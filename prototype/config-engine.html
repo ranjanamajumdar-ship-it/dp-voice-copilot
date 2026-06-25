@@ -65,9 +65,7 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
   background: rgba(255,255,255,.45); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
 }
 .right-head {
-  padding: 24px 28px 20px; flex-shrink: 0;
-  background: var(--glass-shine-btn); border-bottom: 1px solid var(--glass-border-light);
-  position: relative; z-index: 2;
+  display: none;
 }
 .right-body {
   flex: 1; overflow-y: auto; padding: 24px 28px 100px; background: transparent;
@@ -640,8 +638,8 @@ function renderEditor(){
   const bodyEl=document.getElementById('editorBody');
   if(!sel||!N[sel]){headEl.innerHTML='';bodyEl.innerHTML='<div class="ed-empty"><span>←</span>Select a step to configure</div>';return;}
   const n=N[sel];const num=displayNum[sel];
-  headEl.innerHTML=`<div class="ed-head"><div class="row"><span class="type-pill" style="background:${TYPE_COLORS[n.type]}18;color:${TYPE_COLORS[n.type]};border-color:${TYPE_COLORS[n.type]}30">${TYPES[n.type].label}</span><span style="font-size:12px;color:var(--muted)">Step ${num}</span></div><h2>${esc(n.title||n.subtype||'Untitled')}</h2>${n.subtype?`<div class="sub">${esc(n.subtype)}</div>`:''}</div>`;
-  let h='';
+  headEl.innerHTML='';
+  let h=`<div class="ed-head" style="margin-bottom:20px"><div class="row"><span class="type-pill" style="background:${TYPE_COLORS[n.type]}18;color:${TYPE_COLORS[n.type]};border-color:${TYPE_COLORS[n.type]}30">${TYPES[n.type].label}</span><span style="font-size:12px;color:var(--muted)">Step ${num}</span></div><h2>${esc(n.title||n.subtype||'Untitled')}</h2>${n.subtype?`<div class="sub">${esc(n.subtype)}</div>`:''}</div>`;
 
   // Step Type
   h+=`<div class="ed-card"><div class="sec-head">Step Type</div><div class="seg" id="segType">${Object.keys(TYPES).map(t=>`<button data-t="${t}" class="${n.type===t?'active':''}">${TYPES[t].label}</button>`).join('')}</div></div>`;
@@ -740,7 +738,7 @@ function renderEditor(){
 function wireEd(n){const el=document.getElementById('editorBody');
   el.querySelectorAll('#segType button').forEach(b=>{b.onclick=()=>{n.type=b.dataset.t;n.subtype='';n.branches=[];render();};});
   const edSub=el.querySelector('#edSub');if(edSub)edSub.onchange=e=>{chgSub(n,e.target.value);};
-  bd('#edQ','input',e=>{n.question=e.target.value;n.title=e.target.value;renderTree();const c=el.querySelector('#cc');if(c)c.textContent=e.target.value.length;const h2=document.getElementById('editorHead').querySelector('.ed-head h2');if(h2)h2.textContent=n.title||n.subtype||'Untitled';});
+  bd('#edQ','input',e=>{n.question=e.target.value;n.title=e.target.value;renderTree();const c=el.querySelector('#cc');if(c)c.textContent=e.target.value.length;const h2=document.getElementById('editorBody').querySelector('.ed-head h2');if(h2)h2.textContent=n.title||n.subtype||'Untitled';});
   bd('#edYes','input',e=>{if(n.branches[0]){n.branches[0].label=e.target.value;renderTree();}});
   bd('#edNo','input',e=>{if(n.branches[1]){n.branches[1].label=e.target.value;renderTree();}});
   el.querySelectorAll('.mci').forEach(inp=>{inp.oninput=e=>{n.branches[+e.target.dataset.mi].label=e.target.value;renderTree();};});
