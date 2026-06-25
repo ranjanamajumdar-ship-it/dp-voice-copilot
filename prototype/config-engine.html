@@ -26,7 +26,7 @@
   --blur: blur(12px);
   --orange: #ef8c3b;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --radius: 14px;
+  --radius: 12px;
   --radius-sm: 10px;
   --radius-xs: 8px;
 }
@@ -69,7 +69,7 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 /* ── RIGHT PANEL ── */
 .right {
   flex: 1; min-width: 380px; display: flex; flex-direction: column;
-  background: var(--b50); backdrop-filter: none;
+  background: #fff; backdrop-filter: none;
 }
 .right-head {
   display: none;
@@ -144,8 +144,12 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 }
 .node-select-pill .chevron { color: var(--muted); font-size: 14px; flex-shrink: 0; }
 .node-select-pill .chevron svg { display: block; }
-.node optgroup { font-weight: 600; font-size: 11px; color: var(--text2); }
-.node option { font-weight: 400; font-size: 12px; color: #333; background: #fff; }
+.node optgroup { font-weight: 600; font-size: 11px; color: var(--b700); }
+.node option { font-weight: 400; font-size: 12px; color: var(--b800); background: #fff; padding: 6px 8px; }
+.node option:checked { background: var(--b500); color: #fff; }
+.field select option { color: var(--b800); background: #fff; padding: 6px 8px; }
+.field select option:checked { background: var(--b500); color: #fff; }
+.field select optgroup { font-weight: 600; font-size: 11px; color: var(--b700); }
 
 /* Branch options inside card */
 .node-options-section { padding: 2px 14px 4px; }
@@ -157,7 +161,7 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 }
 .node-option-row .opt-label { flex: 1; }
 .node-option-connector {
-  width: 20px; height: 1px; background: var(--glass-border-light); flex-shrink: 0; margin-left: 6px;
+  width: 20px; height: 0; border-top: 1.5px dashed var(--b200); flex-shrink: 0; margin-left: 6px;
 }
 .node-option-add {
   font-size: 9px; font-weight: 600; color: var(--accent);
@@ -232,17 +236,17 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 .ed-head { margin-bottom: 0; }
 .ed-head .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .ed-head .type-pill {
-  font-size: 9px; font-weight: 700; padding: 5px 14px; border-radius: 6px; letter-spacing: .05em;
-  text-transform: uppercase; background: var(--b500) !important; color: #fff !important; border: none !important;
+  font-size: 9px; font-weight: 700; padding: 5px 14px; border-radius: 8px; letter-spacing: .05em;
+  text-transform: uppercase;
 }
 .ed-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--b800); line-height: 1.3; }
 .ed-head .sub { font-size: 12px; color: var(--b300); margin-top: 3px; font-weight: 500; }
 
 .ed-card {
-  background: #fff;
-  border: 0.6px solid var(--glass-border-light); border-radius: var(--radius); padding: 18px 20px;
+  background: var(--b50);
+  border: 1px solid var(--b100); border-radius: 10px; padding: 18px 20px;
   margin-bottom: 14px;
-  box-shadow: 0 2px 8px rgba(30,60,110,.05);
+  box-shadow: none;
 }
 .sec-head {
   font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
@@ -255,8 +259,8 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 .field label { display: block; font-size: 12px; font-weight: 600; color: var(--b700); margin-bottom: 6px; }
 .field input, .field select, .field textarea {
   width: 100%; height: 42px; padding: 0 14px;
-  border: 1px solid var(--b200); border-radius: var(--radius-xs);
-  font-size: 13px; font-family: var(--font); background: var(--b50); color: var(--b800);
+  border: 1px solid var(--b200); border-radius: 8px;
+  font-size: 13px; font-family: var(--font); background: #fff; color: var(--b800);
   outline: none; transition: all .2s;
 }
 .field input:focus, .field select:focus, .field textarea:focus {
@@ -334,7 +338,7 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 
 /* ── CARD: Equipment status badge ── */
 .node-eq-badge { padding: 4px 16px 8px; display: flex; gap: 6px; }
-.eq-pill { padding: 5px 12px; border-radius: 14px; font-size: 10px; font-weight: 700; letter-spacing: .03em; border: 1px solid var(--glass-border-light); background: var(--glass-shine-btn); box-shadow: 0 2px 4px rgba(66,165,245,.06), inset 0 1px 0 rgba(255,255,255,.4); }
+.eq-pill { padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 700; letter-spacing: .03em; border: 1px solid var(--glass-border-light); background: var(--glass-shine-btn); box-shadow: 0 2px 4px rgba(66,165,245,.06), inset 0 1px 0 rgba(255,255,255,.4); }
 .eq-pill.on { color: #2e7d32; }
 .eq-pill.off { color: #c62828; }
 
@@ -414,7 +418,7 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 .ph-section { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; }
 .ph-divider { height: 1px; background: var(--glass-border-light); margin: 2px 0; }
 .ph-btns { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
-.ph-btn { padding: 14px; border-radius: 28px; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; transition: all .2s; }
+.ph-btn { padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; transition: all .2s; }
 .ph-btn.dark { background: linear-gradient(160deg, rgba(66,165,245,.8), rgba(21,101,192,.9)); color: #fff; border: 1px solid rgba(66,165,245,.4); box-shadow: 0 4px 16px rgba(66,165,245,.25), inset 0 1px 0 rgba(255,255,255,.3); }
 .ph-btn.light { background: var(--glass-shine-btn); color: var(--accent-dark); border: 1px solid var(--glass-border); box-shadow: 0 2px 8px rgba(66,165,245,.08), inset 0 1px 0 rgba(255,255,255,.4); }
 .ph-btn:hover { transform: translateY(-1px); }
@@ -641,7 +645,7 @@ function renderEditor(){
   if(!sel||!N[sel]){headEl.innerHTML='';bodyEl.innerHTML='<div class="ed-empty"><span>←</span>Select a step to configure</div>';return;}
   const n=N[sel];const num=displayNum[sel];
   headEl.innerHTML='';
-  let h=`<div class="ed-head" style="margin-bottom:20px"><div class="row"><span class="type-pill" style="background:${TYPE_COLORS[n.type]}18;color:${TYPE_COLORS[n.type]};border-color:${TYPE_COLORS[n.type]}30">${TYPES[n.type].label}</span><span style="font-size:12px;color:var(--muted)">Step ${num}</span></div><h2>${esc(n.title||n.subtype||'Untitled')}</h2>${n.subtype?`<div class="sub">${esc(n.subtype)}</div>`:''}</div>`;
+  let h=`<div class="ed-head" style="margin-bottom:20px"><h2>Configuration</h2><div class="row" style="margin-top:6px"><span class="type-pill" style="background:${TYPE_COLORS[n.type]};color:#fff;border:none">${TYPES[n.type].label}</span><span style="font-size:12px;color:var(--b300);font-weight:500">Step ${num}</span></div></div>`;
 
   // Step Type
   h+=`<div class="ed-card"><div class="sec-head">Step Type</div><div class="seg" id="segType">${Object.keys(TYPES).map(t=>`<button data-t="${t}" class="${n.type===t?'active':''}">${TYPES[t].label}</button>`).join('')}</div></div>`;
@@ -791,7 +795,7 @@ modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open');};
 function renderPhone(){const n=N[sel];if(!n)return;const num=displayNum[sel];const total=allIds().length;
   const typeLabel=TYPES[n.type]?.label||n.type;
   let body=`<div class="ph-stepc">Step ${num} of ${total}</div><div class="ph-divider"></div><div class="ph-section">${esc(typeLabel)}</div><div class="ph-q">${esc(n.question||n.title||n.subtype)}</div>`;
-  if(n.type==='diagnostic'){if(n.subtype==='Binary Decision (Yes/No)'){body+=`<div class="ph-btns">${n.branches.map((b,i)=>`<div class="ph-btn ${i===0?'dark':'light'}">${esc(b.label)}</div>`).join('')}</div>`;}else if(n.subtype==='Multiple Choice'){body+=`<div class="ph-btns">${n.branches.map(b=>`<div class="ph-btn light">${esc(b.label)}</div>`).join('')}</div>`;}else if(n.subtype?.includes('Threshold')||n.subtype?.includes('Numeric')||n.subtype?.includes('Range')){body+=`<div style="text-align:center;margin:20px 0"><input style="width:80%;text-align:center;font-size:28px;font-weight:700;padding:16px;border:1px solid var(--border);border-radius:14px;background:#fff;outline:none;font-family:var(--font);color:var(--accent-dark)" placeholder="0.0"><div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(n.config.unit||'')}</div></div><div class="ph-btns"><div class="ph-btn dark">Submit</div></div>`;}else{body+=`<div class="ph-btns"><div class="ph-btn dark">Continue</div></div>`;}}
+  if(n.type==='diagnostic'){if(n.subtype==='Binary Decision (Yes/No)'){body+=`<div class="ph-btns">${n.branches.map((b,i)=>`<div class="ph-btn ${i===0?'dark':'light'}">${esc(b.label)}</div>`).join('')}</div>`;}else if(n.subtype==='Multiple Choice'){body+=`<div class="ph-btns">${n.branches.map(b=>`<div class="ph-btn light">${esc(b.label)}</div>`).join('')}</div>`;}else if(n.subtype?.includes('Threshold')||n.subtype?.includes('Numeric')||n.subtype?.includes('Range')){body+=`<div style="text-align:center;margin:20px 0"><input style="width:80%;text-align:center;font-size:28px;font-weight:700;padding:16px;border:1px solid var(--border);border-radius:10px;background:#fff;outline:none;font-family:var(--font);color:var(--accent-dark)" placeholder="0.0"><div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(n.config.unit||'')}</div></div><div class="ph-btns"><div class="ph-btn dark">Submit</div></div>`;}else{body+=`<div class="ph-btns"><div class="ph-btn dark">Continue</div></div>`;}}
   else if(n.type==='rootcause'){body+=`<div class="ph-rc"><div class="ic">🎯</div><div class="lb">Root Cause Identified</div><div class="val">${esc(n.subtype)}</div></div>`;}
   else if(n.type==='remedial'){const cl=n.config.completion||'confirm';body+=`<div class="ph-btns"><div class="ph-btn dark">${cl==='photo'?'Take Photo & Confirm':cl==='approval'?'Request Approval':'Mark Complete'}</div></div>`;}
   else if(n.type==='verification'){if(n.subtype==='Media Verification'&&n.config.mediaTypes&&n.config.mediaTypes.length){body+=`<div class="ph-btns">${n.config.mediaTypes.map(m=>`<div class="ph-btn light">${esc(m)}</div>`).join('')}<div class="ph-btn dark">Submit</div></div>`;}else{body+=`<div class="ph-btns"><div class="ph-btn dark">Verify & Continue</div></div>`;}}
