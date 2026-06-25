@@ -16,10 +16,10 @@
   --glass: rgba(66,165,245,.12);
   --glass-mid: rgba(66,165,245,.18);
   --glass-strong: rgba(66,165,245,.28);
-  --glass-border: rgba(66,165,245,.25);
-  --glass-border-light: rgba(66,165,245,.15);
-  --glass-shine: linear-gradient(135deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.1) 50%, rgba(66,165,245,.05) 100%);
-  --glass-shine-btn: linear-gradient(160deg, rgba(255,255,255,.7) 0%, rgba(200,230,255,.3) 40%, rgba(66,165,245,.15) 100%);
+  --glass-border: rgba(66,165,245,.3);
+  --glass-border-light: rgba(66,165,245,.18);
+  --glass-shine: linear-gradient(135deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.55) 50%, rgba(230,240,255,.4) 100%);
+  --glass-shine-btn: linear-gradient(160deg, rgba(255,255,255,.9) 0%, rgba(230,240,255,.6) 40%, rgba(200,225,255,.4) 100%);
   --blur: blur(12px);
   --orange: #ef8c3b;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -36,7 +36,7 @@ html, body { height: 100%; font-family: var(--font); background: #dde3ed; color:
 /* ── LEFT PANEL ── */
 .left {
   width: 440px; min-width: 320px; display: flex; flex-direction: column;
-  background: rgba(255,255,255,.45); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  background: rgba(255,255,255,.55); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border-right: 1px solid var(--glass-border-light);
 }
 .tree-scroll .tree-item > .node { max-width: 380px; }
@@ -62,7 +62,7 @@ html, body { height: 100%; font-family: var(--font); background: #dde3ed; color:
 /* ── RIGHT PANEL ── */
 .right {
   flex: 1; min-width: 380px; display: flex; flex-direction: column;
-  background: rgba(255,255,255,.3); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  background: rgba(255,255,255,.45); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
 }
 .right-head {
   padding: 24px 28px 18px; flex-shrink: 0;
@@ -83,11 +83,11 @@ html, body { height: 100%; font-family: var(--font); background: #dde3ed; color:
   cursor: pointer; transition: all .3s ease; overflow: visible;
   background: var(--glass-shine); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 16px rgba(66,165,245,.08), inset 0 1px 0 rgba(255,255,255,.5);
+  box-shadow: 0 4px 20px rgba(30,60,110,.1), 0 1px 4px rgba(30,60,110,.06), inset 0 1px 0 rgba(255,255,255,.7);
 }
 .node:hover {
   border-color: rgba(66,165,245,.4);
-  box-shadow: 0 8px 32px rgba(66,165,245,.15), inset 0 1px 0 rgba(255,255,255,.6);
+  box-shadow: 0 8px 32px rgba(30,60,110,.14), 0 2px 8px rgba(30,60,110,.08), inset 0 1px 0 rgba(255,255,255,.8);
   transform: translateY(-2px);
 }
 .node.sel {
@@ -240,7 +240,7 @@ html, body { height: 100%; font-family: var(--font); background: #dde3ed; color:
   background: var(--glass-shine); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 22px 24px;
   margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(66,165,245,.06), inset 0 1px 0 rgba(255,255,255,.5);
+  box-shadow: 0 4px 20px rgba(30,60,110,.1), 0 1px 4px rgba(30,60,110,.06), inset 0 1px 0 rgba(255,255,255,.7);
 }
 .sec-head {
   font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
