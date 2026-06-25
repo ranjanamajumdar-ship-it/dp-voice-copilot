@@ -40,9 +40,9 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 .left {
   width: 440px; min-width: 320px; display: flex; flex-direction: column;
   background:
-    radial-gradient(circle, rgba(50,100,180,.1) 1px, transparent 1px);
+    radial-gradient(circle, rgba(160,175,205,.35) 1px, transparent 1px);
   background-size: 18px 18px;
-  background-color: rgba(220,228,240,.85);
+  background-color: rgba(215,222,238,.6);
   backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border-right: 1px solid var(--glass-border-light);
 }
@@ -285,13 +285,15 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 .ghost-btn:hover { background: var(--b100); border-color: var(--b400); color: var(--b700); }
 
 .seg {
-  display: flex; background: var(--b50); border-radius: var(--radius-sm);
+  display: flex; background: #fff; border-radius: var(--radius-sm);
   padding: 4px; gap: 3px; border: 1px solid var(--b100);
+  overflow-x: auto; flex-wrap: nowrap;
 }
+.seg::-webkit-scrollbar { display: none; }
 .seg button {
-  flex: 1; padding: 9px 6px; font-size: 11px; font-weight: 500; border: none; background: transparent;
+  flex: 1; padding: 9px 10px; font-size: 11px; font-weight: 500; border: none; background: transparent;
   color: var(--b300); cursor: pointer; transition: all .2s; border-radius: var(--radius-xs);
-  white-space: nowrap;
+  white-space: nowrap; flex-shrink: 0; min-width: max-content;
 }
 .seg button.active {
   background: var(--b500); color: #fff; font-weight: 700;
@@ -457,8 +459,8 @@ html, body { height: 100%; font-family: var(--font); background: #c9d3e0; color:
 <script>
 const TYPES={diagnostic:{icon:'🔍',label:'Diagnostic'},rootcause:{icon:'🎯',label:'Root Cause'},remedial:{icon:'🔧',label:'Remedial'},verification:{icon:'✅',label:'Verification'},fallback:{icon:'⚠️',label:'Fallback'}};
 
-const TYPE_COLORS={diagnostic:'#3D65D1',rootcause:'#ef8c3b',remedial:'#1E3A96',verification:'#5F87E8',fallback:'#ef8c3b'};
-const TYPE_TEXT={diagnostic:'#3D65D1',rootcause:'#ef8c3b',remedial:'#1E3A96',verification:'#5F87E8',fallback:'#ef8c3b'};
+const TYPE_COLORS={diagnostic:'#3D65D1',rootcause:'#ef8c3b',remedial:'#1E3A96',verification:'#5F87E8',fallback:'#e05297'};
+const TYPE_TEXT={diagnostic:'#3D65D1',rootcause:'#ef8c3b',remedial:'#1E3A96',verification:'#5F87E8',fallback:'#e05297'};
 
 const AI_SUGGESTIONS={
   diagnostic:['What is the current reading?','Is the equipment operational?','When was the last maintenance?','Are there any alarms active?','What is the flow rate?'],
