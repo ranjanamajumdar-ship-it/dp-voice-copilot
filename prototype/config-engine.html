@@ -483,9 +483,53 @@ function isEquipStatus(sub){return sub==='Question + Equipment Status';}
 function defRange(){return{rangeMin:0,rangeMax:100,cautionMin:10,safeMin:20,safeMax:82,cautionMax:93,sensor:'',unit:''};}
 function defChecklist(){return{items:['Item 1','Item 2']};}
 
-mk({id:1,type:'diagnostic',subtype:'Binary Decision (Yes/No)',title:'Is the blower running?',question:'Check if the blower is currently running and producing air flow.',branches:[{label:'Yes',children:[mk({id:2,type:'diagnostic',subtype:'Question + Threshold Check',title:'Check air pressure',question:'Check the air pressure at the blower outlet.',config:{op:'>',threshold:'0.4',unit:'bar'},branches:[{label:'Pass',children:[mk({id:3,type:'verification',subtype:'Equipment Verification',title:'Verify blower output',question:'Verify blower is producing adequate air flow.'}),mk({id:4,type:'rootcause',subtype:'Diffuser Blockage',title:'Diffuser Blockage',config:{category:'Equipment',severity:'High'}})]},{label:'Fail',children:[mk({id:5,type:'remedial',subtype:'Restart Equipment',title:'Restart blower',question:'Restart the blower from the MCC panel.',config:{duration:'15 min',completion:'confirm'}}),mk({id:6,type:'verification',subtype:'Media Verification',title:'Photo of pressure gauge',question:'Take photo of the pressure gauge reading.',config:{mediaTypes:['Photo Upload']}}),mk({id:7,type:'rootcause',subtype:'Low Air Pressure',title:'Low Air Pressure',config:{category:'Equipment',severity:'Critical'}})]}]})]},{label:'No',children:[mk({id:8,type:'remedial',subtype:'Restart Equipment',title:'Restart blower from MCC',question:'Navigate to MCC panel. Follow lockout-tagout. Press RESET then START.',config:{duration:'10 min',completion:'approval'}}),mk({id:9,type:'verification',subtype:'Manual Inspection',title:'Confirm blower running',question:'Physically confirm blower motor is running.'}),mk({id:10,type:'fallback',subtype:'Escalate to Supervisor',title:'Escalate if blower fails',question:'If blower cannot be restarted, escalate immediately.'})]}]});
+// Step 1: Is the blower OFF?
+mk({id:1,type:'diagnostic',subtype:'Binary Decision (Yes/No)',title:'Is the blower OFF?',question:'Check if blowers are OFF. Check from Panel if blower is OFF or TRIP, or check on DP software.',branches:[{label:'Yes',children:[]},{label:'No',children:[]}]});
+// Step 1 → Yes: Start the blower (Remedial)
+mk({id:2,type:'remedial',subtype:'',title:'Start the blower',question:'Start the blower from the panel.'});
+// Step 1 → Yes → Verification
+mk({id:3,type:'verification',subtype:'Equipment Verification',title:'Confirm blower started',question:'Verify the blower has started and is producing air flow.'});
+
+// Step 2: Check blower performance
+mk({id:4,type:'diagnostic',subtype:'Question + Threshold Check',title:'Check blower performance',question:'Check blower header pressure and flow using pressure transmitter and flow meter (Rotameter).',config:{op:'>',threshold:'0.5',unit:'bar'}});
+// Step 2 → Fail: Clean filter & escalate
+mk({id:5,type:'remedial',subtype:'',title:'Clean blower filter',question:'Clean the blower filter and wait for 1 hour. If it is still not resolved, call maintenance person.',config:{duration:'60 min',completion:'confirm'}});
+mk({id:6,type:'fallback',subtype:'Escalate to Supervisor',title:'Escalate to maintenance',question:'If blower performance has not improved after cleaning the filter, call maintenance person.'});
+
+// Step 3: Check for even bubbling
+mk({id:7,type:'diagnostic',subtype:'Binary Decision (Yes/No)',title:'Is aeration even across the tank?',question:'Check if aeration is equally happening across the tank. Check if dead zones are created in the tank.',branches:[{label:'Yes',children:[]},{label:'No',children:[]}]});
+// Step 3 → No: Diffusers choked
+mk({id:8,type:'rootcause',subtype:'',title:'Diffuser blockage',question:'Diffusers are choked and need cleaning.',config:{category:'Equipment',severity:'Moderate'}});
+mk({id:9,type:'fallback',subtype:'Escalate to Supervisor',title:'Call supervisor for diffuser cleaning',question:'Call supervisor to plan diffuser cleaning action.'});
+
+// Step 4: Check DO sensor failure
+mk({id:10,type:'diagnostic',subtype:'Checklist',title:'Check DO sensor condition',question:'Inspect the DO sensor for scaling, damage, or failure.',config:{checklist:{items:['Check for scaling at DO sensor probe','Check for damage of DO sensor cap','Clean sensor with clean water and wipe with tissue paper','Put sensor in clean water - should show 7-8 ppm','Check DO with manual kit and compare with sensor']}}});
+// Step 4 → Fail
+mk({id:11,type:'remedial',subtype:'',title:'Clean or replace DO sensor cap',question:'Clean the sensor with clean water and wipe with tissue paper. If the cap looks scratched or black paint is removed, call supervisor to replace the cap.'});
+mk({id:12,type:'fallback',subtype:'Escalate to Supervisor',title:'Escalate for sensor cap replacement',question:'If the DO sensor cap needs replacement, call supervisor.'});
+
+// Step 5: Sludge bulking
+mk({id:13,type:'diagnostic',subtype:'Question + Threshold Check',title:'Check MLSS and SV-30',question:'Check MLSS and SV-30. If the MLSS/SV-30 is higher than the desired range, sludge bulking is happening. If floating sludge is observed, dead sludge has accumulated.',config:{op:'>',threshold:'30',unit:'mL/L'}});
+// Step 5 → Fail (sludge bulking detected)
+mk({id:14,type:'remedial',subtype:'',title:'Perform sludge wasting',question:'Perform sludge wasting to remove excess or dead sludge. Tools needed: SV-30 testing kit, MLSS measuring system, Sludge dewatering system.'});
+
+// Step 6: High shock load / toxicity
+mk({id:15,type:'diagnostic',subtype:'Binary Decision (Yes/No)',title:'Is there high shock load or toxicity?',question:'Check COD of incoming load. Check visually of incoming effluent. Check for any difference in colour or characteristics in the incoming water visually.',branches:[{label:'Yes',children:[]},{label:'No',children:[]}]});
+// Step 6 → Yes
+mk({id:16,type:'rootcause',subtype:'',title:'High shock load / toxicity',question:'Incoming load is abnormally high or toxic.',config:{category:'Process',severity:'High'}});
+mk({id:17,type:'remedial',subtype:'',title:'Add nutrients',question:'Add nutrients to support the biological performance. Note: COD kit is needed which may not be present.'});
+// Step 6 → No → All checks passed
+mk({id:18,type:'fallback',subtype:'Escalate to Expert',title:'Escalate to expert',question:'All common root causes have been checked. Escalate to process expert for further investigation.'});
+
 roots=[1];
-N[1].branches[0].children=[2];N[2].branches[0].children=[3];N[3].children=[4];N[2].branches[1].children=[5];N[5].children=[6];N[6].children=[7];N[1].branches[1].children=[8];N[8].children=[9];N[9].children=[10];
+// Wire the tree
+N[1].branches[0].children=[2];N[2].children=[3];
+N[1].branches[1].children=[4];
+N[4].branches=[{label:'Pass',children:[7]},{label:'Fail',children:[5]}];N[5].children=[6];
+N[7].branches[0].children=[10];N[7].branches[1].children=[8];N[8].children=[9];
+N[10].children=[11,13];N[11].children=[12];
+N[13].branches=[{label:'Pass',children:[15]},{label:'Fail',children:[14]}];
+N[15].branches[0].children=[16];N[16].children=[17];N[15].branches[1].children=[18];
 
 function assignNums(){displayNum={};let n=0;function walk(id){if(!N[id]||displayNum[id])return;displayNum[id]=++n;N[id].branches.forEach(b=>b.children.forEach(walk));N[id].children.forEach(walk);}roots.forEach(walk);}
 function allIds(){assignNums();return Object.keys(displayNum).map(Number);}
