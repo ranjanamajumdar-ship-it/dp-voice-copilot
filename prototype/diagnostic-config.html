@@ -1,0 +1,1311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Diagnostic Config · DigitalPaani</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#20224A; --ink2:#43466E; --mut:#767AA6; --faint:#A6A9CC;
+  --line:#E5E6F5; --line-lt:#EFF0FA; --card:#FFFFFF; --hover:#F6F6FD;
+  --accent:#6366F1; --accent-deep:#4F46E5; --accent-bg:#EEEFFE; --accent-line:#D9DBFC;
+  --grad:linear-gradient(135deg,#6366F1,#8B5CF6);
+  --green:#16A34A; --green-bg:#DFF7E7; --green-line:#BBEBCD;
+  --red:#DC4A4A; --red-bg:#FDEAEA; --red-line:#F7CACA;
+  --amber:#B45309; --amber-bg:#FCF1DE;
+  --purple:#7C3AED; --purple-bg:#F2ECFE;
+  --blue:#2563EB; --blue-bg:#E8F0FE; --teal:#0D9488; --teal-bg:#E2F6F3;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --sh:0 1px 2px rgba(40,40,120,.05),0 8px 26px rgba(80,70,220,.07);
+  --sh-lg:0 30px 80px rgba(38,34,120,.25),0 6px 18px rgba(38,34,120,.10);
+  --glass:rgba(255,255,255,.78);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:
+  radial-gradient(1100px 700px at 88% -12%, rgba(196,181,253,.5), transparent 60%),
+  radial-gradient(900px 650px at -8% 112%, rgba(165,215,255,.45), transparent 60%),
+  linear-gradient(180deg,#F6F6FE 0%,#F1F0FB 100%);
+  background-attachment:fixed}
+button{font-family:var(--font);cursor:pointer;border:none;background:none;color:inherit;font-size:13px}
+input,select,textarea{font-family:var(--font);font-size:13px;color:var(--ink)}
+select{cursor:pointer}
+.ic{vertical-align:-2.5px;flex-shrink:0}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#CFD1EA;border-radius:5px;border:2px solid transparent;background-clip:content-box}
+
+/* ============ TOP BAR ============ */
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.6);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(229,230,245,.9);display:flex;align-items:center;gap:13px;padding:11px 24px}
+.topbar .back{width:31px;height:31px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--mut);border:1px solid transparent}
+.topbar .back:hover{border-color:var(--line);background:#fff}
+.tb-title{font-size:14px;font-weight:800;letter-spacing:-.01em}
+.tb-sub{font-size:11px;color:var(--mut);font-weight:600;margin-top:1px}
+.tree-pick{margin-left:6px;padding:8px 32px 8px 13px;border:1px solid var(--line);border-radius:11px;background:var(--glass) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23767AA6' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 11px center;font-weight:700;appearance:none;box-shadow:var(--sh);max-width:280px}
+.chip-draft{font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--amber);background:var(--amber-bg);padding:4px 10px;border-radius:20px;text-transform:uppercase;white-space:nowrap}
+.chip-ok{font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--green);background:var(--green-bg);padding:4px 10px;border-radius:20px;text-transform:uppercase;white-space:nowrap}
+.spacer{flex:1}
+.seg{display:flex;background:rgba(228,229,246,.7);border-radius:12px;padding:3px;box-shadow:inset 0 1px 2px rgba(40,40,120,.05)}
+.seg button{padding:7px 14px;font-size:12px;font-weight:700;border-radius:9px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.seg button.on{background:#fff;color:var(--accent-deep);box-shadow:0 2px 6px rgba(40,40,120,.12)}
+.btn{padding:8px 15px;border-radius:11px;font-weight:700;font-size:12.5px;border:1px solid var(--line);background:var(--glass);box-shadow:var(--sh)}
+.btn:hover{background:#fff}
+.btn.primary{background:var(--grad);border:none;color:#fff;box-shadow:0 6px 18px rgba(99,102,241,.38)}
+.btn.primary:hover{filter:brightness(1.06)}
+
+/* ============ PAGE ============ */
+.page{max-width:860px;margin:0 auto;padding:32px 26px 120px}
+.page.w-sheet{max-width:1160px}
+.page.w-canvas{max-width:none;padding:18px 22px 26px}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.eyebrow::before{content:'';width:16px;height:2.5px;border-radius:2px;background:var(--grad)}
+.page h1{font-size:26px;font-weight:800;letter-spacing:-.03em}
+.page .lede{color:var(--mut);margin-top:6px;font-size:13.5px;line-height:1.5;max-width:600px;font-weight:500}
+.trigger-line{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;color:var(--ink2);font-weight:600}
+.trigger-line .tl-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--accent-line);background:var(--accent-bg);color:var(--accent-deep);border-radius:20px;padding:5px 12px;font-weight:700}
+
+.sect{margin-top:34px}
+.sect-head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.sect-head h2{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.sect-head .count{font-size:12px;color:var(--faint);font-weight:700}
+.sect-head .s-act{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--accent-deep)}
+.sect-head .s-act:hover{text-decoration:underline}
+.sect-sub{font-size:12.5px;color:var(--mut);margin-bottom:14px;font-weight:500}
+
+/* glass panel */
+.panel{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);outline:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--sh)}
+
+/* list rows */
+.row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line-lt);cursor:pointer;transition:background .1s}
+.row:last-of-type{border-bottom:none}
+.row:hover{background:var(--hover)}
+.row .num{width:27px;height:27px;border-radius:9px;background:var(--line-lt);color:var(--ink2);font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.row .mid{flex:1;min-width:0}
+.row .q{font-size:13.5px;font-weight:700;line-height:1.4}
+.row .meta{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.mchip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--ink2)}
+.routes{display:flex;flex-direction:column;gap:5px;align-items:flex-start;min-width:220px}
+.route{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--ink2);max-width:290px}
+.route .tag{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.04em;flex-shrink:0}
+.tag.yes{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}
+.tag.no{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
+.route .to{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
+.route .to b{color:var(--ink2);font-weight:700}
+.route .to.warn{color:var(--red);font-weight:700}
+.evi{display:flex;gap:4px;color:var(--faint);min-width:52px;justify-content:flex-end}
+.chev{color:var(--faint);font-size:15px;flex-shrink:0}
+.add-row{display:flex;align-items:center;justify-content:center;gap:7px;padding:13px;color:var(--accent-deep);font-weight:700;font-size:12.5px;cursor:pointer;border-top:1.5px dashed var(--accent-line)}
+.add-row:hover{background:var(--accent-bg)}
+
+.rc-row .num{background:var(--accent-bg);color:var(--accent-deep)}
+.freq{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800}
+.freq.High{background:var(--red-bg);color:var(--red)}
+.freq.Moderate{background:var(--amber-bg);color:var(--amber)}
+.freq.Low{background:var(--green-bg);color:var(--green)}
+.fixdots{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mut);font-weight:700}
+.maint{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.maint.y{background:var(--purple-bg);color:var(--purple)}
+.maint.n{background:var(--line-lt);color:var(--mut)}
+
+.sla-card{display:flex;align-items:center;gap:14px;cursor:pointer;padding:16px 18px}
+.sla-card:hover{background:var(--hover)}
+.sla-ico{width:38px;height:38px;border-radius:12px;background:var(--amber-bg);color:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sla-card .t{font-weight:800;font-size:13.5px}
+.sla-card .d{font-size:12.5px;color:var(--mut);margin-top:3px;line-height:1.45;font-weight:500}
+
+.vbar{border-radius:14px;padding:12px 16px;font-size:12.5px;font-weight:600;margin-top:24px;display:flex;gap:10px;align-items:flex-start}
+.vbar.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
+.vbar.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}
+.vbar ul{margin:4px 0 0 16px;font-weight:500}
+
+/* ============ SHEET VIEW (continuous boolean flow) ============ */
+.flow{padding:26px 26px 32px;background-image:radial-gradient(#DEDFF2 1.05px,transparent 1.05px);background-size:20px 20px}
+.fbox{background:#fff;border:1px solid var(--line);border-left:3px solid #C6C9F5;border-radius:14px;padding:12px 14px;box-shadow:0 2px 10px rgba(40,40,120,.07);max-width:500px;position:relative;transition:box-shadow .12s}
+.fbox:hover{box-shadow:0 6px 18px rgba(80,70,220,.12)}
+.fbox .finp:first-of-type{font-size:13.5px}
+.fbox.rcx{border-color:#DCD6FD;border-left:3px solid #B79DF0;background:linear-gradient(180deg,#FEFDFF,#FAF8FF)}
+.fbox.escx{border-color:var(--red-line);border-left:3px solid #EE9A9A;background:linear-gradient(180deg,#FFF9F9,#FDF1F1);max-width:430px}
+.fbox.slax{border-color:#F0E2C8;border-left:3px solid #E4B96A;background:linear-gradient(180deg,#FFFEFA,#FDF8EE);max-width:640px}
+.fbox.trgx{border-color:var(--accent-line);border-left:3px solid var(--accent);background:linear-gradient(135deg,#F0F1FF,#F8F4FF);max-width:430px}
+.fbox.fixx{border-left:3px solid #E4B96A}
+.fbox.clsx{border-left:3px solid #7ED4A5}
+.fb-top{display:flex;align-items:center;gap:7px;margin-bottom:6px;flex-wrap:wrap}
+.fb-lab{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.fb-lab.pur{color:var(--purple)} .fb-lab.red{color:var(--red)} .fb-lab.amb{color:var(--amber)} .fb-lab.grn{color:var(--green)} .fb-lab.acc{color:var(--accent-deep)}
+.fnum{width:22px;height:22px;border-radius:7px;background:var(--line-lt);color:var(--ink2);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fb-x{width:22px;height:22px;border-radius:7px;color:var(--faint);display:flex;align-items:center;justify-content:center;font-size:12px;opacity:0;transition:.12s;flex-shrink:0}
+.fbox:hover .fb-x{opacity:1}
+.fb-x:hover{color:var(--red);background:var(--red-bg)}
+.fb-open{width:22px;height:22px;border-radius:7px;color:var(--faint);display:flex;align-items:center;justify-content:center;opacity:0;transition:.12s;flex-shrink:0}
+.fbox:hover .fb-open{opacity:1}
+.fb-open:hover{color:var(--accent-deep);background:var(--accent-bg)}
+.finp{width:100%;border:1px solid transparent;border-radius:8px;background:transparent;font-weight:700;font-size:13px;padding:4px 6px;margin-left:-6px}
+.finp:hover{background:var(--hover)}
+.finp:focus{outline:none;background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.finp.sub{font-weight:500;font-size:11.5px;color:var(--mut);margin-top:1px}
+.finp::placeholder{color:var(--faint);font-weight:500}
+.fsel{appearance:none;border:1px solid var(--line);border-radius:20px;padding:4px 22px 4px 10px;font-size:11px;font-weight:700;color:var(--ink2);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' stroke='%23A6A9CC' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;cursor:pointer;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsel:hover{border-color:var(--accent-line)}
+.fsel:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.fkids{margin:12px 0 0 17px;padding-left:26px;border-left:1.5px dashed #CBCEEC;display:flex;flex-direction:column;gap:15px}
+.fbranch{position:relative}
+.fbranch::before{content:'';position:absolute;left:-26px;top:12px;width:19px;border-top:1.5px dashed #CBCEEC}
+.fb-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fb-child{margin-top:10px}
+.fpill{display:inline-flex;align-items:center;gap:5px;background:#ECEDF8;color:var(--mut);border-radius:20px;font-size:9.5px;font-weight:800;padding:3.5px 10px;letter-spacing:.06em;white-space:nowrap}
+.fpill.acc{background:var(--accent-bg);color:var(--accent-deep)}
+.fpill.amb{background:var(--amber-bg);color:var(--amber)}
+.fpill.grn{background:var(--green-bg);color:var(--green)}
+.fref{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed var(--accent-line);color:var(--accent-deep);background:var(--accent-bg);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fref:hover{filter:brightness(.97)}
+.ichip{display:inline-flex;align-items:center;gap:6px;background:var(--red-bg);color:var(--red);border-radius:9px;padding:5px 11px;font-size:11px;font-weight:700;margin-top:9px}
+.echips{display:flex;gap:4px}
+.echip{width:24px;height:24px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--faint);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.echip.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent-deep)}
+.etg{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;color:var(--faint);border-radius:20px;padding:4px 11px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.etg.on{border-color:var(--red-line);background:var(--red-bg);color:var(--red)}
+.fdiv{display:flex;align-items:center;gap:10px;margin:30px 0 14px}
+.fdiv .fdt{font-size:11.5px;font-weight:700;color:var(--mut)}
+.fdiv .fdt b{color:var(--ink2)}
+.fdiv::after{content:'';flex:1;border-top:1.5px dashed #D6D8EF}
+.fixrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:8px}
+.fadd{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed var(--accent-line);color:var(--accent-deep);border-radius:20px;padding:4.5px 13px;font-size:11px;font-weight:700;background:rgba(255,255,255,.7);cursor:pointer}
+.fadd:hover{background:var(--accent-bg)}
+.rcx .fnum{background:var(--purple-bg);color:var(--purple)}
+.flash{animation:flashB 1.4s ease}
+@keyframes flashB{0%,55%{box-shadow:0 0 0 3px var(--accent),0 6px 18px rgba(80,70,220,.12)}100%{box-shadow:0 2px 10px rgba(40,40,120,.07)}}
+
+/* ============ LEGEND ============ */
+.legend{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:16px;padding:10px 13px;background:var(--glass);border:1px solid rgba(255,255,255,.9);outline:1px solid var(--line);border-radius:14px;box-shadow:var(--sh)}
+.legend .lg-t{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-right:3px}
+.lg{display:inline-flex;align-items:center;gap:6px;padding:4.5px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink2)}
+.lg .lgi{display:inline-flex;width:16px;height:16px;border-radius:5px;align-items:center;justify-content:center}
+.lg-plus{width:17px;height:17px;border-radius:50%;background:var(--accent-bg);color:var(--accent-deep);font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-left:1px;cursor:pointer}
+.lg-plus:hover{background:var(--accent);color:#fff}
+.lg.dim{opacity:.75}
+
+/* ============ SHEET ALT (grid) ============ */
+.s2wrap{overflow-x:auto;padding:0}
+.s2grid{position:relative;display:grid;background:#FDFDFF}
+.s2hc{font-size:10px;font-weight:800;color:var(--faint);display:flex;align-items:center;justify-content:center;background:#F5F5FB;border-right:1px solid var(--line-lt);border-bottom:1px solid var(--line-lt);padding:7px 0;letter-spacing:.08em;min-height:30px}
+.s2bg{border-right:1px solid var(--line-lt);border-bottom:1px solid var(--line-lt)}
+.s2cellwrap{padding:11px;position:relative;z-index:2;display:flex;align-items:center}
+.s2card{background:#fff;border:1px solid var(--line);border-left:3px solid #C6C9F5;border-radius:12px;padding:9px 11px;box-shadow:0 2px 8px rgba(40,40,120,.07);width:100%}
+.s2card.rc2{border-color:#DCD6FD;border-left:3px solid #B79DF0;background:linear-gradient(180deg,#FEFDFF,#FAF8FF)}
+.s2card.esc2{border-color:var(--red-line);border-left:3px solid #EE9A9A;background:linear-gradient(180deg,#FFF9F9,#FDF1F1)}
+.s2card .finp{font-size:12px;padding:3px 5px}
+.s2card .fb-top{margin-bottom:4px}
+.s2route{display:flex;align-items:center;gap:6px;margin-top:5px}
+.s2route .fsel{max-width:168px;font-size:10.5px;padding:3px 20px 3px 8px}
+.s2route .tag{font-size:9px;padding:2px 7px}
+svg.s2edges{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overflow:visible}
+.s2labels{position:absolute;top:0;left:0;z-index:3;pointer-events:none}
+.s2meta{font-size:10.5px;color:var(--mut);font-weight:600;margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ============ CANVAS (node view) ============ */
+.cv-shell{position:relative;height:calc(100vh - 118px);border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,.9);outline:1px solid var(--line);box-shadow:var(--sh);background:#FBFBFF}
+.cv-scroll{position:absolute;inset:0;overflow:auto;background-image:radial-gradient(#DBDDF0 1.1px,transparent 1.1px);background-size:22px 22px}
+.cv-inner{position:relative}
+svg.cv-edges{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
+.cv-tools{position:absolute;top:14px;right:14px;z-index:5;display:flex;gap:8px}
+.cv-hint{position:absolute;bottom:12px;left:16px;z-index:5;font-size:11px;color:var(--faint);font-weight:600;background:rgba(255,255,255,.8);padding:5px 11px;border-radius:20px;backdrop-filter:blur(6px)}
+.cv-node{position:absolute;width:232px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 3px 14px rgba(40,40,120,.09);cursor:grab;user-select:none;transition:box-shadow .12s}
+.cv-node:hover{box-shadow:0 8px 24px rgba(80,70,220,.16);border-color:var(--accent-line)}
+.cv-node.dragging{cursor:grabbing;box-shadow:0 16px 38px rgba(80,70,220,.24);z-index:10}
+.nh{display:flex;align-items:center;gap:6px;padding:9px 12px 0;font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.nq{padding:6px 12px 10px;font-size:12.5px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nports{border-top:1px solid var(--line-lt);padding:7px 12px 9px;display:flex;flex-direction:column;gap:5px}
+.prow{display:flex;align-items:center;gap:7px;position:relative}
+.prow .pdest{flex:1;font-size:10.5px;font-weight:600;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .pdest.warn{color:var(--red);font-weight:700}
+.pdot{position:absolute;right:-17px;width:9px;height:9px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px currentColor}
+.pdot.yes{color:#22C55E;background:#22C55E}
+.pdot.no{color:#F87171;background:#F87171}
+.pdot.warn{color:#F59E0B;background:#fff}
+.cv-node.start{background:linear-gradient(135deg,#EEF0FF,#F6F1FF);border-color:var(--accent-line);width:216px}
+.cv-node.start .nh{color:var(--accent-deep)}
+.cv-node.start .pdot{color:var(--accent);background:var(--accent)}
+.cv-node.rcn{border-color:#DCD6FD;background:linear-gradient(180deg,#FDFCFF, #F8F6FF)}
+.cv-node.rcn .nh{color:var(--purple)}
+.nfix{border-top:1px solid var(--line-lt);padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.nfixrow{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--mut)}
+.nfixrow .dot{width:6px;height:6px;border-radius:2px;flex-shrink:0}
+.nfixrow.more{color:var(--faint)}
+.nfoot{padding:0 12px 10px;display:flex;gap:5px;align-items:center}
+.nbadge{font-size:9px;font-weight:800;letter-spacing:.03em;padding:2.5px 8px;border-radius:20px}
+.cv-node.escn{background:linear-gradient(180deg,#FFF7F7,#FDEEEE);border-color:var(--red-line);width:216px}
+.cv-node.escn .nh{color:var(--red)}
+.cv-node.escn .nq{font-size:11.5px}
+.epill{position:absolute;transform:translate(-50%,-50%);font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:3px 9px;border-radius:20px;pointer-events:none;box-shadow:0 1px 4px rgba(40,40,120,.10)}
+.epill.yes{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}
+.epill.no{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
+
+/* ============ MODAL ============ */
+.overlay{position:fixed;inset:0;background:rgba(32,34,74,.45);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px 20px}
+.modal{background:#fff;border-radius:20px;width:640px;max-width:100%;box-shadow:var(--sh-lg);display:flex;flex-direction:column;max-height:calc(100vh - 48px)}
+.m-head{display:flex;align-items:center;gap:12px;padding:18px 22px 14px;border-bottom:1px solid var(--line-lt);background:#fff;border-radius:20px 20px 0 0;flex-shrink:0}
+.m-head .m-kind{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.m-head h3{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.m-close{margin-left:auto;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:16px}
+.m-close:hover{background:var(--hover)}
+.m-body{padding:20px 22px 8px;overflow-y:auto;flex:1}
+.m-foot{display:flex;align-items:center;gap:10px;padding:14px 22px 18px;border-top:1px solid var(--line-lt);background:#fff;border-radius:0 0 20px 20px;flex-shrink:0}
+.m-del{color:var(--red);font-weight:700;font-size:12.5px}
+.m-del:hover{text-decoration:underline}
+
+.f-label{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.f-group>.f-label{color:var(--mut);font-size:11px}
+.f-group>.f-label::before{content:'';width:3px;height:11px;border-radius:2px;background:var(--grad);flex-shrink:0}
+.f-group{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line-lt)}
+.f-group:last-child{border-bottom:none}
+.inp,textarea.inp,select.inp{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;transition:border-color .1s;font-weight:500}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+textarea.inp{resize:vertical;min-height:60px;line-height:1.45}
+.hint{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.4;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.atypes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.atype{border:1px solid var(--line);border-radius:12px;padding:10px 11px;cursor:pointer;background:#fff}
+.atype:hover{background:var(--hover)}
+.atype.on{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 0 0 1px var(--accent)}
+.atype .ai{color:var(--mut);height:18px}
+.atype.on .ai{color:var(--accent)}
+.atype .an{font-size:12px;font-weight:800;margin-top:5px}
+.atype .ad{font-size:10.5px;color:var(--mut);margin-top:2px;line-height:1.35;font-weight:500}
+
+.route-box{border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:10px;background:#FAFAFE}
+.route-box .rb-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12px;font-weight:700}
+.dest-sel{width:100%}
+
+.tgl-row{display:flex;gap:8px;flex-wrap:wrap}
+.tgl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:11px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:var(--mut)}
+.tgl.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent-deep);box-shadow:0 0 0 1px var(--accent)}
+.tgl .box{width:15px;height:15px;border-radius:5px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0}
+.tgl.on .box{background:var(--accent);border-color:var(--accent)}
+
+.fix-card{border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:10px;background:#FAFAFE}
+.fix-card .fh{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.fix-card .fh .n{width:22px;height:22px;border-radius:8px;background:#fff;border:1px solid var(--line);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.x-btn{color:var(--faint);font-size:15px;padding:2px 5px;border-radius:7px}
+.x-btn:hover{color:var(--red);background:var(--red-bg)}
+.esc-note{display:flex;gap:8px;align-items:flex-start;background:var(--red-bg);border:1px solid var(--red-line);border-radius:11px;padding:9px 12px;font-size:11.5px;color:var(--red);font-weight:600;line-height:1.4;margin-top:10px}
+.add-dashed{width:100%;padding:10px;border:1.5px dashed var(--accent-line);border-radius:12px;color:var(--accent-deep);font-weight:700;font-size:12.5px;background:#fff}
+.add-dashed:hover{background:var(--accent-bg)}
+
+.radio-card{display:flex;gap:11px;border:1px solid var(--line);border-radius:13px;padding:12px 14px;cursor:pointer;margin-bottom:8px;background:#fff}
+.radio-card.on{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 0 0 1px var(--accent)}
+.radio-card .rdot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);margin-top:1px;flex-shrink:0;position:relative}
+.radio-card.on .rdot{border-color:var(--accent)}
+.radio-card.on .rdot::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.radio-card .rt{font-size:13px;font-weight:800}
+.radio-card .rd{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back">←</button>
+  <div>
+    <div class="tb-title">Diagnostic Configuration</div>
+    <div class="tb-sub">STP · Sector 21 Plant</div>
+  </div>
+  <select class="tree-pick" id="treePick" onchange="pickTree(this.value)"></select>
+  <span class="chip-draft" id="statusChip">Draft</span>
+  <div class="spacer"></div>
+  <div class="seg" id="viewSeg"></div>
+  <button class="btn" onclick="openSLA()">Escalation</button>
+  <button class="btn primary" onclick="publish()">Publish</button>
+</div>
+
+<div class="page" id="page"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ============================== ICONS ============================== */
+const ICO={
+  sensor:'<path d="M5 14a7 7 0 1 1 14 0"/><path d="M12 14l3.5-3.5"/>',
+  inspection:'<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  manual:'<path d="M9.5 3h5M10 3v5.2L4.8 17a2.2 2.2 0 0 0 2 3.2h10.4a2.2 2.2 0 0 0 2-3.2L14 8.2V3"/>',
+  photo:'<path d="M3 8.2A2.2 2.2 0 0 1 5.2 6h2l1.8-2h6l1.8 2h2A2.2 2.2 0 0 1 21 8.2v9.6a2.2 2.2 0 0 1-2.2 2.2H5.2A2.2 2.2 0 0 1 3 17.8z"/><circle cx="12" cy="13" r="3.4"/>',
+  video:'<rect x="2" y="6.5" width="13" height="11" rx="2.2"/><path d="M15 10.5l7-3.5v10l-7-3.5"/>',
+  comment:'<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.2 0-2.4-.2-3.4-.7L4 21l1.7-4.1A8.5 8.5 0 1 1 21 11.5z"/>',
+  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  check:'<circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.4l2.5 2.5 4.9-5.3"/>',
+  open:'<path d="M13 5H6.6A2.6 2.6 0 0 0 4 7.6v9.8A2.6 2.6 0 0 0 6.6 20h9.8a2.6 2.6 0 0 0 2.6-2.6V11"/><path d="M10.5 13.5 20 4M14.8 4H20v5.2"/>',
+  downright:'<path d="M5 4v7a5 5 0 0 0 5 5h8.5"/><path d="M15 11.5 18.5 16 15 20.5"/>',
+  question:'<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.5 2.5 0 1 1 3.3 2.8c-.8.3-1 .9-1 1.6"/><path d="M12 16.6v.3"/>',
+  fix:'<path d="M14.5 6.5a4.5 4.5 0 0 0-6 6L4 17l3 3 4.5-4.5a4.5 4.5 0 0 0 6-6L14 13l-3-3z"/>',
+  bolt:'<path d="M13 2 4.5 13.5H11L9.5 22 18 10.5h-6.5z"/>',
+  alert:'<path d="M12 3 1.8 20.2h20.4z"/><path d="M12 10v4.5M12 17.5v.5"/>',
+  list:'<path d="M8.5 6h12M8.5 12h12M8.5 18h12"/><circle cx="4" cy="6" r="1.4"/><circle cx="4" cy="12" r="1.4"/><circle cx="4" cy="18" r="1.4"/>',
+  grid:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M9.5 4v16"/>',
+  flow:'<circle cx="5.5" cy="5.5" r="2.6"/><circle cx="18.5" cy="12" r="2.6"/><circle cx="5.5" cy="18.5" r="2.6"/><path d="M8.1 5.5h5.4A2.5 2.5 0 0 1 16 8v1.5M8.1 18.5h5.4A2.5 2.5 0 0 0 16 16v-1.5"/>',
+  wand:'<path d="M4 20 15.5 8.5M13 4.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8zM19 11l.6 1.4L21 13l-1.4.6L19 15l-.6-1.4L17 13l1.4-.6z"/>',
+};
+const ic=(k,s=14)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
+
+/* ============================== DATA ============================== */
+const uid=p=>p+Math.random().toString(36).slice(2,8);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const ANSWER_TYPES={
+  sensor:{name:'Sensor data',desc:'Read from a live instrument tag'},
+  inspection:{name:'Physical inspection',desc:'Operator observes on-site'},
+  manual:{name:'Manual test',desc:'Field kit / hand measurement'},
+};
+const FIX_TYPES={
+  Mechanical:{color:'#B45309',bg:'var(--amber-bg)'},
+  Electrical:{color:'#2563EB',bg:'var(--blue-bg)'},
+  Instrumental:{color:'#7C3AED',bg:'var(--purple-bg)'},
+  Biological:{color:'#0D9488',bg:'var(--teal-bg)'},
+};
+const SKILLS=['Operator (basic)','Mechanical fitter','Electrician','Instrumentation tech','Process/Bio specialist'];
+const VIEWS=[['list','List','list'],['sheet','Sheet','downright'],['sheet2','Sheet alt','grid'],['canvas','Canvas','flow']];
+
+function seed(){
+  const T1='t_pump', T2='t_lowdo';
+  const steps={}, rcs={};
+  const S=(o)=>{const s={id:uid('s_'),tree:T1,q:'',atype:'inspection',detail:'',sensorTag:'',unit:'',rangeLow:'',rangeHigh:'',equipment:'',
+    yes:{type:'',id:null},no:{type:'',id:null},evi:{photo:false,video:false,comment:false},...o};steps[s.id]=s;return s.id;};
+  const R=(o)=>{const r={id:uid('rc_'),tree:T1,name:'',freq:'Moderate',idEvi:{photo:true,video:false,comment:true},
+    closeEvi:{photo:true,video:false,comment:true},fixes:[],...o};r.fixes=r.fixes.map(f=>({id:uid('f_'),type:'Mechanical',
+    skill:'Operator (basic)',part:'',escalate:false,text:'',...f}));rcs[r.id]=r;return r.id;};
+
+  // --- Root causes: Leakage in Filter Feed Pump (from the diagnostic sheet) ---
+  const rcValve=R({name:'Closed discharge valve (excess pressure)',freq:'High',fixes:[
+    {text:'Open the discharge valves or recirculation valves to provide pressure relief.',type:'Mechanical'}]});
+  const rcFilter=R({name:'Filter choking causing back pressure',freq:'High',fixes:[
+    {text:'Perform filter backwash to relieve back pressure.',type:'Mechanical'}]});
+  const rcSeal=R({name:'Mechanical seal failure',freq:'High',idEvi:{photo:true,video:true,comment:true},fixes:[
+    {text:'Ensure the pump is not running dry.',type:'Mechanical'},
+    {text:'Replace the mechanical seal.',type:'Mechanical',skill:'Mechanical fitter',part:'Mechanical seal',escalate:true}]});
+  const rcGland=R({name:'Gland packing wear or loose packing',freq:'Moderate',fixes:[
+    {text:'Tighten or replace the gland packing at the stuffing box.',type:'Mechanical',skill:'Mechanical fitter',part:'Gland packing',escalate:true}]});
+  const rcBearing=R({name:'Bearing failure',freq:'Moderate',fixes:[
+    {text:'Replace the pump bearing.',type:'Mechanical',skill:'Mechanical fitter',part:'Bearing',escalate:true}]});
+
+  // --- Diagnostic steps (boolean tree) ---
+  const s6=S({q:'Is there high vibration or a rise in bearing temperature?',atype:'manual',
+    detail:'Use a vibration pen on the bearing housing; back-of-hand temperature check.',equipment:'Vibration pen',
+    yes:{type:'rc',id:rcBearing},no:{type:'escalate',id:null},evi:{photo:false,video:false,comment:true}});
+  const s5=S({q:'Is leakage coming from the stuffing box, or uneven around the shaft?',atype:'inspection',
+    detail:'Check whether controlled dripping has become excessive or uneven.',
+    yes:{type:'rc',id:rcGland},no:{type:'step',id:s6},evi:{photo:true,video:false,comment:false}});
+  const s4=S({q:'Is there continuous dripping or spraying near the shaft / seal area?',atype:'inspection',
+    detail:'Look closely at the shaft-seal area while the pump runs.',
+    yes:{type:'rc',id:rcSeal},no:{type:'step',id:s5},evi:{photo:true,video:true,comment:false}});
+  const s3=S({q:'Is the filter choked, causing back pressure?',atype:'inspection',
+    detail:'Check differential pressure across the filter / inspect the filter bed.',
+    yes:{type:'rc',id:rcFilter},no:{type:'step',id:s4}});
+  const s2=S({q:'Is the discharge valve closed or partially closed?',atype:'inspection',
+    detail:'Check valve position on the pump discharge line.',
+    yes:{type:'rc',id:rcValve},no:{type:'step',id:s3},evi:{photo:true,video:false,comment:false}});
+  const s1=S({q:'Is the discharge pressure higher than normal?',atype:'sensor',
+    sensorTag:'PT-102 · Pump discharge pressure',unit:'bar',rangeLow:'2.0',rangeHigh:'3.5',
+    yes:{type:'step',id:s2},no:{type:'step',id:s4}});
+
+  // --- second tree, compact: Low DO ---
+  const rcBlower=R({tree:T2,name:'Blower is OFF',freq:'Low',fixes:[{text:'Start the blower from the panel.',type:'Electrical'}]});
+  const rcDiff=R({tree:T2,name:'Diffusers choked / dead zones',freq:'Moderate',fixes:[
+    {text:'Plan diffuser cleaning with supervisor.',type:'Mechanical',skill:'Mechanical fitter',escalate:true}]});
+  const d2=S({tree:T2,q:'Is aeration even across the tank (no dead zones)?',atype:'inspection',
+    detail:'Look at the surface bubbling pattern.',yes:{type:'escalate',id:null},no:{type:'rc',id:rcDiff},evi:{photo:true,video:false,comment:false}});
+  const d1=S({tree:T2,q:'Are the blowers running?',atype:'sensor',sensorTag:'Blower run status (panel / DP app)',unit:'',
+    yes:{type:'step',id:d2},no:{type:'rc',id:rcBlower}});
+
+  return {
+    trees:[
+      {id:T1,name:'Leakage in Filter Feed Pump',trigger:'Operator reports leakage · WTP filter house',
+       stepOrder:[s1,s2,s3,s4,s5,s6],sla:{hours:24,holdAt:'remediation',escalateTo:'Plant In-charge'},layout:{}},
+      {id:T2,name:'Low DO in Aeration Tank',trigger:'DO sensor below setpoint',
+       stepOrder:[d1,d2],sla:{hours:24,holdAt:'root_cause',escalateTo:'Process Lead'},layout:{}},
+    ],
+    steps,rcs,
+    ui:{tree:T1,view:'canvas',modal:null}
+  };
+}
+
+let S;
+try{const raw=localStorage.getItem('dp_diag_v3');S=raw?JSON.parse(raw):seed();}catch(e){S=seed();}
+const save=()=>{try{localStorage.setItem('dp_diag_v3',JSON.stringify(S));}catch(e){}};
+window.resetSeed=()=>{localStorage.removeItem('dp_diag_v3');S=seed();render();};
+
+/* ============================== HELPERS ============================== */
+const tree=()=>S.trees.find(t=>t.id===S.ui.tree);
+const treeSteps=()=>tree().stepOrder.map(id=>S.steps[id]).filter(Boolean);
+const treeRCs=()=>Object.values(S.rcs).filter(r=>r.tree===S.ui.tree);
+const stepNum=id=>tree().stepOrder.indexOf(id)+1;
+
+function destText(d){
+  if(!d||!d.type)return `<span class="to warn">not routed</span>`;
+  if(d.type==='escalate')return `<span class="to"><b style="color:var(--red)">Escalate</b> · skill dead-end</span>`;
+  if(d.type==='rc'){const r=S.rcs[d.id];return r?`<span class="to">${ic('target',13)} <b>${esc(r.name)}</b></span>`:`<span class="to warn">pick a root cause</span>`;}
+  if(d.type==='step'){const s=S.steps[d.id];return s?`<span class="to">Step ${stepNum(d.id)} · ${esc(s.q.slice(0,34))}${s.q.length>34?'…':''}</span>`:`<span class="to warn">pick a step</span>`;}
+  return `<span class="to warn">not routed</span>`;
+}
+function destShort(d){
+  if(!d||!d.type)return null;
+  if(d.type==='escalate')return 'Escalate';
+  if(d.type==='rc'){const r=S.rcs[d.id];return r?r.name:null;}
+  if(d.type==='step'){const s=S.steps[d.id];return s?('Step '+stepNum(d.id)):null;}
+  return null;
+}
+const destMissing=d=>!d||!d.type||(d.type!=='escalate'&&(!d.id||(d.type==='rc'&&!S.rcs[d.id])||(d.type==='step'&&!S.steps[d.id])));
+const eviIcons=e=>[e.photo?ic('photo',13):'',e.video?ic('video',13):'',e.comment?ic('comment',13):''].join('');
+const rcNeedsMaint=r=>r.fixes.some(f=>f.escalate||f.part);
+
+function validate(){
+  const errs=[];
+  treeSteps().forEach((s,i)=>{
+    if(!s.q.trim())errs.push(`Step ${i+1}: question text is empty`);
+    if(destMissing(s.yes))errs.push(`Step ${i+1} · YES: destination not set`);
+    if(destMissing(s.no))errs.push(`Step ${i+1} · NO: destination not set`);
+  });
+  treeRCs().forEach(r=>{if(!r.fixes.length)errs.push(`Root cause “${r.name}”: no fix steps configured`);});
+  return errs;
+}
+
+/* ============================== RENDER ============================== */
+function render(){
+  const t=tree();
+  document.getElementById('treePick').innerHTML=S.trees.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')+`<option value="__new__">+ New diagnostic tree…</option>`;
+  document.getElementById('viewSeg').innerHTML=VIEWS.map(([v,lbl,icn])=>`<button class="${S.ui.view===v?'on':''}" onclick="setView('${v}')">${ic(icn,13)} ${lbl}</button>`).join('');
+  const errs=validate();
+  document.getElementById('statusChip').outerHTML=errs.length
+    ?`<span class="chip-draft" id="statusChip">Draft · ${errs.length} issue${errs.length>1?'s':''}</span>`
+    :`<span class="chip-ok" id="statusChip">Ready</span>`;
+  const page=document.getElementById('page');
+  page.className='page'+(S.ui.view==='sheet'?' w-sheet':(S.ui.view==='canvas'||S.ui.view==='sheet2')?' w-canvas':'');
+  page.innerHTML=S.ui.view==='sheet'?pageSheet(errs):S.ui.view==='sheet2'?pageSheet2(errs):S.ui.view==='canvas'?pageCanvas():pageList(errs);
+  renderModal();
+  if(S.ui.view==='canvas')requestAnimationFrame(canvasMount);
+  else if(S.ui.view==='sheet2')requestAnimationFrame(drawS2Edges);
+  save();
+}
+window.setView=v=>{S.ui.view=v;render();};
+
+/* ---------------- LIST VIEW ---------------- */
+function pageList(errs){
+  const t=tree();
+  let h=`<div class="eyebrow">Diagnostic tree</div><h1>${esc(t.name)}</h1>
+  <p class="lede">Operators walk these yes/no steps to isolate the root cause, then run the fix steps. Click any row to configure it.</p>
+  <div class="trigger-line">Starts when <span class="tl-chip">${ic('bolt',12)} ${esc(t.trigger)}</span></div>
+  ${legendBar()}`;
+
+  h+=`<div class="sect"><div class="sect-head"><h2>Diagnostic steps</h2><span class="count">${treeSteps().length}</span></div>
+  <div class="sect-sub">Each step is a question. The <b>answer method</b> tells the operator how to check — sensor data, physical inspection, or a manual test.</div>
+  <div class="panel">`;
+  treeSteps().forEach((s,i)=>{
+    const at=ANSWER_TYPES[s.atype];
+    h+=`<div class="row" onclick="openStep('${s.id}')">
+      <span class="num">${i+1}</span>
+      <div class="mid">
+        <div class="q">${esc(s.q)||'<span style="color:var(--faint)">Untitled question</span>'}</div>
+        <div class="meta">
+          <span class="mchip">${ic(s.atype,13)} ${at.name}</span>
+          ${s.atype==='sensor'&&s.sensorTag?`<span class="mchip" style="color:var(--mut)">${esc(s.sensorTag)}</span>`:''}
+        </div>
+      </div>
+      <div class="routes">
+        <div class="route"><span class="tag yes">YES</span>${destText(s.yes)}</div>
+        <div class="route"><span class="tag no">NO</span>${destText(s.no)}</div>
+      </div>
+      <span class="evi">${eviIcons(s.evi)}</span>
+      <span class="chev">›</span>
+    </div>`;
+  });
+  h+=`<div class="add-row" onclick="addStep()">+ Add diagnostic step</div></div></div>`;
+
+  h+=`<div class="sect"><div class="sect-head"><h2>Root causes &amp; fixes</h2><span class="count">${treeRCs().length}</span>
+  <span class="s-act" onclick="addRC()">+ New root cause</span></div>
+  <div class="sect-sub">Reaching a root cause asks the operator for evidence (photo / video / comment), then walks them through the fix steps.</div>
+  <div class="panel">`;
+  treeRCs().forEach(r=>{
+    const types=[...new Set(r.fixes.map(f=>f.type))];
+    h+=`<div class="row rc-row" onclick="openRC('${r.id}')">
+      <span class="num">${ic('target',14)}</span>
+      <div class="mid">
+        <div class="q">${esc(r.name)}</div>
+        <div class="meta">
+          <span class="freq ${r.freq}">${r.freq} frequency</span>
+          <span class="fixdots">${types.map(tp=>`<span style="width:7px;height:7px;border-radius:2px;background:${FIX_TYPES[tp].color};display:inline-block"></span>`).join('')} ${r.fixes.length} fix step${r.fixes.length!==1?'s':''}</span>
+        </div>
+      </div>
+      <span class="maint ${rcNeedsMaint(r)?'y':'n'}">${rcNeedsMaint(r)?'Maintenance needed':'Operator can fix'}</span>
+      <span class="evi">${eviIcons(r.idEvi)}</span>
+      <span class="chev">›</span>
+    </div>`;
+  });
+  h+=`</div></div>`;
+
+  const t2=tree();
+  h+=`<div class="sect"><div class="sect-head"><h2>Escalation &amp; SLA</h2></div>
+  <div class="panel"><div class="sla-card" onclick="openSLA()">
+    <div class="sla-ico">${ic('clock',18)}</div>
+    <div style="flex:1">
+      <div class="t">Unresolved after ${t2.sla.hours} hours</div>
+      <div class="d">Ticket stays open at the <b>${t2.sla.holdAt==='root_cause'?'root-cause identification':'remediation'}</b> stage and escalates to <b>${esc(t2.sla.escalateTo)}</b>. Skill dead-ends escalate immediately.</div>
+    </div>
+    <span class="chev">›</span>
+  </div></div></div>`;
+
+  h+=errs.length
+    ?`<div class="vbar err"><span>${ic('alert',14)}</span><div>${errs.length} issue${errs.length>1?'s':''} to fix before publishing<ul>${errs.slice(0,6).map(e=>`<li>${esc(e)}</li>`).join('')}${errs.length>6?`<li>…and ${errs.length-6} more</li>`:''}</ul></div></div>`
+    :`<div class="vbar ok"><span>✓</span><div>Every path is routed and every root cause has fix steps — ready to publish.</div></div>`;
+  return h;
+}
+
+/* ---------------- SHEET VIEW (continuous boolean flow) ---------------- */
+let fRendered=new Set(), fMerges=new Set(), fInc={};
+
+function flowIncoming(){
+  const inc={};
+  const add=(key,label)=>{(inc[key]=inc[key]||[]).push(label);};
+  treeSteps().forEach(s=>{['yes','no'].forEach(k=>{
+    const d=s[k];const lbl=`Step ${stepNum(s.id)} · ${k.toUpperCase()}`;
+    if(d.type==='step'&&d.id&&S.steps[d.id])add(d.id,lbl);
+    else if(d.type==='rc'&&d.id&&S.rcs[d.id])add(d.id,lbl);
+    else if(d.type==='escalate')add('ESC',lbl);
+  });});
+  return inc;
+}
+const flowKey=d=>{
+  if(!d||!d.type)return null;
+  if(d.type==='escalate')return 'ESC';
+  if(d.type==='step'&&d.id&&S.steps[d.id])return d.id;
+  if(d.type==='rc'&&d.id&&S.rcs[d.id])return d.id;
+  return null;
+};
+const flowLabel=key=>{
+  if(key==='ESC')return 'Escalate';
+  if(S.steps[key])return 'Step '+stepNum(key);
+  if(S.rcs[key])return S.rcs[key].name;
+  return '?';
+};
+const stepIssues=s=>{
+  const a=[];
+  if(!s.q.trim())a.push('question empty');
+  if(destMissing(s.yes))a.push('YES not routed');
+  if(destMissing(s.no))a.push('NO not routed');
+  return a;
+};
+const issueChip=n=>n?`<div class="ichip">${ic('alert',11)} ${n} issue${n>1?'s':''} to fix before publishing</div>`:'';
+const eviBtns=(arr,fn)=>['photo','video','comment'].map(k=>`<button class="echip ${arr[k]?'on':''}" title="${k}" onclick="${fn}('${k}')">${ic(k,12)}</button>`).join('');
+
+function fStepNode(s){
+  fRendered.add(s.id);
+  const iss=stepIssues(s);
+  let h=`<div class="fbox" data-fnode="${s.id}">
+    <div class="fb-top"><span class="fnum">${stepNum(s.id)}</span>
+      <select class="fsel" onchange="setSA('${s.id}',this.value)">
+        ${Object.entries(ANSWER_TYPES).map(([k,a])=>`<option value="${k}" ${s.atype===k?'selected':''}>${a.name}</option>`).join('')}</select>
+      <div class="echips" style="margin-left:auto">${eviBtns(s.evi,`tglStepEvi.bind(null,'${s.id}')`)}</div>
+      <button class="fb-open" title="Open full editor" onclick="openStep('${s.id}')">${ic('open',12)}</button>
+      <button class="fb-x" onclick="delStep('${s.id}')">✕</button></div>
+    <input class="finp" value="${esc(s.q)}" placeholder="Type the yes / no question…" oninput="mutStep('${s.id}','q',this.value)">
+    ${s.atype==='sensor'
+      ?`<div style="display:flex;gap:6px;align-items:center">
+          <input class="finp sub" style="flex:1" value="${esc(s.sensorTag)}" placeholder="Sensor tag · e.g. PT-102" oninput="mutStep('${s.id}','sensorTag',this.value)">
+          <input class="finp sub" style="width:58px;flex:none;text-align:center" value="${esc(s.rangeLow)}" placeholder="low" title="Below range (low limit)" oninput="mutStep('${s.id}','rangeLow',this.value)">
+          <span style="font-size:10px;color:var(--faint);font-weight:700">to</span>
+          <input class="finp sub" style="width:58px;flex:none;text-align:center" value="${esc(s.rangeHigh)}" placeholder="high" title="Above range (high limit)" oninput="mutStep('${s.id}','rangeHigh',this.value)">
+          <input class="finp sub" style="width:40px;flex:none" value="${esc(s.unit)}" placeholder="unit" oninput="mutStep('${s.id}','unit',this.value)"></div>`
+      :s.atype==='manual'
+      ?`<input class="finp sub" value="${esc(s.detail)}" placeholder="Test procedure (optional)" oninput="mutStep('${s.id}','detail',this.value)">
+        <input class="finp sub" value="${esc(s.equipment)}" placeholder="Equipment needed · e.g. Vibration pen" oninput="mutStep('${s.id}','equipment',this.value)">`
+      :`<input class="finp sub" value="${esc(s.detail)}" placeholder="What to look for (optional)" oninput="mutStep('${s.id}','detail',this.value)">`}
+    ${issueChip(iss.length)}
+  </div>
+  <div class="fkids">${fBranch(s,'yes')}${fBranch(s,'no')}</div>`;
+  return h;
+}
+function fBranch(s,k){
+  const d=s[k];const key=flowKey(d);
+  let h=`<div class="fbranch"><div class="fb-h">
+    <span class="tag ${k}">${k.toUpperCase()}</span>
+    ${destSelect(d,`set${k==='yes'?'Yes':'No'}_${s.id}`,s.id,'fsel')}`;
+  if(key&&(fRendered.has(key)||fMerges.has(key)))
+    h+=`<button class="fref" onclick="jumpTo('${key}')">${ic('downright',11)} continues at ${esc(flowLabel(key))}</button>`;
+  h+=`</div>`;
+  if(key&&!fRendered.has(key)&&!fMerges.has(key))h+=`<div class="fb-child">${fNode(key)}</div>`;
+  h+=`</div>`;
+  return h;
+}
+function fRCNode(r){
+  fRendered.add(r.id);
+  let h=`<div class="fbox rcx" data-fnode="${r.id}">
+    <div class="fb-top"><span class="fb-lab pur">${ic('target',11)} Root cause</span>
+      <select class="fsel" onchange="mutRCr('${r.id}','freq',this.value)">
+        ${['High','Moderate','Low'].map(f=>`<option value="${f}" ${r.freq===f?'selected':''}>${f} frequency</option>`).join('')}</select>
+      <span class="maint ${rcNeedsMaint(r)?'y':'n'}">${rcNeedsMaint(r)?'Maintenance':'Operator fix'}</span>
+      <div class="echips" style="margin-left:auto">${eviBtns(r.idEvi,`tglRCEvi.bind(null,'${r.id}','idEvi')`)}</div>
+      <button class="fb-open" title="Open full editor" onclick="openRC('${r.id}')">${ic('open',12)}</button>
+      <button class="fb-x" onclick="delRC('${r.id}')">✕</button></div>
+    <input class="finp" value="${esc(r.name)}" placeholder="Name the root cause…" oninput="mutRC('${r.id}','name',this.value)">
+    ${issueChip(r.fixes.length?0:1)}
+  </div>
+  <div class="fkids">`;
+  r.fixes.forEach((f,i)=>{
+    h+=`<div class="fbranch"><div class="fb-h"><span class="fpill amb">FIX ${i+1}</span></div>
+      <div class="fb-child"><div class="fbox fixx">
+        <div class="fb-top">
+          <span style="width:8px;height:8px;border-radius:2.5px;background:${FIX_TYPES[f.type].color};flex-shrink:0"></span>
+          <select class="fsel" onchange="mutFixR('${r.id}','${f.id}','type',this.value)">
+            ${Object.keys(FIX_TYPES).map(tp=>`<option ${f.type===tp?'selected':''}>${tp}</option>`).join('')}</select>
+          <select class="fsel" onchange="mutFixR('${r.id}','${f.id}','skill',this.value)">
+            ${SKILLS.map(sk=>`<option ${f.skill===sk?'selected':''}>${sk}</option>`).join('')}</select>
+          <button class="fb-x" style="margin-left:auto" onclick="delFix('${r.id}','${f.id}')">✕</button></div>
+        <input class="finp" value="${esc(f.text)}" placeholder="What should be done?" oninput="mutFix('${r.id}','${f.id}','text',this.value)">
+        <div class="fixrow">
+          <button class="etg ${f.escalate?'on':''}" onclick="tglFixEsc('${r.id}','${f.id}')">${ic('alert',11)} dead end if skill missing</button>
+          <input class="finp sub" style="width:170px;margin:0" value="${esc(f.part)}" placeholder="Part needed (optional)" oninput="mutFix('${r.id}','${f.id}','part',this.value)">
+        </div>
+      </div></div></div>`;
+  });
+  h+=`<div class="fbranch"><div class="fb-h"><button class="fadd" onclick="addFix('${r.id}')">+ Add fix step</button></div></div>`;
+  h+=`<div class="fbranch"><div class="fb-h"><span class="fpill grn">CLOSE</span></div>
+    <div class="fb-child"><div class="fbox clsx" style="max-width:460px">
+      <div class="fb-top"><span class="fb-lab grn">${ic('check',11)} Close &amp; verify</span>
+        <div class="echips" style="margin-left:auto">${eviBtns(r.closeEvi,`tglRCEvi.bind(null,'${r.id}','closeEvi')`)}</div></div>
+      <div style="font-size:11.5px;color:var(--mut);font-weight:500;line-height:1.45">Evidence collected when the operator closes the issue — or when it dead-ends to maintenance.</div>
+    </div></div></div>`;
+  h+=`</div>`;
+  return h;
+}
+function fEscNode(){
+  fRendered.add('ESC');
+  return `<div class="fbox escx" data-fnode="ESC">
+    <div class="fb-top"><span class="fb-lab red">${ic('alert',11)} Escalate</span></div>
+    <div style="font-weight:700;font-size:13px">Hand over to ${esc(tree().sla.escalateTo)}</div>
+    <div style="font-size:11.5px;color:var(--mut);margin-top:3px;font-weight:500;line-height:1.45">Operator can’t proceed — the ticket escalates with all evidence collected so far.</div>
+  </div>`;
+}
+function fNode(key){
+  if(key==='ESC')return fEscNode();
+  if(S.steps[key])return fStepNode(S.steps[key]);
+  if(S.rcs[key])return fRCNode(S.rcs[key]);
+  return '';
+}
+const fDivider=(pill,text)=>`<div class="fdiv"><span class="fpill acc">${pill}</span><span class="fdt">${text}</span></div>`;
+
+/* ---------------- LEGEND (also a palette for adding) ---------------- */
+function legendBar(){
+  const it=(icon,bg,color,label,add,dim)=>`<span class="lg ${dim?'dim':''}"><span class="lgi" style="background:${bg};color:${color}">${icon}</span>${label}${add?`<span class="lg-plus" title="Add ${label}" onclick="${add}">+</span>`:''}</span>`;
+  return `<div class="legend"><span class="lg-t">Legend</span>
+    ${it(ic('bolt',10),'var(--accent-bg)','var(--accent-deep)','Trigger')}
+    ${it(ic('question',10),'var(--accent-bg)','var(--accent-deep)','Question step','addStep()')}
+    ${it(ic('target',10),'var(--purple-bg)','var(--purple)','Root cause','addRC()')}
+    ${it(ic('fix',10),'var(--amber-bg)','var(--amber)','Fix step',null,true)}
+    ${it(ic('alert',10),'var(--red-bg)','var(--red)','Escalate / dead end',null,true)}
+    ${it(ic('check',10),'var(--green-bg)','var(--green)','Close &amp; verify',null,true)}
+    ${it(ic('clock',10),'var(--amber-bg)','var(--amber)','SLA timeout',null,true)}
+  </div>`;
+}
+
+function pageSheet(errs){
+  const t=tree();
+  fInc=flowIncoming();
+  fMerges=new Set(Object.keys(fInc).filter(k=>fInc[k].length>=2));
+  fRendered=new Set();
+  let h=`<div class="eyebrow">Diagnostic tree · Flow sheet</div><h1>${esc(t.name)}</h1>
+  <p class="lede">One continuous flow — questions branch on yes / no, merging paths break onto a new line, and each root cause runs straight into its fixes and closure.</p>
+  ${legendBar()}`;
+  h+=`<div class="sect"><div class="panel"><div class="flow">`;
+
+  // trigger
+  h+=`<div class="fbox trgx"><div class="fb-top"><span class="fb-lab acc">${ic('bolt',11)} Trigger</span>
+    <button class="fb-open" style="margin-left:auto" title="Tree settings" onclick="openSLA()">${ic('open',12)}</button></div>
+    <input class="finp" value="${esc(t.trigger)}" placeholder="When does this diagnosis start?" oninput="mutTree('trigger',this.value)"></div>`;
+  const first=t.stepOrder[0];
+  if(first){
+    h+=`<div class="fkids"><div class="fbranch"><div class="fb-h"><span class="fpill">STARTS</span></div>
+      <div class="fb-child">${fMerges.has(first)?`<button class="fref" onclick="jumpTo('${first}')">${ic('downright',11)} continues at ${esc(flowLabel(first))}</button>`:fNode(first)}</div></div></div>`;
+  }else{
+    h+=`<div class="fkids"><div class="fbranch"><div class="fb-h"><button class="fadd" onclick="addStep()">+ Add the first diagnostic step</button></div></div></div>`;
+  }
+
+  // merge sections: nodes reached from 2+ paths start fresh on a new line
+  const sectionIds=[...t.stepOrder.filter(id=>fMerges.has(id)),...treeRCs().map(r=>r.id).filter(id=>fMerges.has(id)),...(fMerges.has('ESC')?['ESC']:[])];
+  sectionIds.forEach(id=>{
+    if(fRendered.has(id))return;
+    h+=fDivider(`${ic('downright',10)} MERGE`,`<b>${esc(flowLabel(id))}</b> — paths join here from ${fInc[id].map(esc).join(' and ')}`);
+    h+=fNode(id);
+  });
+
+  // unlinked steps / root causes
+  const unlinkedSteps=t.stepOrder.filter(id=>!fRendered.has(id));
+  unlinkedSteps.forEach(id=>{
+    h+=fDivider('UNLINKED',`<b>Step ${stepNum(id)}</b> — no branch routes here yet; pick it in a yes / no dropdown above`);
+    h+=fNode(id);
+  });
+  treeRCs().filter(r=>!fRendered.has(r.id)).forEach(r=>{
+    h+=fDivider('UNLINKED',`<b>${esc(r.name)}</b> — no branch routes here yet`);
+    h+=fNode(r.id);
+  });
+
+  // SLA — the 24h rule as the tail of the flow
+  h+=fDivider(`${ic('clock',10)} SLA`,'If the issue is still open when time runs out');
+  h+=`<div class="fbox slax"><div class="fb-top"><span class="fb-lab amb">${ic('clock',11)} Unresolved timeout</span>
+      <button class="fb-open" style="margin-left:auto" title="Tree settings" onclick="openSLA()">${ic('open',12)}</button></div>
+    <div class="fixrow" style="margin-top:4px;font-size:12px;font-weight:600;color:var(--ink2)">
+      After <input class="finp" type="number" style="width:60px;margin:0;flex:none;text-align:center" value="${t.sla.hours}" oninput="mutSLA('hours',+this.value)"> hours, keep the ticket open at
+      <select class="fsel" onchange="mutSLA('holdAt',this.value)">
+        <option value="root_cause" ${t.sla.holdAt==='root_cause'?'selected':''}>root-cause identification</option>
+        <option value="remediation" ${t.sla.holdAt==='remediation'?'selected':''}>the remediation step</option></select>
+      and escalate to <input class="finp" style="width:150px;margin:0;flex:none" value="${esc(t.sla.escalateTo)}" oninput="mutSLA('escalateTo',this.value)">
+    </div></div>`;
+
+  h+=`<div style="margin-top:26px"><button class="fadd" onclick="addStep()">+ Add diagnostic step</button>
+      <button class="fadd" style="margin-left:8px" onclick="addRC()">+ Add root cause</button></div>`;
+  h+=`</div></div></div>`;
+
+  h+=errs.length
+    ?`<div class="vbar err"><span>${ic('alert',14)}</span><div>${errs.length} issue${errs.length>1?'s':''} to fix before publishing<ul>${errs.slice(0,6).map(e=>`<li>${esc(e)}</li>`).join('')}${errs.length>6?`<li>…and ${errs.length-6} more</li>`:''}</ul></div></div>`
+    :`<div class="vbar ok"><span>✓</span><div>Every path is routed and every root cause has fix steps — ready to publish.</div></div>`;
+  return h;
+}
+window.jumpTo=key=>{
+  const el=document.querySelector(`[data-fnode="${key}"]`);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1400);}
+};
+
+/* ---------------- SHEET ALT VIEW (spreadsheet grid + connectors) ---------------- */
+let S2={cells:[],refs:[],edges:[]};
+function s2Card(key){
+  if(key==='ESC')return `<div class="s2card esc2" data-fnode="ESC">
+    <div class="fb-top"><span class="fb-lab red">${ic('alert',11)} Escalate</span></div>
+    <div style="font-size:11px;color:var(--mut);font-weight:600;line-height:1.4">Hand over to ${esc(tree().sla.escalateTo)} with evidence collected so far.</div></div>`;
+  const s=S.steps[key];
+  if(s){
+    const iss=stepIssues(s);
+    return `<div class="s2card" data-fnode="${key}">
+      <div class="fb-top"><span class="fnum">${stepNum(key)}</span>
+        <select class="fsel" style="max-width:130px" onchange="setSA('${key}',this.value)">
+          ${Object.entries(ANSWER_TYPES).map(([k,a])=>`<option value="${k}" ${s.atype===k?'selected':''}>${a.name}</option>`).join('')}</select>
+        <button class="fb-open" style="margin-left:auto" title="Open full editor" onclick="openStep('${key}')">${ic('open',12)}</button>
+        <button class="fb-x" onclick="delStep('${key}')">✕</button></div>
+      <input class="finp" value="${esc(s.q)}" placeholder="Type the yes / no question…" oninput="mutStep('${key}','q',this.value)">
+      <div class="s2route"><span class="tag yes">YES</span>${destSelect(s.yes,`setYes_${key}`,key,'fsel')}</div>
+      <div class="s2route"><span class="tag no">NO</span>${destSelect(s.no,`setNo_${key}`,key,'fsel')}</div>
+      ${iss.length?`<div class="ichip" style="margin-top:7px;font-size:10px;padding:4px 9px">${ic('alert',10)} ${iss.length} issue${iss.length>1?'s':''}</div>`:''}
+    </div>`;
+  }
+  const r=S.rcs[key];
+  if(!r)return'';
+  const types=[...new Set(r.fixes.map(f=>f.type))];
+  return `<div class="s2card rc2" data-fnode="${key}">
+    <div class="fb-top"><span class="fb-lab pur">${ic('target',11)} Root cause</span>
+      <select class="fsel" style="max-width:100px" onchange="mutRCr('${key}','freq',this.value)">
+        ${['High','Moderate','Low'].map(f=>`<option value="${f}" ${r.freq===f?'selected':''}>${f}</option>`).join('')}</select>
+      <button class="fb-open" style="margin-left:auto" title="Open full editor" onclick="openRC('${key}')">${ic('open',12)}</button>
+      <button class="fb-x" onclick="delRC('${key}')">✕</button></div>
+    <input class="finp" value="${esc(r.name)}" placeholder="Name the root cause…" oninput="mutRC('${key}','name',this.value)">
+    <div class="s2meta">${types.map(tp=>`<span style="width:7px;height:7px;border-radius:2px;background:${FIX_TYPES[tp].color};display:inline-block"></span>`).join('')}
+      ${r.fixes.length} fix step${r.fixes.length!==1?'s':''} · ${rcNeedsMaint(r)?'maintenance':'operator fix'}
+      <button class="fref" style="padding:2px 9px;font-size:10px" onclick="openRC('${key}')">Edit fixes</button></div>
+  </div>`;
+}
+function pageSheet2(errs){
+  const t=tree();
+  const cells=[],refs=[],edges=[],placed={};let nextRow=0,maxCol=0;
+  function place(key,col){
+    maxCol=Math.max(maxCol,col);
+    placed[key]=true;cells.push({key,row:nextRow++,col});
+    const s=S.steps[key];if(!s)return;
+    ['yes','no'].forEach(k=>{
+      const ck=flowKey(s[k]);if(!ck)return;
+      if(placed[ck]){const ri=refs.length;maxCol=Math.max(maxCol,col+1);refs.push({row:nextRow++,col:col+1,target:ck});edges.push({from:key,toRef:ri,kind:k});}
+      else{edges.push({from:key,to:ck,kind:k});place(ck,col+1);}
+    });
+  }
+  const first=t.stepOrder[0];
+  if(first)place(first,0);
+  t.stepOrder.filter(id=>!placed[id]).forEach(id=>place(id,0));
+  treeRCs().filter(r=>!placed[r.id]).forEach(r=>place(r.id,0));
+  S2={cells,refs,edges};
+  const rows=nextRow,cols=maxCol+1;
+  let g=`<div class="s2hc" style="grid-row:1;grid-column:1"></div>`;
+  for(let c=0;c<cols;c++)g+=`<div class="s2hc" style="grid-row:1;grid-column:${c+2}">${String.fromCharCode(65+c)}</div>`;
+  for(let r=0;r<rows;r++){
+    g+=`<div class="s2hc" style="grid-row:${r+2};grid-column:1">${r+1}</div>`;
+    for(let c=0;c<cols;c++)g+=`<div class="s2bg" style="grid-row:${r+2};grid-column:${c+2}"></div>`;
+  }
+  cells.forEach(cell=>{g+=`<div class="s2cellwrap" style="grid-row:${cell.row+2};grid-column:${cell.col+2}">${s2Card(cell.key)}</div>`;});
+  refs.forEach((rf,i)=>{g+=`<div class="s2cellwrap" data-s2ref="${i}" style="grid-row:${rf.row+2};grid-column:${rf.col+2}"><button class="fref" onclick="jumpTo('${rf.target}')">${ic('downright',11)} continues at ${esc(flowLabel(rf.target))}</button></div>`;});
+  let h=`<div class="eyebrow">Diagnostic tree · Sheet alternative</div><h1>${esc(t.name)}</h1>
+  <p class="lede">Spreadsheet layout — each branch jumps to the next row and indents one column, so the flow reads like a sheet. Connector lines trace the yes / no paths; merges link with jump chips.</p>
+  ${legendBar()}
+  <div class="sect"><div class="panel"><div class="s2wrap">
+    <div class="s2grid" id="s2grid" style="grid-template-columns:34px repeat(${cols},290px)">
+      <svg class="s2edges" id="s2svg"></svg><div class="s2labels" id="s2labels"></div>${g}
+    </div></div>
+    <div class="add-row" onclick="addStep()">+ Add diagnostic step</div></div></div>`;
+  h+=errs.length
+    ?`<div class="vbar err"><span>${ic('alert',14)}</span><div>${errs.length} issue${errs.length>1?'s':''} to fix before publishing<ul>${errs.slice(0,6).map(e=>`<li>${esc(e)}</li>`).join('')}${errs.length>6?`<li>…and ${errs.length-6} more</li>`:''}</ul></div></div>`
+    :`<div class="vbar ok"><span>✓</span><div>Every path is routed and every root cause has fix steps — ready to publish.</div></div>`;
+  return h;
+}
+function drawS2Edges(){
+  const grid=document.getElementById('s2grid'),svg=document.getElementById('s2svg'),lab=document.getElementById('s2labels');
+  if(!grid||!svg)return;
+  const gr=grid.getBoundingClientRect();
+  svg.setAttribute('width',grid.scrollWidth);svg.setAttribute('height',grid.scrollHeight);
+  const colors={yes:'#22C55E',no:'#F87171'};
+  let paths='',pills='';
+  S2.edges.forEach(e=>{
+    const fromEl=grid.querySelector(`[data-fnode="${e.from}"]`);
+    const toEl=e.to!==undefined?grid.querySelector(`[data-fnode="${e.to}"]`):grid.querySelector(`[data-s2ref="${e.toRef}"] .fref`);
+    if(!fromEl||!toEl)return;
+    const fr=fromEl.getBoundingClientRect(),tr=toEl.getBoundingClientRect();
+    const x1=fr.left+(e.kind==='yes'?26:44)-gr.left, y1=fr.bottom-gr.top, x2=tr.left-gr.left-5, y2=tr.top+tr.height/2-gr.top;
+    paths+=`<path d="M${x1},${y1} L${x1},${y2} L${x2},${y2}" fill="none" stroke="${colors[e.kind]}" stroke-width="1.6" stroke-dasharray="5 5" stroke-linecap="round" marker-end="url(#s2ah-${e.kind})" opacity=".8"/>`;
+    pills+=`<span class="epill ${e.kind}" style="left:${x1}px;top:${Math.min(y1+22,(y1+y2)/2)}px">${e.kind.toUpperCase()}</span>`;
+  });
+  svg.innerHTML=`<defs>${Object.entries(colors).map(([k,c])=>`<marker id="s2ah-${k}" markerWidth="8" markerHeight="8" refX="6.5" refY="3.5" orient="auto"><path d="M0.5,0.5 L6.5,3.5 L0.5,6.5" fill="none" stroke="${c}" stroke-width="1.4" stroke-linecap="round"/></marker>`).join('')}</defs>${paths}`;
+  lab.innerHTML=pills;
+}
+
+/* ---------------- CANVAS (NODE) VIEW ---------------- */
+const NODE_W=232;
+function nodeIds(){
+  const t=tree();
+  const ids=['START',...t.stepOrder,...treeRCs().map(r=>r.id)];
+  const anyEsc=treeSteps().some(s=>s.yes.type==='escalate'||s.no.type==='escalate');
+  if(anyEsc)ids.push('ESC');
+  return ids;
+}
+function estH(id){
+  if(id==='START')return 92;
+  if(id==='ESC')return 96;
+  if(S.steps[id])return 138;
+  const r=S.rcs[id];if(!r)return 100;
+  return 96+Math.min(r.fixes.length,3)*21+(r.fixes.length>3?21:0);
+}
+function autoLayout(force){
+  const t=tree();if(force)t.layout={};
+  t.layout=t.layout||{};
+  const depth={START:0};
+  const first=t.stepOrder[0];if(first)depth[first]=1;
+  for(let pass=0;pass<t.stepOrder.length+2;pass++){
+    treeSteps().forEach(s=>{
+      if(depth[s.id]===undefined)depth[s.id]=1;
+      ['yes','no'].forEach(k=>{
+        const d=s[k];const nd=depth[s.id]+1;
+        if(d.type==='step'&&d.id&&S.steps[d.id]){if((depth[d.id]||0)<nd&&nd<=t.stepOrder.length+1)depth[d.id]=Math.max(depth[d.id]||1,Math.min(nd,t.stepOrder.length+1));}
+        else if(d.type==='rc'&&d.id&&S.rcs[d.id])depth[d.id]=Math.max(depth[d.id]||0,nd);
+        else if(d.type==='escalate')depth.ESC=Math.max(depth.ESC||0,nd);
+      });
+    });
+  }
+  const maxD=Math.max(1,...Object.values(depth));
+  treeRCs().forEach(r=>{if(depth[r.id]===undefined)depth[r.id]=maxD;});
+  if(depth.ESC===undefined&&nodeIds().includes('ESC'))depth.ESC=maxD;
+  // stack columns
+  const cols={};
+  nodeIds().forEach(id=>{const d=depth[id]||0;(cols[d]=cols[d]||[]).push(id);});
+  Object.entries(cols).forEach(([d,ids])=>{
+    let y=56;
+    ids.forEach(id=>{
+      if(!t.layout[id])t.layout[id]={x:48+d*312,y};
+      y+=estH(id)+30;
+    });
+  });
+}
+function pageCanvas(){
+  autoLayout(false);
+  const t=tree();
+  let nodes='';
+  nodeIds().forEach(id=>{
+    const p=t.layout[id];if(!p)return;
+    nodes+=nodeHTML(id,p);
+  });
+  return `<div class="cv-shell">
+    <div class="cv-tools">
+      <button class="btn" onclick="autoArrange()">${ic('wand',13)} Auto-arrange</button>
+      <button class="btn" onclick="addStep()">+ Add step</button>
+    </div>
+    <div class="cv-hint">Drag nodes to arrange · click a node to edit · routes are set inside each step</div>
+    <div class="cv-scroll" id="cvScroll"><div class="cv-inner" id="cvInner">
+      <svg class="cv-edges" id="cvSvg"></svg>
+      <div id="cvLabels"></div>
+      ${nodes}
+    </div></div>
+  </div>`;
+}
+function portRow(s,k){
+  const d=s[k];const lbl=destShort(d);
+  return `<div class="prow"><span class="tag ${k}">${k.toUpperCase()}</span>
+    <span class="pdest ${lbl?'':'warn'}">${lbl?('→ '+esc(lbl)):'not routed'}</span>
+    <span class="pdot ${lbl?k:'warn'}" data-port="${k}"></span></div>`;
+}
+function nodeHTML(id,p){
+  const style=`style="left:${p.x}px;top:${p.y}px"`;
+  if(id==='START'){
+    const t=tree();
+    return `<div class="cv-node start" data-id="START" ${style}>
+      <div class="nh">${ic('bolt',11)} Trigger</div>
+      <div class="nq">${esc(t.trigger)}</div>
+      <div class="nports"><div class="prow"><span class="pdest">→ starts the diagnosis</span><span class="pdot" data-port="out" style="color:var(--accent);background:var(--accent)"></span></div></div>
+    </div>`;
+  }
+  if(id==='ESC'){
+    return `<div class="cv-node escn" data-id="ESC" ${style}>
+      <div class="nh">${ic('alert',11)} Escalate</div>
+      <div class="nq">Operator can’t proceed — hand over with evidence collected so far.</div>
+      <div class="nfoot"><span class="nbadge" style="background:var(--red-bg);color:var(--red)">skill dead-end</span></div>
+    </div>`;
+  }
+  const s=S.steps[id];
+  if(s){
+    return `<div class="cv-node step" data-id="${id}" ${style}>
+      <div class="nh">${ic(s.atype,11)} Step ${stepNum(id)} · ${ANSWER_TYPES[s.atype].name}</div>
+      <div class="nq">${esc(s.q)||'Untitled question'}</div>
+      <div class="nports">${portRow(s,'yes')}${portRow(s,'no')}</div>
+    </div>`;
+  }
+  const r=S.rcs[id];
+  if(!r)return'';
+  const shown=r.fixes.slice(0,3);
+  return `<div class="cv-node rcn" data-id="${id}" ${style}>
+    <div class="nh">${ic('target',11)} Root cause · ${r.freq}</div>
+    <div class="nq">${esc(r.name)}</div>
+    <div class="nfix">${shown.map(f=>`<div class="nfixrow"><span class="dot" style="background:${FIX_TYPES[f.type].color}"></span>${esc(f.text.slice(0,40))||'…'}</div>`).join('')}
+    ${r.fixes.length>3?`<div class="nfixrow more">+ ${r.fixes.length-3} more fix step${r.fixes.length-3>1?'s':''}</div>`:''}</div>
+    <div class="nfoot"><span class="nbadge" style="${rcNeedsMaint(r)?'background:var(--purple-bg);color:var(--purple)':'background:var(--line-lt);color:var(--mut)'}">${rcNeedsMaint(r)?'maintenance':'operator fix'}</span>
+    <span style="color:var(--faint);display:flex;gap:3px">${eviIcons(r.idEvi)}</span></div>
+  </div>`;
+}
+function canvasEdges(){
+  const t=tree();const out=[];
+  if(t.stepOrder[0])out.push({from:'START',port:'out',to:t.stepOrder[0],kind:'start'});
+  treeSteps().forEach(s=>{
+    ['yes','no'].forEach(k=>{
+      const d=s[k];let to=null;
+      if(d.type==='step'&&d.id&&S.steps[d.id])to=d.id;
+      else if(d.type==='rc'&&d.id&&S.rcs[d.id])to=d.id;
+      else if(d.type==='escalate')to='ESC';
+      if(to)out.push({from:s.id,port:k,to,kind:k});
+    });
+  });
+  return out;
+}
+function canvasMount(){
+  const inner=document.getElementById('cvInner');if(!inner)return;
+  drawEdges();
+  inner.querySelectorAll('.cv-node').forEach(n=>{
+    n.addEventListener('pointerdown',startDrag);
+  });
+}
+function drawEdges(){
+  const inner=document.getElementById('cvInner'),svg=document.getElementById('cvSvg'),labels=document.getElementById('cvLabels');
+  if(!inner||!svg)return;
+  const t=tree();
+  // size the inner surface
+  let maxX=900,maxY=500;
+  nodeIds().forEach(id=>{const p=t.layout[id];if(!p)return;maxX=Math.max(maxX,p.x+NODE_W+140);maxY=Math.max(maxY,p.y+estH(id)+140);});
+  inner.style.width=maxX+'px';inner.style.height=maxY+'px';
+  svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+  const ir=inner.getBoundingClientRect();
+  const colors={start:'#818CF8',yes:'#22C55E',no:'#F87171'};
+  let paths='',lab='';
+  canvasEdges().forEach(e=>{
+    const fromEl=inner.querySelector(`.cv-node[data-id="${e.from}"] .pdot[data-port="${e.port}"]`);
+    const toEl=inner.querySelector(`.cv-node[data-id="${e.to}"]`);
+    if(!fromEl||!toEl)return;
+    const fr=fromEl.getBoundingClientRect(),tr=toEl.getBoundingClientRect();
+    const x1=fr.left+fr.width/2-ir.left, y1=fr.top+fr.height/2-ir.top;
+    const x2=tr.left-ir.left-3, y2=tr.top+34-ir.top;
+    const dx=Math.max(46,Math.abs(x2-x1)/2);
+    paths+=`<path d="M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}" fill="none" stroke="${colors[e.kind]}" stroke-width="1.7" stroke-dasharray="6 5" stroke-linecap="round" marker-end="url(#ah-${e.kind})" opacity=".85"/>`;
+    if(e.kind==='yes'||e.kind==='no'){
+      const mx=(x1+3*(x1+dx)+3*(x2-dx)+x2)/8, my=(y1+3*y1+3*y2+y2)/8;
+      lab+=`<span class="epill ${e.kind}" style="left:${mx}px;top:${my}px">${e.kind.toUpperCase()}</span>`;
+    }
+  });
+  svg.innerHTML=`<defs>${Object.entries(colors).map(([k,c])=>`<marker id="ah-${k}" markerWidth="8" markerHeight="8" refX="6.5" refY="3.5" orient="auto"><path d="M0.5,0.5 L6.5,3.5 L0.5,6.5" fill="none" stroke="${c}" stroke-width="1.4" stroke-linecap="round"/></marker>`).join('')}</defs>${paths}`;
+  labels.innerHTML=lab;
+}
+/* drag */
+let drag=null;
+function startDrag(ev){
+  if(ev.target.closest('button,select,input'))return;
+  const node=ev.currentTarget;
+  const t=tree();const id=node.dataset.id;const p=t.layout[id];if(!p)return;
+  drag={id,node,sx:ev.clientX,sy:ev.clientY,ox:p.x,oy:p.y,moved:false};
+  try{node.setPointerCapture(ev.pointerId);}catch(e){}
+  node.classList.add('dragging');
+  node.addEventListener('pointermove',moveDrag);
+  node.addEventListener('pointerup',endDrag);
+}
+function moveDrag(ev){
+  if(!drag)return;
+  const dx=ev.clientX-drag.sx,dy=ev.clientY-drag.sy;
+  if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;
+  const t=tree();
+  const p=t.layout[drag.id];
+  p.x=Math.max(8,drag.ox+dx);p.y=Math.max(8,drag.oy+dy);
+  drag.node.style.left=p.x+'px';drag.node.style.top=p.y+'px';
+  drawEdges();
+}
+function endDrag(ev){
+  if(!drag)return;
+  const {id,node,moved}=drag;
+  node.classList.remove('dragging');
+  node.removeEventListener('pointermove',moveDrag);
+  node.removeEventListener('pointerup',endDrag);
+  drag=null;save();
+  if(!moved){
+    if(S.steps[id])openStep(id);
+    else if(S.rcs[id])openRC(id);
+    else openSLA();
+  }
+}
+window.autoArrange=()=>{autoLayout(true);render();};
+
+/* ============================== MODALS ============================== */
+function renderModal(){
+  const root=document.getElementById('modalRoot');
+  const m=S.ui.modal;
+  if(!m){root.innerHTML='';return;}
+  let inner='';
+  if(m.kind==='step')inner=stepModal(S.steps[m.id]);
+  else if(m.kind==='rc')inner=rcModal(S.rcs[m.id]);
+  else if(m.kind==='sla')inner=slaModal();
+  root.innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()">${inner}</div>`;
+}
+window.closeModal=()=>{S.ui.modal=null;render();};
+
+function destSelect(d,setter,excludeStep,cls){
+  const stepOpts=treeSteps().filter(s=>s.id!==excludeStep).map(s=>`<option value="step:${s.id}" ${d.type==='step'&&d.id===s.id?'selected':''}>Step ${stepNum(s.id)} — ${esc(s.q.slice(0,48))}</option>`).join('');
+  const rcOpts=treeRCs().map(r=>`<option value="rc:${r.id}" ${d.type==='rc'&&d.id===r.id?'selected':''}>${esc(r.name)}</option>`).join('');
+  return `<select class="${cls||'inp dest-sel'}" onchange="${setter}(this.value)">
+    <option value="" ${!d.type?'selected':''}>— choose destination —</option>
+    <optgroup label="Next diagnostic step">${stepOpts}<option value="__newstep__">+ Create new step…</option></optgroup>
+    <optgroup label="Root cause identified">${rcOpts}<option value="__newrc__">+ Create new root cause…</option></optgroup>
+    <optgroup label="End of the line"><option value="escalate:" ${d.type==='escalate'?'selected':''}>Escalate — operator can’t proceed</option></optgroup>
+  </select>`;
+}
+function parseDest(v){
+  if(v==='__newstep__'){const id=newStep();return {type:'step',id};}
+  if(v==='__newrc__'){const id=newRC();return {type:'rc',id};}
+  if(!v)return {type:'',id:null};
+  const [type,id]=v.split(':');return {type,id:id||null};
+}
+function tglBtn(on,label,ico,onclick){
+  return `<button class="tgl ${on?'on':''}" onclick="${onclick}"><span class="box">${on?'✓':''}</span>${ico?ic(ico,13):''}${label}</button>`;
+}
+
+/* ---- STEP MODAL ---- */
+function stepModal(s){
+  if(!s)return'';
+  const n=stepNum(s.id);
+  let answerFields='';
+  if(s.atype==='sensor'){
+    answerFields=`<div class="grid2" style="margin-top:10px">
+      <div><div class="f-label">Sensor / tag</div><input class="inp" value="${esc(s.sensorTag)}" oninput="mutStep('${s.id}','sensorTag',this.value)" placeholder="e.g. PT-102 · Discharge pressure"></div>
+      <div><div class="f-label">Unit</div><input class="inp" value="${esc(s.unit)}" oninput="mutStep('${s.id}','unit',this.value)" placeholder="bar"></div></div>
+      <div class="grid2" style="margin-top:2px">
+      <div><div class="f-label">Below range — low limit</div><input class="inp" value="${esc(s.rangeLow)}" oninput="mutStep('${s.id}','rangeLow',this.value)" placeholder="e.g. 2.0"></div>
+      <div><div class="f-label">Above range — high limit</div><input class="inp" value="${esc(s.rangeHigh)}" oninput="mutStep('${s.id}','rangeHigh',this.value)" placeholder="e.g. 3.5"></div></div>
+      <div class="hint">The operator sees the live reading against these limits — readings above the high or below the low limit answer the question.</div>`;
+  }else if(s.atype==='manual'){
+    answerFields=`<div style="margin-top:10px"><div class="f-label">Test procedure</div>
+      <textarea class="inp" oninput="mutStep('${s.id}','detail',this.value)" placeholder="e.g. Use vibration pen on the bearing housing">${esc(s.detail)}</textarea></div>
+      <div style="margin-top:12px"><div class="f-label">Equipment needed</div>
+      <input class="inp" value="${esc(s.equipment)}" oninput="mutStep('${s.id}','equipment',this.value)" placeholder="e.g. Vibration pen, surface thermometer"></div>`;
+  }else{
+    answerFields=`<div style="margin-top:10px"><div class="f-label">What to look for</div>
+      <textarea class="inp" oninput="mutStep('${s.id}','detail',this.value)" placeholder="e.g. Continuous dripping or spraying near the shaft">${esc(s.detail)}</textarea></div>`;
+  }
+  return `<div class="modal">
+    <div class="m-head"><div><div class="m-kind">Diagnostic step ${n}</div><h3>Configure step</h3></div>
+      <button class="m-close" onclick="closeModal()">✕</button></div>
+    <div class="m-body">
+      <div class="f-group"><div class="f-label">Question the operator answers (Yes / No)</div>
+        <textarea class="inp" oninput="mutStep('${s.id}','q',this.value)" placeholder="e.g. Is the discharge pressure higher than normal?">${esc(s.q)}</textarea></div>
+
+      <div class="f-group"><div class="f-label">Answer method — how is this checked?</div>
+        <div class="atypes">${Object.entries(ANSWER_TYPES).map(([k,a])=>`
+          <div class="atype ${s.atype===k?'on':''}" onclick="setSA('${s.id}','${k}')">
+            <div class="ai">${ic(k,18)}</div><div class="an">${a.name}</div><div class="ad">${a.desc}</div></div>`).join('')}
+        </div>${answerFields}</div>
+
+      <div class="f-group"><div class="f-label">Routing</div>
+        <div class="route-box"><div class="rb-h"><span class="tag yes">YES</span> If the answer is yes, go to</div>
+          ${destSelect(s.yes,`setYes_${s.id}`,s.id)}</div>
+        <div class="route-box"><div class="rb-h"><span class="tag no">NO</span> If the answer is no, go to</div>
+          ${destSelect(s.no,`setNo_${s.id}`,s.id)}</div>
+        <div class="hint">Route to the next step, a root cause, or escalate when the operator can’t take it further.</div></div>
+
+      <div class="f-group"><div class="f-label">Evidence to attach at this step (optional)</div>
+        <div class="tgl-row">
+          ${tglBtn(s.evi.photo,'Photo','photo',`tglStepEvi('${s.id}','photo')`)}
+          ${tglBtn(s.evi.video,'Video','video',`tglStepEvi('${s.id}','video')`)}
+          ${tglBtn(s.evi.comment,'Comment','comment',`tglStepEvi('${s.id}','comment')`)}
+        </div></div>
+    </div>
+    <div class="m-foot"><button class="m-del" onclick="delStep('${s.id}')">Delete step</button>
+      <div class="spacer"></div><button class="btn primary" onclick="closeModal()">Done</button></div>
+  </div>`;
+}
+window.mutStep=(id,k,v)=>{S.steps[id][k]=v;save();lazyList();};
+window.setSA=(id,v)=>{S.steps[id].atype=v;render();};
+window.tglStepEvi=(id,k)=>{S.steps[id].evi[k]=!S.steps[id].evi[k];render();};
+
+/* ---- RC MODAL ---- */
+function rcModal(r){
+  if(!r)return'';
+  return `<div class="modal">
+    <div class="m-head"><div><div class="m-kind">Root cause</div><h3>Root cause &amp; fix steps</h3></div>
+      <button class="m-close" onclick="closeModal()">✕</button></div>
+    <div class="m-body">
+      <div class="f-group grid2">
+        <div><div class="f-label">Root cause name</div><input class="inp" value="${esc(r.name)}" oninput="mutRC('${r.id}','name',this.value)"></div>
+        <div><div class="f-label">Frequency of occurrence</div><select class="inp" onchange="mutRCr('${r.id}','freq',this.value)">
+          ${['High','Moderate','Low'].map(f=>`<option ${r.freq===f?'selected':''}>${f}</option>`).join('')}</select></div>
+      </div>
+
+      <div class="f-group"><div class="f-label">Evidence at identification — proof the root cause was found</div>
+        <div class="tgl-row">
+          ${tglBtn(r.idEvi.photo,'Photo','photo',`tglRCEvi('${r.id}','idEvi','photo')`)}
+          ${tglBtn(r.idEvi.video,'Video','video',`tglRCEvi('${r.id}','idEvi','video')`)}
+          ${tglBtn(r.idEvi.comment,'Comment','comment',`tglRCEvi('${r.id}','idEvi','comment')`)}
+        </div></div>
+
+      <div class="f-group"><div class="f-label">Fix steps — performed in order</div>
+        ${r.fixes.map((f,i)=>`<div class="fix-card">
+          <div class="fh"><span class="n">${i+1}</span>
+            <input class="inp" value="${esc(f.text)}" oninput="mutFix('${r.id}','${f.id}','text',this.value)" placeholder="What should be done?">
+            <button class="x-btn" onclick="delFix('${r.id}','${f.id}')">✕</button></div>
+          <div class="grid2">
+            <div><div class="f-label">Fix type</div><select class="inp" onchange="mutFixR('${r.id}','${f.id}','type',this.value)">
+              ${Object.keys(FIX_TYPES).map(tp=>`<option ${f.type===tp?'selected':''}>${tp}</option>`).join('')}</select></div>
+            <div><div class="f-label">Skill required</div><select class="inp" onchange="mutFixR('${r.id}','${f.id}','skill',this.value)">
+              ${SKILLS.map(sk=>`<option ${f.skill===sk?'selected':''}>${sk}</option>`).join('')}</select></div>
+          </div>
+          <div class="grid2" style="margin-top:10px;align-items:end">
+            <div><div class="f-label">Spare / part needed (optional)</div>
+              <input class="inp" value="${esc(f.part)}" oninput="mutFix('${r.id}','${f.id}','part',this.value)" placeholder="e.g. Mechanical seal"></div>
+            <div>${tglBtn(f.escalate,'Escalate if operator lacks this skill','',`tglFixEsc('${r.id}','${f.id}')`)}</div>
+          </div>
+          ${f.escalate?`<div class="esc-note"><span>If the assigned operator doesn’t have <b>${esc(f.skill)}</b>, this becomes a <b>dead end</b> — the ticket escalates with the evidence collected so far.</span></div>`:''}
+        </div>`).join('')}
+        <button class="add-dashed" onclick="addFix('${r.id}')">+ Add fix step</button></div>
+
+      <div class="f-group"><div class="f-label">Evidence at closure / dead end — proof of the fix (or handover)</div>
+        <div class="tgl-row">
+          ${tglBtn(r.closeEvi.photo,'Photo','photo',`tglRCEvi('${r.id}','closeEvi','photo')`)}
+          ${tglBtn(r.closeEvi.video,'Video','video',`tglRCEvi('${r.id}','closeEvi','video')`)}
+          ${tglBtn(r.closeEvi.comment,'Comment','comment',`tglRCEvi('${r.id}','closeEvi','comment')`)}
+        </div>
+        <div class="hint">Asked when the operator closes the issue — or when it dead-ends and is handed to maintenance.</div></div>
+    </div>
+    <div class="m-foot"><button class="m-del" onclick="delRC('${r.id}')">Delete root cause</button>
+      <div class="spacer"></div><button class="btn primary" onclick="closeModal()">Done</button></div>
+  </div>`;
+}
+window.mutRC=(id,k,v)=>{S.rcs[id][k]=v;save();lazyList();};
+window.mutRCr=(id,k,v)=>{S.rcs[id][k]=v;render();};
+window.tglRCEvi=(id,which,k)=>{S.rcs[id][which][k]=!S.rcs[id][which][k];render();};
+window.mutFix=(rid,fid,k,v)=>{S.rcs[rid].fixes.find(f=>f.id===fid)[k]=v;save();lazyList();};
+window.mutFixR=(rid,fid,k,v)=>{S.rcs[rid].fixes.find(f=>f.id===fid)[k]=v;render();};
+window.tglFixEsc=(rid,fid)=>{const f=S.rcs[rid].fixes.find(f=>f.id===fid);f.escalate=!f.escalate;render();};
+window.addFix=rid=>{S.rcs[rid].fixes.push({id:uid('f_'),text:'',type:'Mechanical',skill:'Operator (basic)',part:'',escalate:false});render();};
+window.delFix=(rid,fid)=>{const r=S.rcs[rid];r.fixes=r.fixes.filter(f=>f.id!==fid);render();};
+
+/* ---- TREE SETTINGS / SLA MODAL ---- */
+function slaModal(){
+  const t=tree();
+  return `<div class="modal" style="width:560px">
+    <div class="m-head"><div><div class="m-kind">Escalation &amp; tree settings</div><h3>${esc(t.name)}</h3></div>
+      <button class="m-close" onclick="closeModal()">✕</button></div>
+    <div class="m-body">
+      <div class="f-group grid2">
+        <div><div class="f-label">Tree name</div><input class="inp" value="${esc(t.name)}" oninput="mutTree('name',this.value)"></div>
+        <div><div class="f-label">Trigger — when does this start?</div><input class="inp" value="${esc(t.trigger)}" oninput="mutTree('trigger',this.value)"></div>
+      </div>
+      <div class="f-group grid2">
+        <div><div class="f-label">Escalate if unresolved after</div>
+          <div style="display:flex;align-items:center;gap:8px"><input class="inp" type="number" style="width:90px" value="${t.sla.hours}" oninput="mutSLA('hours',+this.value)"><span style="font-weight:700;color:var(--mut)">hours</span></div></div>
+        <div><div class="f-label">Escalate to</div><input class="inp" value="${esc(t.sla.escalateTo)}" oninput="mutSLA('escalateTo',this.value)"></div>
+      </div>
+      <div class="f-group"><div class="f-label">Where does the ticket stay open when time runs out?</div>
+        <div class="radio-card ${t.sla.holdAt==='root_cause'?'on':''}" onclick="setHold('root_cause')"><span class="rdot"></span>
+          <div><div class="rt">At root-cause identification</div><div class="rd">The diagnosis is reset — the escalated person re-runs the diagnostic steps to confirm the root cause themselves.</div></div></div>
+        <div class="radio-card ${t.sla.holdAt==='remediation'?'on':''}" onclick="setHold('remediation')"><span class="rdot"></span>
+          <div><div class="rt">At the remediation step</div><div class="rd">The identified root cause and evidence carry over — the escalated person continues from the pending fix steps.</div></div></div>
+        <div class="hint">This is the open design question from the spec — both behaviours are configurable per tree so you can test each with operators.</div></div>
+    </div>
+    <div class="m-foot"><div class="spacer"></div><button class="btn primary" onclick="closeModal()">Done</button></div>
+  </div>`;
+}
+window.mutSLA=(k,v)=>{tree().sla[k]=v;save();lazyList();};
+window.mutTree=(k,v)=>{tree()[k]=v;save();lazyList();};
+window.setHold=v=>{tree().sla.holdAt=v;render();};
+
+/* ============================== ACTIONS ============================== */
+// lazyList: refresh the page behind the modal without rebuilding the modal (keeps input focus)
+function lazyList(){
+  const errs=validate();
+  document.getElementById('statusChip').outerHTML=errs.length
+    ?`<span class="chip-draft" id="statusChip">Draft · ${errs.length} issue${errs.length>1?'s':''}</span>`
+    :`<span class="chip-ok" id="statusChip">Ready</span>`;
+  if(S.ui.modal){ // only refresh page content when a modal is open (inline sheet edits keep their own focus)
+    const page=document.getElementById('page');
+    page.innerHTML=S.ui.view==='sheet'?pageSheet(errs):S.ui.view==='sheet2'?pageSheet2(errs):S.ui.view==='canvas'?pageCanvas():pageList(errs);
+    if(S.ui.view==='canvas')requestAnimationFrame(canvasMount);
+    else if(S.ui.view==='sheet2')requestAnimationFrame(drawS2Edges);
+  }
+}
+
+function newStep(){
+  const id=uid('s_');
+  S.steps[id]={id,tree:S.ui.tree,q:'',atype:'inspection',detail:'',sensorTag:'',unit:'',rangeLow:'',rangeHigh:'',equipment:'',
+    yes:{type:'',id:null},no:{type:'',id:null},evi:{photo:false,video:false,comment:false}};
+  tree().stepOrder.push(id);registerDestSetters(id);return id;
+}
+function newRC(){
+  const id=uid('rc_');
+  S.rcs[id]={id,tree:S.ui.tree,name:'New root cause',freq:'Moderate',
+    idEvi:{photo:true,video:false,comment:true},closeEvi:{photo:true,video:false,comment:true},fixes:[]};
+  return id;
+}
+window.addStep=()=>{const id=newStep();S.ui.modal={kind:'step',id};render();};
+window.addRC=()=>{const id=newRC();S.ui.modal={kind:'rc',id};render();};
+window.openStep=id=>{S.ui.modal={kind:'step',id};render();};
+window.openRC=id=>{S.ui.modal={kind:'rc',id};render();};
+window.openSLA=()=>{S.ui.modal={kind:'sla'};render();};
+window.delStep=id=>{const t=tree();t.stepOrder=t.stepOrder.filter(x=>x!==id);delete S.steps[id];delete t.layout[id];
+  Object.values(S.steps).forEach(s=>{['yes','no'].forEach(k=>{if(s[k].type==='step'&&s[k].id===id)s[k]={type:'',id:null};});});
+  S.ui.modal=null;render();};
+window.delRC=id=>{delete S.rcs[id];delete tree().layout[id];
+  Object.values(S.steps).forEach(s=>{['yes','no'].forEach(k=>{if(s[k].type==='rc'&&s[k].id===id)s[k]={type:'',id:null};});});
+  S.ui.modal=null;render();};
+
+function registerDestSetters(id){
+  window['setYes_'+id]=v=>{S.steps[id].yes=parseDest(v);render();};
+  window['setNo_'+id]=v=>{S.steps[id].no=parseDest(v);render();};
+}
+Object.keys(S.steps).forEach(registerDestSetters);
+
+window.pickTree=v=>{
+  if(v==='__new__'){
+    const id=uid('t_');
+    S.trees.push({id,name:'New diagnostic tree',trigger:'Describe the trigger…',stepOrder:[],sla:{hours:24,holdAt:'remediation',escalateTo:'Plant In-charge'},layout:{}});
+    S.ui.tree=id;const sid=newStep();S.ui.modal={kind:'step',id:sid};render();return;
+  }
+  S.ui.tree=v;S.ui.modal=null;render();
+};
+window.publish=()=>{
+  const errs=validate();
+  if(errs.length){alert('Fix before publishing:\n\n• '+errs.join('\n• '));return;}
+  alert('✓ “'+tree().name+'” published.\n\n'+treeSteps().length+' diagnostic steps · '+treeRCs().length+' root causes — all paths routed.');
+};
+
+window.addEventListener('resize',()=>{if(S.ui.view==='canvas')drawEdges();else if(S.ui.view==='sheet2')drawS2Edges();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.ui.modal)closeModal();});
+
+render();
+</script>
+</body>
+</html>
