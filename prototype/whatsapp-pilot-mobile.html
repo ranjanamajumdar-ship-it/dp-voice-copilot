@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Pilot — Operator Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* DigitalPaani palette */
+    --navy:#092454;
+    --navy-mid:#1a2d5d;
+    --navy-tint:#E8EBF2;
+    --teal:#6AA8B0;
+    --teal-light:#B0C3D6;
+    --teal-tint:#E8F0F2;
+    --sage:#8AB878;
+    --sage-forest:#2E5924;
+    --sage-tint:#F1F8EC;
+    --rust:#C4511E;
+    --rust-tint:#FAF0EB;
+    --paper:#F7F6F2;
+    --ink:#1A1A1A;
+    --muted:#6F6F6F;
+    --line:#E0DDD3;
+    --white:#FFFFFF;
+    /* WhatsApp dark */
+    --wa-bg:#0B141A;
+    --wa-header:#202C33;
+    --wa-in:#202C33;
+    --wa-out:#005C4B;
+    --wa-accent:#25D366;
+    --wa-text:#E9EDEF;
+    --wa-muted:#8696A0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans','Noto Sans Devanagari',-apple-system,sans-serif;}
+  body{background:#DDDAD2;color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+
+  .phone{
+    width:375px;height:812px;background:var(--paper);
+    border-radius:40px;border:6px solid #B8B4A8;
+    box-shadow:0 30px 80px rgba(26,26,26,.35);
+    overflow:hidden;display:flex;flex-direction:column;position:relative;
+  }
+  @media(max-width:430px){
+    body{padding:0;}
+    .phone{width:100%;height:100vh;height:100dvh;border-radius:0;border:none;box-shadow:none;}
+  }
+
+  .statusbar{
+    height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px;font-size:13px;font-weight:600;background:var(--navy);color:#fff;
+  }
+  .statusbar .icons{font-size:11px;letter-spacing:2px;}
+  .phone.wa-mode .statusbar{background:var(--wa-header);}
+
+  /* ---------- Researcher header (Carbon-ish) ---------- */
+  .navbar{
+    height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;
+    padding:0 16px;background:var(--navy);color:#fff;
+  }
+  .navbar .brand{font-size:14px;font-weight:600;}
+  .navbar .brand span{display:block;font-size:10px;color:var(--teal-light);font-weight:500;letter-spacing:.3px;}
+  .navbar .spacer{margin-left:auto;}
+  .navbar .timer{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;padding:0 4px;color:#fff;}
+  .navbar .hbtn{
+    font-size:11px;color:#fff;font-weight:600;cursor:pointer;padding:6px 12px;
+    border:1px solid rgba(255,255,255,.35);background:transparent;
+  }
+  .navbar .hbtn:hover{background:var(--navy-mid);}
+  .navtoggle{display:flex;border:1px solid rgba(255,255,255,.35);overflow:hidden;flex-shrink:0;}
+  .navtoggle button{
+    font-size:11px;color:rgba(255,255,255,.7);font-weight:600;cursor:pointer;padding:6px 14px;
+    border:none;background:transparent;transition:.12s;
+  }
+  .navtoggle button.sel{background:#fff;color:var(--navy);}
+  .navtoggle button:not(.sel):hover{background:var(--navy-mid);color:#fff;}
+  .phone.wa-mode .navbar{display:none;}
+
+  .screen{flex:1;overflow-y:auto;display:none;-webkit-overflow-scrolling:touch;min-height:0;}
+  .screen.on{display:flex;flex-direction:column;}
+  .screen::-webkit-scrollbar{width:0;}
+  .pad{padding:20px 16px 40px;}
+
+  h1{font-size:22px;font-weight:600;margin-bottom:4px;letter-spacing:-.2px;}
+  .sub{font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5;}
+
+  /* ---------- Carbon form ---------- */
+  label{font-size:12px;color:var(--muted);display:block;margin:16px 0 6px;font-weight:500;}
+  input[type=text],textarea{
+    width:100%;background:var(--white);border:none;border-bottom:1px solid #8D8D8D;color:var(--ink);
+    padding:12px 14px;font-size:14px;outline:none;border-radius:0;
+  }
+  input:focus,textarea:focus{outline:2px solid var(--navy);outline-offset:-2px;}
+  .seg{display:flex;gap:1px;background:var(--line);}
+  .seg button{
+    flex:1;background:var(--white);border:none;color:var(--muted);
+    padding:12px 4px;font-size:12px;font-weight:600;cursor:pointer;transition:.1s;border-radius:0;
+  }
+  .seg button.sel{background:var(--navy);color:#fff;}
+
+  .btn{
+    width:100%;border:none;border-radius:0;padding:15px 16px;font-size:14px;font-weight:600;
+    cursor:pointer;margin-top:16px;text-align:left;display:flex;justify-content:space-between;align-items:center;
+  }
+  .btn:after{content:'→';font-size:16px;}
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-mid);}
+  .btn-secondary{background:transparent;color:var(--navy);border:1px solid var(--navy);}
+  .btn-danger{background:transparent;color:var(--rust);border:1px solid var(--rust);}
+  .btn.center{text-align:center;justify-content:center;}
+  .btn.center:after{content:'';}
+
+  /* ---------- WhatsApp screen ---------- */
+  #scr-wa{background:var(--wa-bg);}
+  .wa-header{
+    flex-shrink:0;display:flex;align-items:center;gap:10px;
+    padding:10px 14px;background:var(--wa-header);color:var(--wa-text);
+  }
+  .wa-header .avatar{
+    width:36px;height:36px;border-radius:50%;background:var(--wa-accent);color:#04160B;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;
+  }
+  .wa-header .t{font-size:14.5px;font-weight:600;}
+  .wa-header .t span{display:block;font-size:11px;color:var(--wa-muted);font-weight:400;}
+  #waScroll{flex:1;overflow-y:auto;padding:18px 14px 10px;}
+  #waScroll::-webkit-scrollbar{width:0;}
+  .wa-bubble{max-width:84%;margin-bottom:8px;padding:9px 12px;font-size:14.5px;line-height:1.6;
+    border-radius:9px;animation:pop .25s ease;color:var(--wa-text);}
+  @keyframes pop{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .wa-in{background:var(--wa-in);border-top-left-radius:0;}
+  .wa-out{background:var(--wa-out);border-top-right-radius:0;margin-left:auto;}
+  .wa-bubble .time{display:block;font-size:10px;color:var(--wa-muted);margin-top:4px;text-align:right;font-variant-numeric:tabular-nums;}
+  .wa-link{
+    display:block;margin-top:8px;padding:11px;background:rgba(37,211,102,.12);border:1px solid var(--wa-accent);
+    border-radius:8px;color:var(--wa-accent);font-weight:700;font-size:13.5px;text-align:center;cursor:pointer;
+  }
+  .wa-replybar{
+    flex-shrink:0;padding:10px 14px 16px;background:var(--wa-header);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .wa-chip{
+    width:100%;background:transparent;border:1px solid var(--wa-accent);color:var(--wa-accent);
+    border-radius:999px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;
+  }
+  .wa-chip:active{background:rgba(37,211,102,.15);}
+  .typing{display:inline-flex;gap:4px;padding:13px;}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--wa-muted);animation:blink 1s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s;}.typing i:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{50%{opacity:.25;}}
+
+  /* ---------- App flow (Carbon light) ---------- */
+  .app-header{
+    flex-shrink:0;background:var(--navy);color:#fff;padding:12px 12px 12px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .app-back{
+    height:44px;flex-shrink:0;border:2px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-weight:700;cursor:pointer;line-height:1;
+    display:none;align-items:center;justify-content:center;gap:6px;padding:0 14px 0 10px;
+  }
+  .app-back .chev{font-size:26px;}
+  .app-back.show{display:flex;}
+  .app-back:hover{background:rgba(255,255,255,.18);border-color:#fff;}
+  .app-header .htxt{min-width:0;}
+  .app-header .brand{font-size:12px;font-weight:600;letter-spacing:.2px;color:var(--teal-light);}
+  .app-header .fault{font-size:15px;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .progress-track{flex-shrink:0;height:5px;background:var(--navy-tint);display:flex;}
+  .progress-fill{background:var(--teal);transition:width .3s;}
+  /* Miller: the app body is a single column, one decision per screen */
+  #appBody{display:flex;flex-direction:column;flex:1;min-height:0;}
+  .step-label{font-size:13.5px;color:var(--muted);font-weight:700;margin-bottom:10px;letter-spacing:.3px;}
+  .q{font-size:25px;font-weight:700;line-height:1.4;margin-bottom:8px;}
+  .q-detail{font-size:17px;color:var(--muted);line-height:1.55;margin-bottom:22px;}
+  .opts-wrap{margin-top:auto;}  /* Fitts: push choices to the thumb zone at the bottom */
+  /* Fitts: large, full-width targets, generous height, no tiny hit areas */
+  .opt{
+    width:100%;background:var(--white);border:1px solid var(--line);color:var(--ink);
+    min-height:64px;padding:18px 16px;font-size:18px;font-weight:600;cursor:pointer;text-align:left;
+    margin-bottom:10px;border-radius:0;transition:.1s;display:flex;align-items:center;gap:14px;
+  }
+  .opt:hover{border-color:var(--navy);}
+  .opt:active{background:var(--navy-tint);}
+  .opt .radio{
+    width:24px;height:24px;border-radius:50%;border:2px solid #8D8D8D;flex-shrink:0;
+  }
+  .advice{
+    border-left:4px solid var(--teal);background:var(--teal-tint);
+    padding:16px 16px;font-size:17px;line-height:1.6;margin-bottom:22px;animation:pop .25s ease;
+  }
+  .advice.warn{border-left-color:var(--rust);background:var(--rust-tint);}
+  .advice b{display:block;font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;font-weight:700;}
+  /* Miller: tool status is one compact chip, not a paragraph */
+  .toolchip{
+    display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 14px;
+    font-size:14px;font-weight:600;border:1px solid var(--line);align-self:flex-start;
+    background:var(--sage-tint);color:var(--sage-forest);
+  }
+  .toolchip.need{background:var(--rust-tint);color:var(--rust);border-color:var(--rust);}
+  .opt.esc{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .opt.esc .ic{font-size:20px;flex-shrink:0;}
+  /* Line-art equipment illustration per step — visual anchor for the check being done */
+  .illus{
+    background:var(--white);border:1px solid var(--line);padding:10px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+  }
+  .illus svg{width:100%;height:120px;color:var(--ink);}
+  .opt .oic{width:30px;height:30px;flex-shrink:0;color:var(--navy);}
+  .opt .oic svg{width:100%;height:100%;}
+
+  /* ---------- Done ---------- */
+  .done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;background:var(--paper);}
+  .done-ic{width:72px;height:72px;border-radius:50%;background:var(--sage-tint);border:2px solid var(--sage);
+    display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--sage-forest);margin-bottom:18px;}
+  .done-wrap h1{margin-bottom:8px;}
+  .done-wrap .sub{max-width:260px;}
+  .done-wrap .btn{max-width:250px;}
+
+  /* ---------- Results: progressive disclosure ---------- */
+  .acc{background:var(--white);border:1px solid var(--line);border-top:none;margin:0;}
+  .acc:first-of-type{border-top:1px solid var(--line);}
+  .acc-head{
+    display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none;
+  }
+  .acc-head:hover{background:var(--paper);}
+  .acc-head .op{font-size:14px;font-weight:600;}
+  .acc-head .meta{font-size:11px;color:var(--muted);}
+  .acc-head .chev{margin-left:6px;color:var(--muted);transition:.2s;font-size:12px;}
+  .acc.open .chev{transform:rotate(180deg);}
+  .pill{margin-left:auto;font-size:10px;font-weight:700;padding:4px 10px;letter-spacing:.4px;border-radius:0;}
+  .pill.pass{background:var(--sage-tint);color:var(--sage-forest);border:1px solid var(--sage);}
+  .pill.fail{background:var(--rust-tint);color:var(--rust);border:1px solid var(--rust);}
+  .acc-body{display:none;padding:0 16px 16px;border-top:1px solid var(--line);}
+  .acc.open .acc-body{display:block;}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:14px;}
+  .res-cell{background:var(--white);padding:10px 8px;text-align:center;}
+  .res-cell .v{font-size:14px;font-weight:700;}
+  .res-cell .k{font-size:8.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+  .res-row2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-top:none;}
+  .res-note{margin-top:10px;font-size:12px;color:var(--ink);background:var(--paper);border-left:3px solid var(--teal);padding:9px 11px;line-height:1.55;}
+  .res-note.quote{border-left-color:var(--navy);}
+  .acc-btns{display:flex;gap:1px;margin-top:12px;background:var(--line);border:1px solid var(--line);}
+  .acc-btns button{
+    flex:1;border:none;border-radius:0;padding:11px 0;font-size:12px;font-weight:700;cursor:pointer;
+    background:var(--white);color:var(--muted);
+  }
+  .acc-btns button.on-match{background:var(--sage-tint);color:var(--sage-forest);}
+  .acc-btns button.on-nomatch{background:var(--rust-tint);color:var(--rust);}
+  .rc-opt{
+    width:100%;background:var(--white);border:1px solid var(--line);color:var(--ink);
+    padding:11px 14px;font-size:13px;font-weight:500;cursor:pointer;text-align:left;
+    border-radius:0;display:flex;align-items:center;gap:10px;margin-top:-1px;
+  }
+  .rc-opt .radio{width:15px;height:15px;border-radius:50%;border:2px solid #8D8D8D;flex-shrink:0;}
+  .rc-opt.sel{background:var(--navy-tint);border-color:var(--navy);position:relative;z-index:1;}
+  .rc-opt.sel .radio{border-color:var(--navy);background:radial-gradient(circle, var(--navy) 45%, transparent 50%);}
+  .del-btn{
+    width:100%;margin-top:10px;border:none;border-radius:0;padding:11px 0;
+    font-size:12px;font-weight:600;cursor:pointer;
+    background:transparent;color:var(--rust);border:1px dashed var(--rust);
+  }
+  .del-btn:hover{background:var(--rust-tint);}
+  .gate-banner{
+    background:var(--navy);color:#fff;padding:18px 16px;margin-bottom:16px;
+  }
+  .gate-banner .big{font-size:30px;font-weight:700;}
+  .gate-banner.pass{background:var(--sage-forest);}
+  .gate-banner p{font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;line-height:1.5;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:40px 20px;line-height:1.6;}
+
+  /* ---------- Log ---------- */
+  .log-entry{
+    background:var(--white);border:1px solid var(--line);border-top:none;
+    padding:10px 14px;font-size:12px;line-height:1.55;
+  }
+  .log-entry:first-of-type{border-top:1px solid var(--line);}
+  .log-entry .row1{display:flex;gap:8px;align-items:center;margin-bottom:3px;}
+  .kw{font-size:9px;font-weight:700;letter-spacing:.5px;padding:2px 7px;}
+  .kw-sent{background:var(--navy-tint);color:var(--navy);}
+  .kw-reply{background:var(--sage-tint);color:var(--sage-forest);}
+  .kw-timeout,.kw-dropout{background:var(--rust-tint);color:var(--rust);}
+  .kw-context,.kw-post,.kw-deeplink{background:var(--teal-tint);color:#3D707A;}
+  .log-entry .t{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;}
+
+  /* ---------- Dashboard ---------- */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:20px;}
+  .tile{background:var(--white);padding:14px 12px;}
+  .tile .v{font-size:24px;font-weight:700;letter-spacing:-.5px;}
+  .tile .v small{font-size:12px;font-weight:600;color:var(--muted);}
+  .tile .k{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+  .tile.good .v{color:var(--sage-forest);}
+  .tile.bad .v{color:var(--rust);}
+  .chart{background:var(--white);border:1px solid var(--line);padding:16px;margin-bottom:16px;}
+  .chart h3{font-size:13px;font-weight:600;margin-bottom:2px;}
+  .chart .cap{font-size:10.5px;color:var(--muted);margin-bottom:14px;}
+  .hbar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .hbar-row .lbl{width:64px;font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;text-align:right;}
+  .hbar-row .track{flex:1;height:16px;background:var(--paper);position:relative;}
+  .hbar-row .fill{height:100%;background:var(--navy);border-radius:0 4px 4px 0;min-width:2px;transition:width .4s;}
+  .hbar-row .fill.teal{background:#3D707A;}
+  .hbar-row .val{font-size:11px;font-weight:700;width:44px;flex-shrink:0;}
+  .stackbar{display:flex;height:26px;margin-bottom:10px;}
+  .stackbar .seg-m{background:var(--sage-forest);border-right:2px solid var(--white);}
+  .stackbar .seg-n{background:var(--rust);}
+  .stackbar .seg-u{background:#B8B4A8;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;}
+  .legend span{font-size:11px;color:var(--ink);display:flex;align-items:center;gap:5px;font-weight:500;}
+  .legend i{width:10px;height:10px;display:inline-block;flex-shrink:0;}
+
+  @media print{
+    body{background:#fff;padding:0;display:block;}
+    .phone{width:100%;height:auto;border:none;border-radius:0;box-shadow:none;overflow:visible;display:block;}
+    .statusbar,.navbar,.toast{display:none !important;}
+    .screen{display:none !important;}
+    #scr-dash{display:block !important;overflow:visible;height:auto;}
+    #scr-dash .btn{display:none;}
+    .chart,.tiles{break-inside:avoid;}
+  }
+
+  .toast{
+    position:absolute;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);opacity:0;
+    background:var(--ink);color:#fff;font-weight:600;font-size:12.5px;
+    padding:11px 20px;transition:.3s;z-index:60;white-space:nowrap;box-shadow:0 8px 30px rgba(0,0,0,.3);
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+  <div class="statusbar"><span>9:41</span></div>
+
+  <!-- researcher header -->
+  <div class="navbar" id="navbar">
+    <div class="brand">DigitalPaani<span>Guided Pilot · Research</span></div>
+    <div class="spacer"></div>
+    <div class="timer" id="elapsed">00:00</div>
+    <div class="navtoggle" id="navToggle">
+      <button id="tgTest" onclick="goTest()">Test</button>
+      <button id="tgResults" onclick="showResults()">Results</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 1: SETUP (researcher · English) ============ -->
+  <div class="screen on" id="scr-setup">
+    <div class="pad">
+      <h1>New Test</h1>
+      <div class="sub">Fill this, press Start, and hand the phone to the operator. The WhatsApp trigger fires first; the rest of the flow runs in the app via deeplink.</div>
+      <label>Operator code</label>
+      <input type="text" id="opCode" placeholder="e.g. OP-04">
+      <label>Fault</label>
+      <div class="seg" id="faultSeg">
+        <button data-v="A" class="sel">A · Pump Leakage</button>
+        <button data-v="B">B · Low DO</button>
+      </div>
+      <label>Shift</label>
+      <div class="seg" id="shiftSeg">
+        <button data-v="Morning" class="sel">Morning</button>
+        <button data-v="Evening">Evening</button>
+        <button data-v="Night">Night</button>
+      </div>
+      <label>Actual root cause (the staged fault — used to auto-score accuracy)</label>
+      <div id="actualRCList"></div>
+      <button class="btn btn-primary" onclick="startSession()">Start — send WhatsApp trigger</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 2: WHATSAPP TRIGGER (operator · Hindi) ============ -->
+  <div class="screen" id="scr-wa">
+    <div class="wa-header">
+      <div class="avatar">DP</div>
+      <div class="t">डिजिटलपानी सहायक<span>ऑनलाइन</span></div>
+    </div>
+    <div id="waScroll"></div>
+    <div class="wa-replybar" id="waReplybar"></div>
+  </div>
+
+  <!-- ============ SCREEN 3: APP FLOW (operator · Hindi · Carbon) ============ -->
+  <div class="screen" id="scr-app">
+    <div class="app-header">
+      <button class="app-back" id="appBack" onclick="stepBack()"><span class="chev">‹</span>पीछे</button>
+      <div class="htxt">
+        <div class="brand">डिजिटलपानी</div>
+        <div class="fault" id="appFault">—</div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+    <div class="pad" id="appBody"></div>
+  </div>
+
+  <!-- ============ SCREEN 4: DONE (operator · Hindi) ============ -->
+  <div class="screen" id="scr-done">
+    <div class="done-wrap">
+      <div class="done-ic">✓</div>
+      <h1>धन्यवाद!</h1>
+      <div class="sub">आपकी जाँच पूरी हो गई।<br>फ़ोन वापस दे दें।</div>
+      <button class="btn btn-primary center" onclick="showResults()">परिणाम देखें</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 5: RESULTS (researcher · English · accordion) ============ -->
+  <div class="screen" id="scr-results">
+    <div class="pad">
+      <h1>Results</h1>
+      <div class="sub">One row per operator — click a name to expand the full record. Accuracy is scored automatically against the staged root cause.</div>
+      <div class="gate-banner" id="gateBanner"></div>
+      <div id="resList"></div>
+      <button class="btn btn-primary" onclick="newTest()">New Test</button>
+      <button class="btn btn-secondary" onclick="showDash()">View study summary</button>
+      <button class="btn btn-danger" onclick="resetAll()">Clear all results</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 7: SUMMARY DASHBOARD (researcher · English) ============ -->
+  <div class="screen" id="scr-dash">
+    <div class="pad">
+      <h1>Study Summary</h1>
+      <div class="sub" id="dashSub">Collective results across all saved tests.</div>
+      <div id="dashBody"></div>
+      <button class="btn btn-primary" onclick="window.print()">Download PDF</button>
+      <button class="btn btn-secondary" onclick="showResults()">Back to results</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+</div>
+
+<script>
+/* ================= LINE-ART ICON LIBRARY (black-and-white technical style) ================= */
+const SVG_ATTR = 'viewBox="0 0 160 120" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS = {
+  valve: `<svg ${SVG_ATTR}>
+    <rect x="8" y="50" width="52" height="20"/><rect x="100" y="50" width="52" height="20"/>
+    <rect x="60" y="40" width="40" height="40"/>
+    <line x1="80" y1="40" x2="80" y2="18"/><circle cx="80" cy="14" r="11"/>
+    <line x1="69" y1="14" x2="91" y2="14"/><line x1="80" y1="3" x2="80" y2="25"/>
+  </svg>`,
+  filter: `<svg ${SVG_ATTR}>
+    <rect x="8" y="50" width="32" height="20"/><rect x="120" y="50" width="32" height="20"/>
+    <rect x="40" y="28" width="80" height="64" rx="6"/>
+    <line x1="55" y1="28" x2="55" y2="92"/><line x1="70" y1="28" x2="70" y2="92"/>
+    <line x1="90" y1="28" x2="90" y2="92"/><line x1="105" y1="28" x2="105" y2="92"/>
+  </svg>`,
+  seal: `<svg ${SVG_ATTR}>
+    <circle cx="52" cy="60" r="36"/><circle cx="52" cy="60" r="10" fill="currentColor" stroke="none"/>
+    <rect x="88" y="48" width="52" height="24"/><rect x="100" y="42" width="16" height="36"/>
+    <path d="M108 78 q4 9 0 16" stroke-dasharray="2 4"/><circle cx="108" cy="99" r="3" fill="currentColor" stroke="none"/>
+  </svg>`,
+  gland: `<svg ${SVG_ATTR}>
+    <rect x="14" y="45" width="64" height="30"/>
+    <line x1="26" y1="45" x2="26" y2="75"/><line x1="38" y1="45" x2="38" y2="75"/>
+    <line x1="50" y1="45" x2="50" y2="75"/><line x1="62" y1="45" x2="62" y2="75"/>
+    <rect x="82" y="52" width="60" height="16"/>
+    <path d="M88 75 q4 10 0 18" stroke-dasharray="2 4"/><circle cx="88" cy="98" r="3" fill="currentColor" stroke="none"/>
+  </svg>`,
+  bearing: `<svg ${SVG_ATTR}>
+    <rect x="14" y="50" width="40" height="20"/><rect x="106" y="50" width="40" height="20"/>
+    <circle cx="80" cy="60" r="34"/><circle cx="80" cy="60" r="17"/>
+    <circle cx="80" cy="27" r="5"/><circle cx="109" cy="45" r="5"/><circle cx="109" cy="75" r="5"/>
+    <circle cx="51" cy="45" r="5"/><circle cx="51" cy="75" r="5"/><circle cx="80" cy="93" r="5"/>
+  </svg>`,
+  pump: `<svg ${SVG_ATTR}>
+    <rect x="8" y="35" width="66" height="48" rx="4"/>
+    <line x1="21" y1="35" x2="21" y2="83"/><line x1="34" y1="35" x2="34" y2="83"/>
+    <line x1="47" y1="35" x2="47" y2="83"/><line x1="60" y1="35" x2="60" y2="83"/>
+    <rect x="78" y="50" width="18" height="18"/>
+    <circle cx="132" cy="59" r="34"/><circle cx="132" cy="59" r="7" fill="currentColor" stroke="none"/>
+    <rect x="4" y="95" width="152" height="6"/>
+  </svg>`,
+  blower: `<svg ${SVG_ATTR}>
+    <rect x="10" y="35" width="58" height="48" rx="4"/>
+    <line x1="22" y1="35" x2="22" y2="83"/><line x1="34" y1="35" x2="34" y2="83"/>
+    <line x1="46" y1="35" x2="46" y2="83"/><line x1="58" y1="35" x2="58" y2="83"/>
+    <circle cx="116" cy="59" r="30"/><circle cx="116" cy="59" r="4" fill="currentColor" stroke="none"/>
+    <line x1="116" y1="32" x2="116" y2="86"/><line x1="89" y1="59" x2="143" y2="59"/>
+    <line x1="97" y1="40" x2="135" y2="78"/><line x1="97" y1="78" x2="135" y2="40"/>
+  </svg>`,
+  airvalve: `<svg ${SVG_ATTR}>
+    <rect x="8" y="52" width="48" height="16"/><rect x="104" y="52" width="48" height="16"/>
+    <circle cx="80" cy="60" r="24"/><line x1="80" y1="60" x2="107" y2="33" stroke-width="4.5"/>
+  </svg>`,
+  diffuser: `<svg ${SVG_ATTR}>
+    <rect x="14" y="18" width="132" height="82" rx="4"/>
+    <line x1="14" y1="76" x2="146" y2="76" stroke-dasharray="4 3"/>
+    <ellipse cx="80" cy="91" rx="32" ry="6"/>
+    <circle cx="64" cy="68" r="4"/><circle cx="80" cy="52" r="5"/>
+    <circle cx="97" cy="38" r="4"/><circle cx="70" cy="28" r="3"/>
+  </svg>`,
+  sludge: `<svg ${SVG_ATTR}>
+    <rect x="14" y="18" width="132" height="82" rx="4"/>
+    <line x1="14" y1="76" x2="146" y2="76" stroke-dasharray="4 3"/>
+    <path d="M14 92 q22 -12 44 0 t44 0 t44 0" fill="none"/>
+  </svg>`,
+  probe: `<svg ${SVG_ATTR}>
+    <rect x="14" y="18" width="132" height="82" rx="4"/>
+    <line x1="14" y1="72" x2="146" y2="72" stroke-dasharray="4 3"/>
+    <line x1="100" y1="8" x2="100" y2="88"/><rect x="91" y="2" width="18" height="14"/>
+    <circle cx="100" cy="88" r="6"/>
+  </svg>`,
+  none: `<svg ${SVG_ATTR}>
+    <circle cx="80" cy="60" r="30"/><line x1="60" y1="40" x2="100" y2="80"/><line x1="100" y1="40" x2="60" y2="80"/>
+  </svg>`
+};
+function illusBox(key){ return key && ICONS[key] ? `<div class="illus">${ICONS[key]}</div>` : ''; }
+function optIcon(key){ return key && ICONS[key] ? `<span class="oic">${ICONS[key]}</span>` : '<span class="radio"></span>'; }
+
+/* ================= FAULT SCRIPTS (operator-facing · Hindi only) ================= */
+const SCRIPTS = {
+  A: {
+    nameEn:"Pump Leakage",
+    nameHi:"फ़िल्टर फ़ीड पंप — रिसाव जाँच",
+    trigger:"⚠️ फ़िल्टर फ़ीड पंप में रिसाव मिला है। जाँच शुरू करें?",
+    toolOptions:["कोई टूल नहीं","मैकेनिकल सील","ग्लैंड","बेयरिंग"],
+    toolByRC:{"प्रेशर बहुत ज़्यादा है":"कोई टूल नहीं","मैकेनिकल सील ख़राब है":"मैकेनिकल सील","पंप के पुर्ज़े ढीले हैं":"ग्लैंड","बेयरिंग ख़राब है — बदलना पड़ेगा":"बेयरिंग"},
+    escByRC:{"प्रेशर बहुत ज़्यादा है":false,"मैकेनिकल सील ख़राब है":true,"पंप के पुर्ज़े ढीले हैं":true,"बेयरिंग ख़राब है — बदलना पड़ेगा":true},
+    steps:[
+      { q:"डिस्चार्ज वाल्व देखें।", detail:"वाल्व बंद है या खुला?", tool:null, illus:"valve",
+        opts:[
+          {label:"बंद है", advice:"प्रेशर कम करने के लिए वाल्व खोलें।", next:2},
+          {label:"खुला है", next:2}
+        ]},
+      { q:"फ़िल्टर देखें।", detail:"क्या उसमें चोकिंग है?", tool:null, illus:"filter",
+        opts:[
+          {label:"हाँ, चोकिंग है", advice:"फ़िल्टर बैकवॉश करें।", next:3},
+          {label:"नहीं", next:3}
+        ]},
+      { q:"सील एरिया में लीकेज देखें।", detail:"क्या लगातार पानी बह रहा है? (पंप बिना पानी खींचे चल रहा है?)", tool:"मैकेनिकल सील — मेंटेनेंस द्वारा", illus:"seal",
+        opts:[
+          {label:"हाँ", advice:"मेंटेनेंस को मैकेनिकल सील लगानी पड़ेगी। सुपरवाइज़र को एस्केलेट करें।", warn:true, escalate:true, next:6},
+          {label:"नहीं", next:4}
+        ]},
+      { q:"बॉक्स में देखें।", detail:"क्या ड्रिपिंग हो रही है?", tool:"ग्लैंड — मेंटेनेंस द्वारा", illus:"gland",
+        opts:[
+          {label:"हाँ, ज़्यादा है", advice:"मेंटेनेंस को बुलाएं। सुपरवाइज़र को एस्केलेट करें।", warn:true, escalate:true, next:6},
+          {label:"हाँ, पर कम है", advice:"नज़र रखें — ड्रिपिंग बढ़े तो मेंटेनेंस को बुलाएं।", next:5},
+          {label:"नहीं", next:5}
+        ]},
+      { q:"बेयरिंग जाँचें।", detail:"क्या कंपन या तापमान ज़्यादा है?", tool:"बेयरिंग — मेंटेनेंस द्वारा", illus:"bearing",
+        opts:[
+          {label:"हाँ", advice:"मेंटेनेंस को बुलाएं — बेयरिंग बदलनी पड़ेगी। सुपरवाइज़र को एस्केलेट करें।", warn:true, escalate:true, next:6},
+          {label:"नहीं", next:6}
+        ]},
+      { q:"रिसाव का सबसे संभावित कारण क्या है?", illus:"pump",
+        rcOptions:["प्रेशर बहुत ज़्यादा है","मैकेनिकल सील ख़राब है","पंप के पुर्ज़े ढीले हैं","बेयरिंग ख़राब है — बदलना पड़ेगा"]}
+    ]
+  },
+  B: {
+    nameEn:"Low DO",
+    nameHi:"एरेशन टैंक — कम डी.ओ. जाँच",
+    trigger:"⚠️ एरेशन टैंक में डी.ओ. 0.8 mg/L है (सामान्य 2–4)। जाँच शुरू करें?",
+    steps:[
+      { q:"क्या ब्लोअर चल रहा है?", detail:"पैनल पर कोई ट्रिप/अलार्म है?", illus:"blower",
+        opts:[
+          {label:"चल रहा है", next:2},
+          {label:"बंद है / ट्रिप", advice:"ब्लोअर फिर से शुरू करें। ट्रिप दोबारा हो तो इलेक्ट्रीशियन को बुलाएं।", next:2}
+        ]},
+      { q:"एरेशन टैंक का एयर वाल्व देखें।", detail:"क्या पूरा खुला है?", illus:"airvalve",
+        opts:[
+          {label:"खुला है", next:3},
+          {label:"बंद / आधा", advice:"वाल्व पूरा खोलें, 15 मिनट बाद डी.ओ. फिर देखें।", next:3}
+        ]},
+      { q:"टैंक की सतह देखें।", detail:"क्या बुलबुले एक जैसे उठ रहे हैं?", illus:"diffuser",
+        opts:[
+          {label:"एक जैसे", next:4},
+          {label:"असमान", advice:"डिफ्यूज़र बंद या ख़राब हो सकता है। मेंटेनेंस को बुलाएं।", warn:true, next:5}
+        ]},
+      { q:"लोड और स्लज देखें।", detail:"क्या आज लोड ज़्यादा है या स्लज बहुत गाढ़ा/काला है?", illus:"sludge",
+        opts:[
+          {label:"हाँ", advice:"ज़्यादा स्लज निकालें / सुपरवाइज़र को बताएं।", next:5},
+          {label:"नहीं", advice:"डी.ओ. प्रोब साफ़ करके रीडिंग दोबारा लें।", illus:"probe", next:5}
+        ]},
+      { q:"कम डी.ओ. का सबसे संभावित कारण क्या है?", illus:"diffuser",
+        rcOptions:["ब्लोअर बंद/ट्रिप","एयर वाल्व बंद","डिफ्यूज़र ख़राब","ज़्यादा लोड","डी.ओ. प्रोब ख़राब"]}
+    ]
+  }
+};
+const POST_Q = "इस मार्गदर्शन से आपको कितनी मदद मिली? क्या कोई चरण उलझाने वाला लगा?";
+const TIMEOUT_MIN = 10;
+
+/* ================= STATE ================= */
+let S = null;
+let sentAt = null;
+let timeoutHandle = null;
+let elapsedTimer = null;
+let sessionStart = null;
+let EVENTS = [];
+let prevScreen = 'scr-setup';
+
+const $ = id => document.getElementById(id);
+const now = () => new Date();
+const hhmm = d => d.toTimeString().slice(0,5);
+const fmtLat = s => s<60 ? s+'s' : Math.floor(s/60)+'m '+(s%60)+'s';
+
+document.querySelectorAll('.seg').forEach(seg=>{
+  seg.addEventListener('click',e=>{
+    if(e.target.tagName!=='BUTTON')return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));
+    e.target.classList.add('sel');
+    if(seg.id==='faultSeg') renderActualRC(e.target.dataset.v);
+  });
+});
+
+let actualRC = null;
+function rcStep(fault){ return SCRIPTS[fault].steps.find(s=>s.rcOptions); }
+function renderActualRC(fault){
+  actualRC = null;
+  $('actualRCList').innerHTML = rcStep(fault).rcOptions.map((o,i)=>
+    `<button class="rc-opt" id="arc-${i}" onclick="pickActualRC(${i},'${o.replace(/'/g,"\\'")}')"><span class="radio"></span>${o}</button>`).join('');
+}
+function pickActualRC(i, label){
+  actualRC = label;
+  document.querySelectorAll('.rc-opt').forEach(b=>b.classList.remove('sel'));
+  $('arc-'+i).classList.add('sel');
+}
+
+const RESULTS_SCREENS = ['scr-results','scr-dash'];
+let flowScreen = 'scr-setup';
+function show(id){
+  if(!RESULTS_SCREENS.includes(id)) flowScreen = id;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $(id).classList.add('on');
+  $('phone').classList.toggle('wa-mode', id==='scr-wa');
+  const onResults = RESULTS_SCREENS.includes(id);
+  $('tgResults').classList.toggle('sel', onResults);
+  $('tgTest').classList.toggle('sel', !onResults);
+}
+function goTest(){
+  if(S) show(flowScreen);   // resume an in-progress test
+  else newTest();
+}
+
+/* ---------- log + timer ---------- */
+function logEvent(kw, text){
+  EVENTS.push({t: now().toTimeString().slice(0,8), kw, text});
+}
+function startElapsed(){
+  sessionStart = now();
+  clearInterval(elapsedTimer);
+  $('elapsed').textContent='00:00';
+  elapsedTimer = setInterval(()=>{
+    const s = Math.floor((now()-sessionStart)/1000);
+    $('elapsed').textContent = String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },1000);
+}
+function stopElapsed(){ clearInterval(elapsedTimer); }
+
+/* ---------- timeout ---------- */
+function armTimeout(stepLabel){
+  sentAt = now();
+  clearTimeout(timeoutHandle);
+  timeoutHandle = setTimeout(()=>{
+    S.dropout = stepLabel;
+    logEvent('TIMEOUT', `No response in ${TIMEOUT_MIN} min at ${stepLabel}`);
+    finish(false);
+  }, TIMEOUT_MIN*60*1000);
+}
+function recordReply(stepLabel, label){
+  clearTimeout(timeoutHandle);
+  const sec = Math.round((now()-sentAt)/1000);
+  // if the operator went back and re-answered this step, keep the latest latency
+  S.latencies = S.latencies.filter(l=>l.step!==stepLabel);
+  S.latencies.push({step:stepLabel, sec});
+  logEvent('REPLY', `${stepLabel} → "${label}" · latency ${fmtLat(sec)}`);
+}
+
+/* ================= SESSION ================= */
+function startSession(){
+  const op = $('opCode').value.trim();
+  if(!op){ toast('Enter operator code'); return; }
+  if(!actualRC){ toast('Select the actual (staged) root cause'); return; }
+  const fault = document.querySelector('#faultSeg .sel').dataset.v;
+  const shift = document.querySelector('#shiftSeg .sel').dataset.v;
+  S = { op, fault, shift, start: now().toISOString(),
+        latencies: [], stepsCompleted: 0, replied:null,
+        dropout:null, rootCause:'', post:'', accuracy:'', actualRC,
+        toolPicked:'', toolExpected:'', toolCorrect:'', escalationNeeded:'', escalated:'' };
+  EVENTS = [];
+  logEvent('CONTEXT', `${op} · Fault ${fault} · ${shift} shift · actual root cause: ${actualRC}`);
+  startElapsed();
+  openWhatsApp();
+}
+
+/* ---------- WhatsApp trigger ---------- */
+function openWhatsApp(){
+  $('waScroll').innerHTML=''; $('waReplybar').innerHTML='';
+  show('scr-wa');
+  waBotSay(SCRIPTS[S.fault].trigger, ()=>{
+    offerWaReplies([
+      {label:"1 · शुरू करें", fn:onAccept},
+      {label:"0 · अभी नहीं", fn:onDecline}
+    ], 'Trigger');
+  });
+}
+function waBotSay(text, after){
+  const scroll = $('waScroll');
+  const tp = document.createElement('div');
+  tp.className='wa-bubble wa-in typing'; tp.innerHTML='<i></i><i></i><i></i>';
+  scroll.appendChild(tp); scroll.scrollTop = scroll.scrollHeight;
+  setTimeout(()=>{
+    tp.classList.remove('typing');
+    tp.innerHTML = text + `<span class="time">${hhmm(now())}</span>`;
+    scroll.scrollTop = scroll.scrollHeight;
+    logEvent('SENT', text);
+    if(after) after();
+  }, 700);
+}
+function waUserSay(text){
+  const scroll = $('waScroll');
+  const b = document.createElement('div');
+  b.className='wa-bubble wa-out';
+  b.innerHTML = text + `<span class="time">${hhmm(now())}</span>`;
+  scroll.appendChild(b); scroll.scrollTop = scroll.scrollHeight;
+}
+function offerWaReplies(options, stepLabel){
+  const bar = $('waReplybar');
+  bar.innerHTML='';
+  options.forEach(o=>{
+    const c = document.createElement('button');
+    c.className='wa-chip'; c.textContent=o.label;
+    c.onclick = ()=>{ bar.innerHTML=''; recordReply(stepLabel, o.label); waUserSay(o.label); o.fn(); };
+    bar.appendChild(c);
+  });
+  armTimeout(stepLabel);
+}
+function onDecline(){
+  S.replied='Declined';
+  S.dropout='Trigger';
+  waBotSay("ठीक है। ज़रूरत पड़ने पर message करें।", ()=> setTimeout(()=>finish(false), 900));
+}
+function onAccept(){
+  S.replied='Yes';
+  waBotSay("ऐप में जाँच तैयार है। नीचे दी गई लिंक पर टैप करें 👇", ()=>{
+    const scroll = $('waScroll');
+    const link = document.createElement('div');
+    link.className='wa-bubble wa-in';
+    link.innerHTML = `डिजिटलपानी ऐप<div class="wa-link" onclick="openApp()">🔗 जाँच शुरू करें — ऐप खोलें</div><span class="time">${hhmm(now())}</span>`;
+    scroll.appendChild(link); scroll.scrollTop = scroll.scrollHeight;
+    armTimeout('Deeplink');
+  });
+}
+function openApp(){
+  clearTimeout(timeoutHandle);
+  const sec = Math.round((now()-sentAt)/1000);
+  S.latencies.push({step:'Deeplink', sec});
+  logEvent('DEEPLINK', `Opened app via deeplink · latency ${fmtLat(sec)}`);
+  $('appFault').textContent = SCRIPTS[S.fault].nameHi;
+  navStack = [];
+  show('scr-app');
+  navGo({t:'step', n:1});
+}
+
+/* ---------- App flow (Carbon screens) ---------- */
+function checkCount(){ return SCRIPTS[S.fault].steps.filter(s=>!s.rcOptions).length; }
+
+/* Back navigation — one screen = one decision (Miller), history stack */
+let navStack = [];
+function navGo(desc){ navStack.push(desc); navRender(desc); updateBack(); }
+function navRender(desc){
+  if(desc.t==='step') renderStep(desc.n);
+  else if(desc.t==='tool') renderTool();
+  else if(desc.t==='esc') renderEsc();
+  else if(desc.t==='post') renderPost();
+}
+function stepBack(){
+  if(navStack.length<2) return;
+  clearTimeout(timeoutHandle);
+  navStack.pop();
+  logEvent('BACK', 'Operator went back a step');
+  navRender(navStack[navStack.length-1]);
+  updateBack();
+}
+function updateBack(){ $('appBack').classList.toggle('show', navStack.length>1); }
+
+/* Miller: tool status is one compact chip, not a paragraph */
+function toolChip(st){
+  const needed = st.tool && st.tool!=='';
+  return `<div class="toolchip ${needed?'need':''}">${needed?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`;
+}
+
+function renderStep(n){
+  const st = SCRIPTS[S.fault].steps[n-1];
+  const total = checkCount();
+  const body = $('appBody');
+
+  if(st.rcOptions){  // diagnosis screen
+    $('progFill').style.width = '100%';
+    body.innerHTML = `<div class="step-label">निदान</div>
+      ${illusBox(st.illus)}
+      <div class="q">${st.q}</div>
+      <div class="opts-wrap">` +
+      st.rcOptions.map((o)=>`<button class="opt" onclick="pickRC('${o.replace(/'/g,"\\'")}')"><span class="radio"></span>${o}</button>`).join('') +
+      `</div>`;
+    logEvent('SENT', 'RC: '+st.q);
+    armTimeout('S'+n);
+    return;
+  }
+  // Hick: one question, minimum options. Miller: short q + chunked detail.
+  $('progFill').style.width = ((n-1)/total*100)+'%';
+  body.innerHTML = `<div class="step-label">चरण ${n} / ${total}</div>
+    ${illusBox(st.illus)}
+    <div class="q">${st.q}</div>
+    ${st.detail?`<div class="q-detail">${st.detail}</div>`:''}
+    ${toolChip(st)}
+    <div class="opts-wrap" id="optsWrap"></div>`;
+  const wrap = $('optsWrap');
+  st.opts.forEach((o,i)=>{
+    const b = document.createElement('button');
+    b.className='opt'; b.innerHTML=`<span class="radio"></span>${o.label}`;
+    b.onclick = ()=>{
+      recordReply('S'+n, o.label);
+      S.stepsCompleted = Math.max(S.stepsCompleted, n);
+      if(o.advice){
+        body.innerHTML = `<div class="step-label">चरण ${n} / ${total}</div>
+          ${illusBox(o.illus||st.illus)}
+          <div class="advice ${o.warn?'warn':''}"><b>सलाह</b>${o.advice}</div>
+          ${toolChip(st)}
+          <div class="opts-wrap"><button class="btn btn-primary" id="advNext">आगे बढ़ें</button></div>`;
+        armTimeout('S'+n+'-advice');
+        $('advNext').onclick = ()=>{ clearTimeout(timeoutHandle); navGo({t:'step', n:o.next}); };
+      } else {
+        navGo({t:'step', n:o.next});
+      }
+    };
+    wrap.appendChild(b);
+  });
+  logEvent('SENT', 'चरण '+n+': '+st.q);
+  armTimeout('S'+n);
+}
+function pickRC(label){
+  recordReply('RC', label);
+  S.rootCause = label;
+  S.stepsCompleted = checkCount();
+  S.accuracy = label===S.actualRC ? 'Match' : 'No match';
+  logEvent('ACCURACY', `Picked "${label}" vs actual "${S.actualRC}" → ${S.accuracy}`);
+  if(SCRIPTS[S.fault].toolOptions) navGo({t:'tool'});
+  else navGo({t:'post'});
+}
+
+/* ---------- Tool identification ---------- */
+const TOOL_ICON = {"कोई टूल नहीं":"none","मैकेनिकल सील":"seal","ग्लैंड":"gland","बेयरिंग":"bearing"};
+function renderTool(){
+  const sc = SCRIPTS[S.fault];
+  $('progFill').style.width = '100%';
+  $('appBody').innerHTML = `<div class="step-label">टूल की पहचान</div>
+    <div class="q">कौन सा टूल चाहिए?</div>
+    <div class="opts-wrap">` +
+    sc.toolOptions.map((o)=>`<button class="opt" onclick="pickTool('${o.replace(/'/g,"\\'")}')">${optIcon(TOOL_ICON[o])}${o}</button>`).join('') +
+    `</div>`;
+  logEvent('SENT', 'Tool identification');
+  armTimeout('Tool');
+}
+function pickTool(label){
+  const sc = SCRIPTS[S.fault];
+  recordReply('Tool', label);
+  S.toolPicked = label;
+  S.toolExpected = sc.toolByRC[S.actualRC] || '';
+  S.toolCorrect = label===S.toolExpected ? 'Match' : 'No match';
+  logEvent('TOOL', `Picked "${label}" vs expected "${S.toolExpected}" → ${S.toolCorrect}`);
+  navGo({t:'esc'});
+}
+
+/* ---------- Escalation via app ---------- */
+function renderEsc(){
+  const sc = SCRIPTS[S.fault];
+  S.escalationNeeded = sc.escByRC[S.actualRC] ? 'Yes' : 'No';
+  $('progFill').style.width = '100%';
+  $('appBody').innerHTML = `<div class="step-label">अगला कदम</div>
+    <div class="q">आगे क्या करना है?</div>
+    <div class="opts-wrap">
+      <button class="opt esc" onclick="pickEscalation('Yes')"><span class="ic">📤</span>सुपरवाइज़र को एस्केलेट करें</button>
+      <button class="opt" onclick="pickEscalation('No')"><span class="radio"></span>ज़रूरत नहीं — खुद ठीक कर दिया</button>
+    </div>`;
+  logEvent('SENT', 'Escalation choice');
+  armTimeout('Escalate');
+}
+function pickEscalation(v){
+  recordReply('Escalate', v==='Yes'?'एस्केलेट किया':'एस्केलेट नहीं किया');
+  S.escalated = v;
+  logEvent('ESCALATE', `Escalated: ${v} · needed: ${S.escalationNeeded}`);
+  navGo({t:'post'});
+}
+function renderPost(){
+  $('progFill').style.width='100%';
+  $('appBody').innerHTML = `<div class="step-label">आख़िरी सवाल</div>
+    <div class="q">${POST_Q}</div>
+    <div class="opts-wrap">
+      <textarea id="postInput" rows="3" placeholder="अपना जवाब लिखें…"></textarea>
+      <button class="btn btn-primary" onclick="submitPost()">भेजें</button>
+      <button class="btn btn-secondary" onclick="submitPost(true)">छोड़ें</button>
+    </div>`;
+  logEvent('SENT', POST_Q);
+  armTimeout('Post');
+}
+function submitPost(skip){
+  clearTimeout(timeoutHandle);
+  const v = skip ? '' : $('postInput').value.trim();
+  S.post = v;
+  finish(true);
+}
+function finish(completed){
+  if(!S) return;
+  stopElapsed();
+  const total = checkCount();
+  const diagnosed = !!S.rootCause;
+  if(S.dropout==='Post' && diagnosed) S.dropout = 'Completed'; // post-Q timeout ≠ diagnosis dropout
+  if(!S.dropout) S.dropout = (completed && diagnosed) ? 'Completed'
+    : S.stepsCompleted>0 ? 'S'+S.stepsCompleted : 'Trigger';
+  if(S.replied===null) S.replied='No';
+  if(S.post) logEvent('POST', S.post);
+  logEvent('DROPOUT', S.dropout==='Completed' ? 'Completed all steps' : 'Dropout at '+S.dropout);
+  const all = JSON.parse(localStorage.getItem('waPilotResults')||'[]');
+  all.push({...S, events: EVENTS});
+  localStorage.setItem('waPilotResults', JSON.stringify(all));
+  S = null;
+  show('scr-done');
+  toast('Session saved');
+}
+
+/* ================= RESULTS (accordion) ================= */
+function showResults(){
+  const all = JSON.parse(localStorage.getItem('waPilotResults')||'[]');
+  const pass = all.filter(s=>s.stepsCompleted>=3).length;
+  const gb = $('gateBanner');
+  gb.className = 'gate-banner' + (pass>=4?' pass':'');
+  gb.innerHTML = `<div class="big">${pass} / ${all.length}</div>
+    <p>Primary gate: operators completing 3+ steps · target ≥ 4 of 10</p>`;
+
+  const list = $('resList');
+  if(!all.length){
+    list.innerHTML = '<div class="empty">No tests saved yet.<br>Run a test and results will appear here automatically.</div>';
+  } else {
+    list.innerHTML = all.map((s,i)=>{
+      const lats = s.latencies||[];
+      const avg = lats.length ? Math.round(lats.reduce((a,l)=>a+l.sec,0)/lats.length) : null;
+      const gate = s.stepsCompleted>=3;
+      const total = SCRIPTS[s.fault] ? SCRIPTS[s.fault].steps.filter(x=>!x.rcOptions).length : 5;
+      const latDetail = lats.map(l=>`${l.step} ${fmtLat(l.sec)}`).join(' · ');
+      const escOk = s.escalated && s.escalated===s.escalationNeeded;
+      const clr = m => m==='Match'?'var(--sage-forest)':m==='No match'?'var(--rust)':'var(--muted)';
+      return `<div class="acc" id="acc-${i}">
+        <div class="acc-head" onclick="toggleAcc(${i})">
+          <div><div class="op">${s.op}</div>
+          <div class="meta">Fault ${s.fault} · ${s.shift} · ${new Date(s.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} ${hhmm(new Date(s.start))}</div></div>
+          <span class="pill ${gate?'pass':'fail'}">${gate?'PASS':'FAIL'}</span>
+          <span class="chev">▼</span>
+        </div>
+        <div class="acc-body">
+          <div class="res-grid">
+            <div class="res-cell"><div class="v">${s.replied}</div><div class="k">Replied</div></div>
+            <div class="res-cell"><div class="v">${s.stepsCompleted}/${total}</div><div class="k">Steps</div></div>
+            <div class="res-cell"><div class="v">${s.dropout}</div><div class="k">Dropout</div></div>
+          </div>
+          <div class="res-row2">
+            <div class="res-cell"><div class="v">${avg!==null?fmtLat(avg):'—'}</div><div class="k">Avg latency</div></div>
+            <div class="res-cell"><div class="v" style="font-size:13px;color:${clr(s.accuracy)};">${s.accuracy?(s.accuracy==='Match'?'✓ Match':'✗ No match'):'—'}</div><div class="k">RC accuracy</div></div>
+          </div>
+          <div class="res-row2">
+            <div class="res-cell"><div class="v" style="font-size:11px;">${s.rootCause||'—'}</div><div class="k">Operator picked</div></div>
+            <div class="res-cell"><div class="v" style="font-size:11px;">${s.actualRC||'—'}</div><div class="k">Actual (staged)</div></div>
+          </div>
+          <div class="res-row2">
+            <div class="res-cell"><div class="v" style="font-size:13px;color:${clr(s.toolCorrect)};">${s.toolCorrect?(s.toolCorrect==='Match'?'✓ Correct':'✗ Wrong'):'—'}</div><div class="k">Tool ID</div></div>
+            <div class="res-cell"><div class="v" style="font-size:13px;color:${s.escalated?(escOk?'var(--sage-forest)':'var(--rust)'):'var(--muted)'};">${s.escalated?(s.escalated==='Yes'?'Escalated':'Not escalated'):'—'}</div><div class="k">Escalation ${s.escalationNeeded?('· needed: '+s.escalationNeeded):''}</div></div>
+          </div>
+          ${s.toolPicked?`<div class="res-note">🔧 Tool picked: <b>${s.toolPicked}</b> · expected: <b>${s.toolExpected||'—'}</b></div>`:''}
+          ${latDetail?`<div class="res-note">⏱ ${latDetail}</div>`:''}
+          ${s.post?`<div class="res-note quote">"${s.post}"</div>`:''}
+          <button class="del-btn" onclick="deleteResult(${i})">🗑 Delete this result</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  show('scr-results');
+}
+function toggleAcc(i){
+  $('acc-'+i).classList.toggle('open');
+}
+function deleteResult(i){
+  const all = JSON.parse(localStorage.getItem('waPilotResults')||'[]');
+  if(!all[i]) return;
+  if(!confirm(`Delete result for ${all[i].op}? This cannot be undone.`)) return;
+  all.splice(i,1);
+  localStorage.setItem('waPilotResults', JSON.stringify(all));
+  showResults();
+  toast('Result deleted');
+}
+
+/* ================= SUMMARY DASHBOARD ================= */
+function showDash(){
+  const all = JSON.parse(localStorage.getItem('waPilotResults')||'[]');
+  if(!all.length){ toast('No results yet'); return; }
+  const n = all.length;
+  const chk = s => SCRIPTS[s.fault]?SCRIPTS[s.fault].steps.filter(x=>!x.rcOptions).length:5;
+  const pass = all.filter(s=>s.stepsCompleted>=3).length;
+  const completed = all.filter(s=>s.stepsCompleted>=chk(s)).length;
+  const scored = all.filter(s=>s.accuracy==='Match'||s.accuracy==='No match');
+  const match = scored.filter(s=>s.accuracy==='Match').length;
+  const nomatch = scored.length - match;
+  const unscored = n - scored.length;
+
+  // tool identification
+  const toolScored = all.filter(s=>s.toolCorrect==='Match'||s.toolCorrect==='No match');
+  const toolOk = toolScored.filter(s=>s.toolCorrect==='Match').length;
+  const toolWrong = toolScored.length - toolOk;
+  const toolNa = n - toolScored.length;
+
+  // escalation
+  const escReached = all.filter(s=>s.escalated==='Yes'||s.escalated==='No');
+  const escCorrect = escReached.filter(s=>s.escalated===s.escalationNeeded).length;
+  const escWrong = escReached.length - escCorrect;
+  const escNa = n - escReached.length;
+
+  // funnel: how many reached each stage
+  const maxChk = Math.max(...all.map(s=>SCRIPTS[s.fault]?SCRIPTS[s.fault].steps.filter(x=>!x.rcOptions).length:5), 5);
+  const stages = [
+    {lbl:'Trigger', cnt: all.filter(s=>s.replied==='Yes').length},
+    ...Array.from({length:maxChk},(_,k)=>({lbl:'Step '+(k+1), cnt: all.filter(s=>s.stepsCompleted>=k+1).length})),
+    {lbl:'Diagnosis', cnt: all.filter(s=>s.rootCause).length},
+    {lbl:'Tool ID', cnt: all.filter(s=>s.toolPicked).length},
+    {lbl:'Escalation', cnt: all.filter(s=>s.escalated).length}
+  ];
+
+  // avg latency per stage across sessions
+  const latMap = {};
+  all.forEach(s=>(s.latencies||[]).forEach(l=>{
+    const key = l.step.replace('-advice','');
+    (latMap[key]=latMap[key]||[]).push(l.sec);
+  }));
+  const latOrder = ['Trigger','Deeplink','S1','S2','S3','S4','S5','RC','Tool','Escalate'].filter(k=>latMap[k]);
+  const latAvgs = latOrder.map(k=>({lbl:k, avg: Math.round(latMap[k].reduce((a,b)=>a+b,0)/latMap[k].length)}));
+  const latMax = Math.max(...latAvgs.map(l=>l.avg), 1);
+
+  // fault split
+  const byFault = ['A','B'].map(f=>{
+    const g = all.filter(s=>s.fault===f);
+    return {f, n:g.length, done:g.filter(s=>s.stepsCompleted>=chk(s)).length};
+  }).filter(x=>x.n);
+
+  $('dashSub').textContent = `${n} test${n>1?'s':''} · generated ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
+  $('dashBody').innerHTML = `
+    <div class="tiles">
+      <div class="tile ${pass>=4?'good':''}"><div class="v">${pass}<small> / ${n}</small></div><div class="k">Gate passes (3+ steps · target ≥4/10)</div></div>
+      <div class="tile"><div class="v">${Math.round(completed/n*100)}<small>%</small></div><div class="k">Completed full flow</div></div>
+      <div class="tile ${scored.length && match/scored.length>=0.5?'good':scored.length?'bad':''}"><div class="v">${scored.length?Math.round(match/scored.length*100)+'%':'—'}</div><div class="k">Root-cause accuracy (of ${scored.length} scored)</div></div>
+      <div class="tile ${toolScored.length && toolOk/toolScored.length>=0.5?'good':toolScored.length?'bad':''}"><div class="v">${toolScored.length?Math.round(toolOk/toolScored.length*100)+'%':'—'}</div><div class="k">Tool identified correctly (of ${toolScored.length})</div></div>
+      <div class="tile ${escReached.length && escCorrect/escReached.length>=0.5?'good':escReached.length?'bad':''}"><div class="v">${escReached.length?Math.round(escCorrect/escReached.length*100)+'%':'—'}</div><div class="k">Escalated correctly (of ${escReached.length})</div></div>
+      <div class="tile"><div class="v">${all.filter(s=>s.replied==='Yes').length}<small> / ${n}</small></div><div class="k">Replied to trigger</div></div>
+    </div>
+
+    <div class="chart">
+      <h3>Dropout funnel</h3>
+      <div class="cap">Operators reaching each stage (of ${n})</div>
+      ${stages.map(st=>`
+        <div class="hbar-row" title="${st.lbl}: ${st.cnt} of ${n}">
+          <div class="lbl">${st.lbl}</div>
+          <div class="track"><div class="fill" style="width:${st.cnt/n*100}%"></div></div>
+          <div class="val">${st.cnt}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="chart">
+      <h3>Average latency per stage</h3>
+      <div class="cap">Seconds from prompt shown to operator's tap</div>
+      ${latAvgs.map(l=>`
+        <div class="hbar-row" title="${l.lbl}: avg ${fmtLat(l.avg)}">
+          <div class="lbl">${l.lbl}</div>
+          <div class="track"><div class="fill teal" style="width:${l.avg/latMax*100}%"></div></div>
+          <div class="val">${fmtLat(l.avg)}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="chart">
+      <h3>Root-cause accuracy</h3>
+      <div class="cap">Auto-scored against the staged fault</div>
+      <div class="stackbar">
+        ${match?`<div class="seg-m" style="flex:${match}" title="Match: ${match}"></div>`:''}
+        ${nomatch?`<div class="seg-n" style="flex:${nomatch}" title="No match: ${nomatch}"></div>`:''}
+        ${unscored?`<div class="seg-u" style="flex:${unscored}" title="Not scored: ${unscored}"></div>`:''}
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--sage-forest)"></i>✓ Match (${match})</span>
+        <span><i style="background:var(--rust)"></i>✗ No match (${nomatch})</span>
+        <span><i style="background:#B8B4A8"></i>— Not scored (${unscored})</span>
+      </div>
+    </div>
+
+    <div class="chart">
+      <h3>Tool identification</h3>
+      <div class="cap">Did the operator name the correct tool for the staged fault?</div>
+      <div class="stackbar">
+        ${toolOk?`<div class="seg-m" style="flex:${toolOk}"></div>`:''}
+        ${toolWrong?`<div class="seg-n" style="flex:${toolWrong}"></div>`:''}
+        ${toolNa?`<div class="seg-u" style="flex:${toolNa}"></div>`:''}
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--sage-forest)"></i>✓ Correct (${toolOk})</span>
+        <span><i style="background:var(--rust)"></i>✗ Wrong (${toolWrong})</span>
+        <span><i style="background:#B8B4A8"></i>— Not reached (${toolNa})</span>
+      </div>
+    </div>
+
+    <div class="chart">
+      <h3>Escalation via app</h3>
+      <div class="cap">Did the operator escalate when the fault required it?</div>
+      <div class="stackbar">
+        ${escCorrect?`<div class="seg-m" style="flex:${escCorrect}"></div>`:''}
+        ${escWrong?`<div class="seg-n" style="flex:${escWrong}"></div>`:''}
+        ${escNa?`<div class="seg-u" style="flex:${escNa}"></div>`:''}
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--sage-forest)"></i>✓ Correct decision (${escCorrect})</span>
+        <span><i style="background:var(--rust)"></i>✗ Wrong decision (${escWrong})</span>
+        <span><i style="background:#B8B4A8"></i>— Not reached (${escNa})</span>
+      </div>
+    </div>
+
+    ${byFault.length?`<div class="chart">
+      <h3>Completion by fault</h3>
+      <div class="cap">Completed all steps, per staged fault</div>
+      ${byFault.map(x=>`
+        <div class="hbar-row" title="Fault ${x.f}: ${x.done} of ${x.n} completed">
+          <div class="lbl">Fault ${x.f}</div>
+          <div class="track"><div class="fill" style="width:${x.done/x.n*100}%"></div></div>
+          <div class="val">${x.done}/${x.n}</div>
+        </div>`).join('')}
+    </div>`:''}`;
+  show('scr-dash');
+}
+
+function newTest(){
+  clearTimeout(timeoutHandle);
+  stopElapsed();
+  $('elapsed').textContent='00:00';
+  S = null;
+  $('opCode').value='';
+  renderActualRC(document.querySelector('#faultSeg .sel').dataset.v);
+  show('scr-setup');
+}
+function resetAll(){
+  if(!confirm('Delete ALL saved results on this device?')) return;
+  localStorage.removeItem('waPilotResults');
+  showResults();
+}
+
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* init */
+renderActualRC('A');
+show('scr-setup');
+</script>
+</body>
+</html>
