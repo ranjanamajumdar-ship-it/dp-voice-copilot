@@ -1,0 +1,636 @@
+<title>Know Your Plant — Interactive Prototype</title>
+<style>
+  :root{
+    --ink:#0E1A20;--ink-2:#22343C;--mist:#F4F7F6;--paper:#FBFCFC;
+    --line:#DCE5E4;--line-2:#E9EEED;--muted:#5F7278;--muted-2:#8B9DA0;
+    --accent:#0E9E97;--accent-deep:#0A6E6A;--accent-wash:#E4F3F1;
+    --water:#2C7BE5;--water-wash:#E7F0FD;
+    --good:#1F9D6B;--good-wash:#E4F4EC;--warn:#C9871A;--warn-wash:#FBF0DA;
+    --crit:#D8483C;--crit-wash:#FBE7E4;--card:#FFF;
+    --shadow:0 1px 2px rgba(14,26,32,.05),0 10px 30px rgba(14,26,32,.06);
+    --disp:"Helvetica Neue",Arial,ui-sans-serif,system-ui,sans-serif;
+    --body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  :root[data-theme="dark"]{
+    --ink:#EAF1F0;--ink-2:#C4D2D2;--mist:#0B1317;--paper:#0F1A1F;
+    --line:#22333A;--line-2:#1A2A30;--muted:#8FA2A6;--muted-2:#67797D;
+    --accent:#2CC2BA;--accent-deep:#7FE0D9;--accent-wash:#11302F;
+    --water:#5B9CF0;--water-wash:#14263C;--good:#3FBE88;--good-wash:#122A20;
+    --warn:#E0A83C;--warn-wash:#2E2410;--crit:#EE6A5E;--crit-wash:#331916;
+    --card:#132127;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ink:#EAF1F0;--ink-2:#C4D2D2;--mist:#0B1317;--paper:#0F1A1F;
+    --line:#22333A;--line-2:#1A2A30;--muted:#8FA2A6;--muted-2:#67797D;
+    --accent:#2CC2BA;--accent-deep:#7FE0D9;--accent-wash:#11302F;
+    --water:#5B9CF0;--water-wash:#14263C;--good:#3FBE88;--good-wash:#122A20;
+    --warn:#E0A83C;--warn-wash:#2E2410;--crit:#EE6A5E;--crit-wash:#331916;
+    --card:#132127;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--mist);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* ===== App frame ===== */
+  .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;max-width:1240px;margin:0 auto;background:var(--paper);}
+  /* sidebar */
+  .side{background:var(--card);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;}
+  .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 16px;}
+  .brand .logo{font-size:20px;}
+  .brand b{font-family:var(--disp);font-weight:800;letter-spacing:-.01em;font-size:16px;}
+  .brand small{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);}
+  .navlabel{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);padding:14px 8px 6px;}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;border:none;background:none;color:var(--ink-2);font-size:14px;width:100%;text-align:left;transition:.12s;}
+  .nav .ic{width:18px;text-align:center;font-size:15px;opacity:.85;}
+  .nav:hover{background:var(--mist);}
+  .nav.on{background:var(--accent-wash);color:var(--accent-deep);font-weight:600;}
+  .nav .badge{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--crit);color:#fff;padding:1px 6px;border-radius:999px;}
+  .side .foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--line-2);}
+  .op{display:flex;align-items:center;gap:10px;padding:6px 8px;}
+  .op .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--water));color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;}
+  .op b{font-size:13px;}.op small{display:block;color:var(--muted);font-size:11px;}
+  .themebtn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px;color:var(--muted);font-size:12px;}
+
+  /* main */
+  .main{position:relative;min-width:0;}
+  .topbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:12px 22px;}
+  .topbar .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
+  .topbar .status{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  .live{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--good);}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 var(--good);animation:pulse 2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 60%,transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  .screen{padding:26px 30px 120px;max-width:960px;}
+  .screen.wide{max-width:1040px;}
+
+  h1{font-family:var(--disp);font-weight:800;letter-spacing:-.02em;font-size:28px;margin:0 0 2px;}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:15px;}
+  h2{font-family:var(--disp);font-weight:700;font-size:19px;margin:26px 0 12px;letter-spacing:-.01em;}
+  h3{font-size:13px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 10px;font-weight:600;}
+
+  .grid{display:grid;gap:14px;}.g2{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:repeat(3,1fr);}.g4{grid-template-columns:repeat(4,1fr);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);}
+  .card.click{cursor:pointer;transition:.14s;}
+  .card.click:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 24px rgba(14,26,32,.1);}
+  .kh{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);display:block;margin-bottom:8px;}
+  .card h4{margin:0 0 4px;font-family:var(--disp);font-size:16px;font-weight:700;letter-spacing:-.01em;}
+  .card p{margin:.3em 0;font-size:13.5px;color:var(--ink-2);}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:999px;font-weight:600;}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .good{background:var(--good-wash);color:var(--good);}.warn{background:var(--warn-wash);color:var(--warn);}
+  .crit{background:var(--crit-wash);color:var(--crit);}.info{background:var(--water-wash);color:var(--water);}
+  .ai{background:var(--accent-wash);color:var(--accent-deep);}
+
+  .gauge{--v:91;--c:var(--good);width:92px;height:92px;border-radius:50%;flex:none;background:conic-gradient(var(--c) calc(var(--v)*1%),var(--line-2) 0);display:grid;place-items:center;position:relative;}
+  .gauge::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--card);}
+  .gauge b{position:relative;font-family:var(--disp);font-size:25px;font-weight:800;}.gauge b small{font-size:12px;color:var(--muted);}
+  .readout{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+
+  .sensors{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:10px;overflow:hidden;}
+  .sensors .s{background:var(--card);padding:10px 12px;}
+  .sensors .k{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--muted-2);text-transform:uppercase;}
+  .sensors .v{font-family:var(--mono);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px;}
+  .sensors .v small{font-size:10.5px;color:var(--muted);}
+  .up{color:var(--warn);}.down{color:var(--water);}.st{color:var(--good);}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);transition:.12s;}
+  .chip:hover{border-color:var(--accent);color:var(--accent-deep);background:var(--accent-wash);}
+
+  /* chat */
+  .chat{display:flex;flex-direction:column;gap:12px;padding:4px 0;}
+  .bub{max-width:80%;padding:11px 14px;border-radius:15px;font-size:14px;line-height:1.5;animation:rise .3s ease;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .bub.op{align-self:flex-end;background:var(--water-wash);color:var(--ink);border-bottom-right-radius:5px;}
+  .bub.ai{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:5px;box-shadow:var(--shadow);}
+  .bub.ai .who{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .bub.ai .who .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .bub ul{margin:8px 0 2px;padding-left:18px;}.bub li{margin:2px 0;}
+  .typing{display:inline-flex;gap:4px;}.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted-2);animation:blink 1.2s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+  .askbar{position:sticky;bottom:0;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 0 4px;margin-top:14px;}
+  .askrow{display:flex;gap:8px;align-items:center;}
+  .askrow input{flex:1;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:11px 16px;font-size:14px;color:var(--ink);font-family:inherit;}
+  .askrow input:focus{outline:none;border-color:var(--accent);}
+  .iconbtn{border:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex:none;}
+  .mic{background:var(--accent-wash);color:var(--accent-deep);}
+  .send{background:var(--accent);color:#fff;}
+
+  /* stepper / task */
+  .flow{display:flex;flex-direction:column;gap:8px;}
+  .step{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .step .n{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600;background:var(--mist);color:var(--muted);}
+  .step.done .n{background:var(--good-wash);color:var(--good);}
+  .step.now{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-wash);}
+  .step.now .n{background:var(--accent);color:#fff;}
+  .step .h{font-weight:700;font-size:14px;}.step .d{font-size:12.5px;color:var(--muted);}
+  .step.done{opacity:.62;}
+
+  .tl{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+  .tl .d{border:1px solid var(--line);border-radius:10px;padding:9px;background:var(--card);}
+  .tl .day{font-family:var(--mono);font-size:10px;color:var(--muted-2);text-transform:uppercase;}
+  .tl .st2{font-size:12px;margin-top:5px;font-weight:600;line-height:1.25;}
+  .tl .g{border-top:3px solid var(--good);}.tl .w{border-top:3px solid var(--warn);}
+  .tl .c{border-top:3px solid var(--crit);}.tl .i{border-top:3px solid var(--water);}
+
+  .callout{border:1px solid var(--line);border-left:3px solid var(--water);background:var(--water-wash);border-radius:0 12px 12px 0;padding:12px 15px;font-size:13.5px;color:var(--ink-2);}
+  .callout.ac{border-left-color:var(--accent);background:var(--accent-wash);}
+  .callout.wc{border-left-color:var(--warn);background:var(--warn-wash);}
+
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:600;transition:.12s;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.pri{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn.pri:hover{background:var(--accent-deep);}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+
+  .src{font-family:var(--mono);font-size:11px;color:var(--muted);display:inline-flex;gap:6px;align-items:center;cursor:pointer;}
+  .src u{text-decoration-style:dotted;}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--muted);}
+  .empty .big{font-size:34px;margin-bottom:8px;}
+
+  .banner{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--crit-wash);color:var(--crit);font-size:13px;font-family:var(--mono);}
+  .banner.warnb{background:var(--warn-wash);color:var(--warn);}
+
+  .obtn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:14px;font-size:14px;font-weight:600;color:var(--ink);text-align:center;transition:.12s;}
+  .obtn:hover{border-color:var(--accent);}
+  .obtn.sel{background:var(--accent-wash);border-color:var(--accent);color:var(--accent-deep);}
+
+  .hidden{display:none!important;}
+  .fade{animation:rise .35s ease;}
+
+  /* mobile */
+  @media (max-width:820px){
+    .app{grid-template-columns:1fr;}
+    .side{position:fixed;bottom:0;top:auto;left:0;right:0;height:auto;width:100%;flex-direction:row;overflow-x:auto;z-index:30;border-right:none;border-top:1px solid var(--line);padding:8px;gap:2px;}
+    .brand,.navlabel,.side .foot{display:none;}
+    .nav{flex-direction:column;gap:3px;font-size:10px;padding:6px 8px;min-width:64px;}
+    .nav .ic{font-size:18px;}.nav .badge{position:absolute;}
+    .g2,.g3,.g4{grid-template-columns:1fr;}
+    .sensors{grid-template-columns:repeat(2,1fr);}
+    .tl{grid-template-columns:repeat(2,1fr);}
+    .screen{padding:18px 16px 90px;}
+  }
+</style>
+
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="brand"><span class="logo">🌿</span><div><b>Know Your Plant</b><small>DigitalPaani</small></div></div>
+    <div class="navlabel">Copilot</div>
+    <button class="nav on" data-go="home"><span class="ic">◱</span>Home</button>
+    <button class="nav" data-go="ask"><span class="ic">✳</span>Ask Your Plant</button>
+    <div class="navlabel">Plant</div>
+    <button class="nav" data-go="plant"><span class="ic">⊞</span>Plant Explorer</button>
+    <button class="nav" data-go="biology"><span class="ic">🧫</span>Biology</button>
+    <button class="nav" data-go="diagnose"><span class="ic">🩺</span>Diagnostics<span class="badge">1</span></button>
+    <button class="nav" data-go="tasks"><span class="ic">☑</span>Tasks</button>
+    <div class="navlabel">Records</div>
+    <button class="nav" data-go="compliance"><span class="ic">⚖</span>Compliance</button>
+    <button class="nav" data-go="history"><span class="ic">🕘</span>History</button>
+    <div class="foot">
+      <button class="themebtn" onclick="toggleTheme()">◐ Toggle theme</button>
+      <div class="op"><div class="av">R</div><div><b>Rahul K.</b><small>Shift A · Operator</small></div></div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="topbar">
+      <span class="crumb" id="crumb">Home</span>
+      <div class="status">
+        <span class="live"><i></i>SCADA live</span>
+        <span class="pill ai"><span class="dot"></span>Copilot on</span>
+      </div>
+    </div>
+    <div id="stage"></div>
+  </div>
+</div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const el=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
+const stage=$('#stage');
+
+function toggleTheme(){
+  const r=document.documentElement;
+  const cur=r.getAttribute('data-theme')|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+}
+
+const CRUMB={home:'Home',ask:'Ask Your Plant',plant:'Plant Explorer',equip:'Plant › Equipment',biology:'Biology',
+  diagnose:'Diagnostics',tasks:'Tasks',task:'Tasks › Task Mode',compliance:'Compliance',history:'History',explain:'Learning Mode'};
+
+function go(screen,arg){
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.go===screen));
+  $('#crumb').textContent=CRUMB[screen]||screen;
+  stage.innerHTML='';
+  const s=el('<div class="screen fade"></div>');
+  if(screen==='home') s.append(...home());
+  else if(screen==='ask') s.append(...ask());
+  else if(screen==='plant') s.append(...plant());
+  else if(screen==='equip') s.append(...equip(arg));
+  else if(screen==='explain') s.append(...explain(arg));
+  else if(screen==='biology') s.append(...biology());
+  else if(screen==='diagnose') s.append(...diagnose());
+  else if(screen==='tasks') s.append(...tasks());
+  else if(screen==='task') s.append(...taskmode(arg));
+  else if(screen==='compliance') s.append(...compliance());
+  else if(screen==='history') s.append(...history());
+  stage.append(s);
+  stage.scrollIntoView({block:'start'});
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>go(n.dataset.go));
+
+/* ---------- helpers ---------- */
+function h(str){const d=document.createElement('div');d.innerHTML=str;return [...d.childNodes];}
+
+/* ================= HOME ================= */
+function home(){
+  const w=el(`<div>
+    <h1>Good morning, Rahul 🌤️</h1>
+    <p class="sub">Overnight was calm. One thing to check before 09:00.</p>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="readout">
+        <div class="gauge" style="--v:91;--c:var(--good)"><b>91<small>%</small></b></div>
+        <div style="flex:1;min-width:240px;">
+          <span class="kh">Plant Health</span>
+          <p style="font-size:15px;margin:.1em 0;">Biology is <b>stable</b>. Clarifier sludge blanket rose overnight. Pump&nbsp;2 vibration up 12%. <b>No compliance risk expected today.</b></p>
+          <div class="chips" style="margin-top:8px;">
+            <button class="chip" data-go2="biology">Biology 88 · steady</button>
+            <button class="chip" data-go2="diagnose">Equipment · 1 to review</button>
+            <button class="chip" data-go2="compliance">Compliance ✓ on track</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid g3">
+      <div class="card"><span class="kh">Today's risks</span>
+        <p><span class="pill warn"><span class="dot"></span>Watch</span> Clarifier blanket +0.4m</p>
+        <p><span class="pill warn"><span class="dot"></span>Watch</span> Pump 2 vibration +12%</p></div>
+      <div class="card"><span class="kh">Recommended actions</span>
+        <p>1 · <a class="lk" data-go2="equip" data-arg="clarifier">Inspect clarifier</a></p>
+        <p>2 · <a class="lk" data-go2="diagnose">Review Pump 2</a></p>
+        <p>3 · <a class="lk" data-go2="equip" data-arg="uv">Check UV runtime</a></p></div>
+      <div class="card"><span class="kh">Since last shift</span>
+        <p>MLSS +180 mg/L</p><p>Blower 1 → Auto</p><p>Backwash done 04:10</p></div>
+    </div>
+    <h2>Quick actions</h2>
+    <div class="grid g4">
+      <button class="card click" data-go2="task" data-arg="waste"><h4>▶ Start task</h4><p>Sludge wasting, backwash…</p></button>
+      <button class="card click" data-go2="biology"><h4>📸 Log observation</h4><p>Foam · colour · settling</p></button>
+      <button class="card click" data-go2="ask"><h4>✳ Ask your plant</h4><p>Natural language or voice</p></button>
+      <button class="card click" data-go2="history"><h4>🗒 Shift handover</h4><p>Review + sign off</p></button>
+    </div>
+    <div class="callout ac" style="margin-top:18px;"><b>Try it:</b> every underlined item is live. Tap “Review Pump 2” to enter a guided diagnosis, or “Start task” to run Task Mode.</div>
+  </div>`);
+  wireLinks(w);
+  return [w];
+}
+
+/* ================= ASK ================= */
+const ASK_ANSWERS={
+  'why did the blanket rise':{src:3,html:`The clarifier sludge blanket rose <b>0.4&nbsp;m</b> overnight because return-sludge flow (RAS) dropped when Pump&nbsp;2 slowed — its vibration trip lowered output around 02:30. Solids built up faster than they returned. It's still within safe range (1.5&nbsp;m of 2.4&nbsp;m). Clearing the Pump&nbsp;2 issue should restore normal blanket depth.`,chips:['Is this urgent?','Show Pump 2','What if I do nothing?']},
+  'is pump 2 serious':{src:4,html:`Not yet — but worth acting today. Pump&nbsp;2 vibration is up <b>12%</b> over 48h, still below the alarm threshold. History shows a similar rise 4 months ago that turned out to be a partially blocked suction strainer. I'd run a quick diagnosis before it forces a trip.`,chips:['Start diagnosis','Has this happened before?','Can it wait to tomorrow?'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose'}},
+  'will we meet limits today':{src:5,html:`Yes — I forecast <b>all discharge limits met</b> today. Effluent BOD is trending 12&nbsp;mg/L (limit 30), TSS 14&nbsp;mg/L (limit 50). The only variable is UV runtime; if it stays above 20h/day, faecal coliform stays compliant. Confidence <b>84%</b>.`,chips:['Show the forecast','What could change this?'],cta:{label:'Open compliance forecast',go:'compliance'}},
+  'default':{src:3,html:`I read your live SCADA, the last 7 days of trends and the SOP library for that. In short: things look normal for your plant right now. Want me to look at a specific process or piece of equipment?`,chips:['How is biology?','Any risks today?','Explain today\'s DO trend']}
+};
+function ask(){
+  const w=el(`<div>
+    <h1>Ask Your Plant</h1>
+    <p class="sub">Natural language or voice. The copilot already knows your live plant state.</p>
+    <div class="chat" id="chat">
+      <div class="bub ai"><div class="who"><span class="dot"></span>Plant Copilot</div>Morning, Rahul. I'm watching all 14 data sources. Ask me anything — here are a few things on my mind today.</div>
+    </div>
+    <div class="askbar">
+      <div class="chips" style="margin-bottom:10px;" id="suggest">
+        <button class="chip">Why did the blanket rise?</button>
+        <button class="chip">Is Pump 2 serious?</button>
+        <button class="chip">Will we meet limits today?</button>
+      </div>
+      <div class="askrow">
+        <button class="iconbtn mic" title="Hold to speak">🎤</button>
+        <input id="askin" placeholder="Ask your plant…" autocomplete="off">
+        <button class="iconbtn send" id="asksend">↑</button>
+      </div>
+    </div>
+  </div>`);
+  const chat=w.querySelector('#chat');
+  const input=w.querySelector('#askin');
+  function answer(q){
+    const key=q.toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
+    let a=ASK_ANSWERS.default;
+    for(const k in ASK_ANSWERS){if(k!=='default'&&key.includes(k.slice(0,14))){a=ASK_ANSWERS[k];break;}}
+    chat.append(el(`<div class="bub op">${q}</div>`));
+    const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Reading ${a.src} sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
+    chat.append(t);chat.scrollIntoView({block:'end'});
+    stage.scrollTo?.(0,9e9);window.scrollTo(0,9e9);
+    setTimeout(()=>{
+      t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="src"><u>${a.src} sources</u></span></div>${a.html}`;
+      const cl=el(`<div class="chips" style="margin-top:10px;"></div>`);
+      (a.chips||[]).forEach(c=>{const b=el(`<button class="chip">${c}</button>`);b.onclick=()=>answer(c);cl.append(b);});
+      t.append(cl);
+      if(a.cta){const b=el(`<div class="btnrow"><button class="btn pri">${a.cta.label}</button></div>`);b.querySelector('button').onclick=()=>go(a.cta.go);t.append(b);}
+      window.scrollTo(0,9e9);
+    },900);
+  }
+  w.querySelectorAll('#suggest .chip').forEach(c=>c.onclick=()=>answer(c.textContent));
+  w.querySelector('#asksend').onclick=()=>{if(input.value.trim()){answer(input.value.trim());input.value='';}};
+  input.onkeydown=(e)=>{if(e.key==='Enter'&&input.value.trim()){answer(input.value.trim());input.value='';}};
+  return [w];
+}
+
+/* ================= PLANT EXPLORER ================= */
+const EQUIP={
+  clarifier:{name:'Secondary Clarifier',proc:'Clarification',status:'warn',stat:'Watch',vals:[['Blanket','1.9','m','up'],['Overflow','98','m³/h','st'],['Torque','62','%','st'],['Mode','Auto','','']]},
+  pump2:{name:'RAS Pump 2',proc:'Sludge return',status:'warn',stat:'Review',vals:[['Vibration','4.8','mm/s ↑','up'],['Discharge','2.1','bar','down'],['Runtime','1,240','h','st'],['Mode','Auto','','']]},
+  blower1:{name:'Blower 1',proc:'Aeration',status:'good',stat:'Healthy',vals:[['Output','62','%','st'],['Air flow','420','m³/h','st'],['Runtime','980','h','st'],['Mode','Auto','','']]},
+  uv:{name:'UV Disinfection',proc:'Disinfection',status:'good',stat:'Healthy',vals:[['Runtime','21.4','h/day','st'],['Intensity','88','%','st'],['Lamp age','6','mo','st'],['Mode','Auto','','']]}
+};
+function plant(){
+  const w=el(`<div>
+    <h1>Plant Explorer</h1>
+    <p class="sub">Four processes, tap any to see its equipment. Colour shows health at a glance.</p>
+    <div class="grid g2" id="procs"></div>
+    <h2>Equipment</h2>
+    <div class="grid g2" id="eqs"></div>
+  </div>`);
+  const procs=[['Aeration','good','DO on target · Blower 1 Auto'],['Clarification','warn','Blanket rising · watch'],['Sludge return','warn','Pump 2 vibration ↑'],['Disinfection','good','UV runtime healthy']];
+  const pc=w.querySelector('#procs');
+  procs.forEach(([n,st,d])=>pc.append(el(`<div class="card"><span class="kh">Process</span><h4>${n}</h4><p><span class="pill ${st}"><span class="dot"></span>${st==='good'?'Healthy':'Watch'}</span> ${d}</p></div>`)));
+  const eq=w.querySelector('#eqs');
+  for(const k in EQUIP){const e=EQUIP[k];
+    const c=el(`<button class="card click" style="text-align:left"><span class="kh">${e.proc}</span><h4>${e.name}</h4><p><span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p></button>`);
+    c.onclick=()=>go('equip',k);eq.append(c);}
+  return [w];
+}
+function equip(k){
+  const e=EQUIP[k]||EQUIP.pump2;
+  const w=el(`<div>
+    <h1>${e.name}</h1>
+    <p class="sub">${e.proc} · <span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p>
+    <div class="sensors" style="margin-bottom:14px;">${e.vals.map(([k2,v,u,t])=>`<div class="s"><div class="k">${k2}</div><div class="v ${t}">${v} <small>${u}</small></div></div>`).join('')}</div>
+    <div class="btnrow">
+      <button class="btn pri" id="ex">? Explain this equipment</button>
+      <button class="btn" id="dg">⚠ Diagnose a problem</button>
+      <button class="btn" id="tr">📈 Trend explorer</button>
+    </div>
+    <div id="slot" style="margin-top:16px;"></div>
+  </div>`);
+  w.querySelector('#ex').onclick=()=>go('explain',e.name);
+  w.querySelector('#dg').onclick=()=>go('diagnose');
+  w.querySelector('#tr').onclick=()=>{
+    const slot=w.querySelector('#slot');
+    slot.innerHTML='';
+    slot.append(el(`<div class="card fade"><span class="kh">Trend Explanation · last 24h</span>
+      <svg viewBox="0 0 320 70" width="100%" height="70" preserveAspectRatio="none" style="margin:6px 0">
+        <polyline fill="none" stroke="var(--water)" stroke-width="2" points="0,48 40,45 80,50 120,40 160,30 200,34 240,28 280,20 320,16"/>
+        <polyline fill="var(--water-wash)" stroke="none" opacity=".5" points="0,48 40,45 80,50 120,40 160,30 200,34 240,28 280,20 320,16 320,70 0,70"/>
+        <circle cx="320" cy="16" r="3.5" fill="var(--water)"/></svg>
+      <p style="font-size:13.5px;color:var(--ink-2)">Vibration has climbed steadily over 24h — <b>gentle upward drift, not a spike</b>. Your normal band for this pump is 3.5–4.2 mm/s; it's now at the top of that band. Worth a look, not an emergency.</p></div>`));
+  };
+  return [w];
+}
+
+/* ================= EXPLAIN / LEARNING ================= */
+function explain(topic){
+  topic=topic||'Aeration Basin 1';
+  const w=el(`<div>
+    <h1>Learning Mode</h1>
+    <p class="sub">Taught with <b>your</b> plant — live values, current mode and your SOPs.</p>
+    <div class="chat" id="chat">
+      <div class="bub op">Teach me how ${topic} works.</div>
+    </div>
+    <div class="askbar"><div class="chips" id="depth"></div></div>
+  </div>`);
+  const chat=w.querySelector('#chat');
+  const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Reading 4 sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
+  chat.append(t);
+  setTimeout(()=>{
+    t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · your plant</div>
+      In your plant, ${topic} is where microbes eat the organic load. Right now DO is <b>2.3&nbsp;mg/L</b> (your target is 2.0) and Blower&nbsp;1 is in Auto at 62%. The blower feeds air so the bugs can breathe; too little and they suffocate, too much wastes energy. Your MLSS of 4,120&nbsp;mg/L means a healthy population is doing the work.`;
+  },800);
+  const depths=['Go deeper — the biology','Why does DO matter?','Show the SOP','Explain today\'s DO trend'];
+  const dc=w.querySelector('#depth');
+  depths.forEach(d=>{const b=el(`<button class="chip">${d}</button>`);b.onclick=()=>{
+    chat.append(el(`<div class="bub op">${d}</div>`));
+    const tt=el(`<div class="bub ai"><div class="who"><span class="dot"></span><span class="typing"><i></i><i></i><i></i></span></div></div>`);chat.append(tt);window.scrollTo(0,9e9);
+    setTimeout(()=>{tt.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot</div>${EXPLAIN_MORE(d)}`;window.scrollTo(0,9e9);},700);
+  };dc.append(b);});
+  return [w];
+}
+function EXPLAIN_MORE(d){
+  if(d.includes('DO trend'))return `DO dipped to <b>1.4 mg/L</b> at 04:00 after the 04:10 backwash pulled flow while Blower 1 was still at 40% manual. It recovered to 2.3. This same dip appears most nights after backwash — normal for your plant, not a fault.`;
+  if(d.includes('SOP'))return `Your SOP <b>AER-03</b> says: keep DO 1.8–2.5 mg/L during nitrification, verify blower Auto mode each shift, and log any manual override. Want me to check compliance with it right now?`;
+  if(d.includes('DO matter'))return `Below ~1.5 mg/L nitrifying bacteria slow down and ammonia can break through your discharge limit. Above ~3 you're just paying for electricity. That's why 2.0 is your sweet spot.`;
+  return `The floc in your basin is a living community — bacteria, protozoa, rotifers. A healthy plant shows crawling ciliates under a microscope and settles into a firm brown blanket. Your last settling test looked textbook. I compare it only against your own history.`;
+}
+
+/* ================= BIOLOGY ================= */
+let obs={foam:null,colour:null,settling:null,odour:null};
+function biology(){
+  const w=el(`<div>
+    <h1>Biological Health</h1>
+    <p class="sub">An inferred AI score — not measured. Always shown with its confidence.</p>
+    <div class="card" style="margin-bottom:14px;"><div class="readout">
+      <div class="gauge" style="--v:88;--c:var(--good)"><b>88</b></div>
+      <div style="flex:1;min-width:240px;">
+        <p style="margin:.1em 0;font-size:15px;"><b>Stable biology.</b> Good settling, DO on target.</p>
+        <span class="pill info"><span class="dot"></span>Confidence 72% · no SVI in 3 days</span>
+        <p style="font-size:13px;color:var(--muted);margin:.4em 0 0;">Watch: slight foam increase this morning. If it thickens, check F:M ratio.</p>
+      </div>
+    </div></div>
+    <h3>Biology timeline</h3>
+    <div class="tl">
+      <div class="d g"><div class="day">Mon</div><div class="st2">Healthy</div></div>
+      <div class="d g"><div class="day">Tue</div><div class="st2">Healthy</div></div>
+      <div class="d w"><div class="day">Wed</div><div class="st2">Slightly stressed</div></div>
+      <div class="d c"><div class="day">Thu</div><div class="st2">Foaming ↑</div></div>
+      <div class="d i"><div class="day">Fri</div><div class="st2">Nitrification recovering</div></div>
+      <div class="d g"><div class="day">Sat</div><div class="st2">Stable</div></div>
+    </div>
+    <h2>Log today's observation</h2>
+    <p class="sub" style="margin-top:-6px">One capture per shift raises the copilot's confidence.</p>
+    <div id="obs"></div>
+    <h2>Settling test assistant</h2>
+    <div class="card"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="photo">📸 Upload settling photo</button>
+      <div id="photoout" class="chips"></div>
+    </div></div>
+  </div>`);
+  // observation engine
+  const groups=[['foam','Foam',['None','White','Brown','Thick']],['colour','Colour',['Brown','Dark brown','Black','Grey']],['settling','Settling',['Good','Average','Poor']],['odour','Odour',['Earthy','Chemical','Septic']]];
+  const ob=w.querySelector('#obs');
+  groups.forEach(([key,lab,opts])=>{
+    const row=el(`<div style="margin-bottom:12px"><h3 style="margin:6px 0">${lab}</h3><div class="grid g4" data-k="${key}"></div></div>`);
+    const g=row.querySelector('.grid');
+    opts.forEach(o=>{const b=el(`<button class="obtn">${o}</button>`);b.onclick=()=>{g.querySelectorAll('.obtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');obs[key]=o;checkDone();};g.append(b);});
+    ob.append(row);
+  });
+  const saveWrap=el(`<div class="btnrow"><button class="btn pri" id="save" disabled style="opacity:.5">Save observation</button><span id="hint" class="src" style="align-self:center">Select all four to save</span></div>`);
+  ob.append(saveWrap);
+  function checkDone(){const done=obs.foam&&obs.colour&&obs.settling&&obs.odour;const b=w.querySelector('#save');b.disabled=!done;b.style.opacity=done?1:.5;if(done)w.querySelector('#hint').textContent='Ready — this bumps confidence to ~84%';}
+  w.querySelector('#save').onclick=function(){this.textContent='✓ Saved to Biology Diary';this.classList.remove('pri');w.querySelector('#hint').textContent='Confidence updated · timeline refreshed';};
+  w.querySelector('#photo').onclick=function(){
+    const out=w.querySelector('#photoout');out.innerHTML='<span class="src"><span class="typing"><i></i><i></i><i></i></span> Analysing photo…</span>';
+    setTimeout(()=>{out.innerHTML=`<span class="pill good"><span class="dot"></span>Settling: Good</span><span class="pill info"><span class="dot"></span>SV 220 ml/L</span><span class="pill good"><span class="dot"></span>No bulking</span><span class="pill warn"><span class="dot"></span>Slight pin floc</span>`;},1100);
+  };
+  return [w];
+}
+
+/* ================= DIAGNOSE ================= */
+const DTREE=[
+  {ai:`I ranked five likely causes for Pump 2's low discharge & rising vibration, by what your data suggests:`,list:['Blocked suction — <b>most likely</b>','Air lock','Impeller wear','Cavitation','Pressure-sensor fault'],opts:[['Diagnose blocked suction','s1'],['Why that order?','why'],['Has this happened before?','hist']]},
+];
+function diagnose(){
+  const w=el(`<div>
+    <h1>Diagnostics · RAS Pump 2</h1>
+    <p class="sub">The diagnostic tree, as a conversation. I read the live values for each branch — you do the physical checks.</p>
+    <div class="chat" id="chat">
+      <div class="bub op">Pump 2 discharge pressure is low.</div>
+    </div>
+    <div class="askbar"><div class="chips" id="opts"></div></div>
+  </div>`);
+  const chat=w.querySelector('#chat'),opts=w.querySelector('#opts');
+  function aiSay(html,then){
+    const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Copilot <span class="typing"><i></i><i></i><i></i></span></div></div>`);
+    chat.append(t);window.scrollTo(0,9e9);
+    setTimeout(()=>{t.innerHTML=`<div class="who"><span class="dot"></span>Copilot</div>${html}`;then&&then();window.scrollTo(0,9e9);},750);
+  }
+  function setOpts(list){opts.innerHTML='';list.forEach(([label,fn])=>{const b=el(`<button class="chip">${label}</button>`);b.onclick=()=>{chat.append(el(`<div class="bub op">${label}</div>`));fn();};opts.append(b);});}
+  // step 0
+  aiSay(`I found <b>five likely causes</b>, ranked by your data:<ul><li>Blocked suction — <b>most likely</b></li><li>Air lock · Impeller wear</li><li>Cavitation · Pressure-sensor fault</li></ul>Diagnose blocked suction first?`,()=>{
+    setOpts([['Yes, start',step1],['Why that order?',()=>aiSay(`Suction ΔP is already reading high (0.9&nbsp;bar) and vibration rose gradually — the classic signature of debris building on the strainer. The sensor reads fine, so a fault is less likely.`,()=>setOpts([['OK, start',step1]]))],['Has this happened before?',()=>aiSay(`Yes — 4 months ago, same pump, same signature. Root cause then was a rag caught on the strainer. Fixed in 25 minutes.`,()=>setOpts([['Start diagnosis',step1]]))]]);
+  });
+  function step1(){aiSay(`<b>Step 1 of 3.</b> I'm reading suction strainer differential live: <b>ΔP 0.9&nbsp;bar</b> — that's high. Please visually inspect the strainer. What do you see?`,()=>setOpts([['Strainer looks clogged',step2],['Strainer is clean',()=>aiSay(`Interesting — then let's rule out air lock next. Is there gurgling at the pump casing?`,()=>setOpts([['Yes, gurgling',rootAir],['No',()=>aiSay('Then impeller wear is next. Let me open that branch.',()=>setOpts([['Continue',step2]]))]]))]]));}
+  function step2(){aiSay(`<b>Step 2 of 3.</b> That confirms it. <span class="pill warn"><span class="dot"></span>Root cause: blocked suction strainer.</span> Isolate the pump before cleaning — I'll guide the isolation as a task. Ready?`,()=>setOpts([['Show root cause & tasks',rootBlock]]));}
+  function rootAir(){rootCard('Air lock in suction line','Bleed the suction line via valve V22, then re-prime.',['Bleed V22','Re-prime pump','Verify discharge 3.2 bar']);}
+  function rootBlock(){rootCard('Blocked suction strainer','Clean the strainer and restore flow.',['Isolate Pump 2 (guided)','Clean suction strainer','Restart & verify pressure']);}
+  function rootCard(cause,fix,steps){
+    const c=el(`<div class="card fade" style="margin-top:6px"><span class="kh">Root cause confirmed</span>
+      <h4>${cause}</h4><p>${fix}</p>
+      <div class="flow" style="margin:12px 0">
+        ${steps.map((s,i)=>`<div class="step"><div class="n">${i+1}</div><div><div class="h">${s}</div></div></div>`).join('')}
+      </div>
+      <div class="btnrow"><button class="btn pri" id="dofix">▶ Start remedial task</button><button class="btn" id="verify">Verify only</button></div>
+    </div>`);
+    chat.append(c);opts.innerHTML='';
+    c.querySelector('#dofix').onclick=()=>go('task','isolate');
+    c.querySelector('#verify').onclick=()=>{
+      c.querySelector('.btnrow').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:12px"><span class="kh">Verification</span><h4>Discharge pressure test</h4><p>Target band <b>3.0–3.4 bar</b>. Live reading after fix: <b>3.2 bar</b> <span class="pill good"><span class="dot"></span>PASS</span></p><div class="btnrow"><button class="btn pri" onclick="go('history')">Close issue & log</button></div></div>`));
+    };
+    window.scrollTo(0,9e9);
+  }
+  return [w];
+}
+
+/* ================= TASKS ================= */
+const TASKS=[['waste','Sludge Wasting','MLSS high · 18 m³ recommended','ai'],['backwash','Backwash','Filter ΔP normal','good'],['cip','CIP','Not due','good'],['isolate','Pump Isolation','For Pump 2 repair','warn'],['dosing','Chemical Dosing','On schedule','good'],['clarifier','Clarifier Cleaning','Not due','good'],['filter','Filter Cleaning','Not due','good'],['valve','Valve Replacement','On request','good'],['motor','Motor Replacement','On request','good']];
+function tasks(){
+  const w=el(`<div><h1>Tasks</h1><p class="sub">Guide-enabled procedures. Starting one puts the copilot in supervisor mode.</p><div class="grid g3" id="tk"></div></div>`);
+  const tk=w.querySelector('#tk');
+  TASKS.forEach(([k,n,d,st])=>{const c=el(`<button class="card click" style="text-align:left"><span class="kh">Procedure</span><h4>${n}</h4><p><span class="pill ${st}"><span class="dot"></span>${d}</span></p></button>`);c.onclick=()=>go('task',k);tk.append(c);});
+  return [w];
+}
+
+/* ================= TASK MODE ================= */
+const TASKDEF={
+  waste:{name:'Sludge Wasting',target:'18 m³',intro:'Today\'s MLSS is high — recommended wasting volume is 18 m³.',
+    steps:[['Confirm MLSS','4,120 mg/L'],['Open Valve V13','Confirm open'],['Start Pump P5','Monitor MLSS drawdown'],['Monitor to 18 m³','Auto-tracked'],['Stop & close V13','Verify'],['Record observations','Log to diary']],
+    sensors:[['MLSS','4,120','mg/L ↓','down'],['Waste vol','6.4','/ 18 m³',''],['P5 flow','42','m³/h','st'],['Blanket','1.1','m','st']],
+    guard:'If P5 flow drops below 20 m³/h or the blanket falls too fast, I\'ll pause the step and warn you before you over-waste.'},
+  isolate:{name:'Pump Isolation · Pump 2',target:'Safe state',intro:'Isolating Pump 2 for suction strainer cleaning. I\'ll confirm each valve before you proceed.',
+    steps:[['Stop Pump 2','Confirm stopped'],['Close discharge V8','Confirm closed'],['Close suction V7','Confirm closed'],['Lock out / tag out','Apply LOTO'],['Confirm zero pressure','0 bar verified'],['Ready for maintenance','Handover']],
+    sensors:[['P2 status','STOP','','st'],['Discharge','0.0','bar','st'],['Suction','0.0','bar','st'],['LOTO','Applied','','st']],
+    guard:'I won\'t let you proceed to cleaning until suction, discharge and LOTO all confirm a zero-energy state.'},
+  backwash:{name:'Backwash',target:'Clean filter',intro:'Filter 1 ΔP is at 0.8 bar. Running a standard backwash cycle.',
+    steps:[['Take filter offline','Confirm isolated'],['Open backwash inlet','V31 open'],['Start backwash pump','Monitor turbidity'],['Run 6 min','Auto-timed'],['Settle & return','Verify clarity'],['Record observations','Log']],
+    sensors:[['Filter ΔP','0.8','bar','up'],['Turbidity','12','NTU','up'],['BW flow','380','m³/h','st'],['Cycle','0:00','/ 6:00','']],
+    guard:'I watch backwash turbidity — when it clears below 5 NTU I\'ll tell you the filter is clean.'}
+};
+function taskmode(k){
+  const d=TASKDEF[k]||TASKDEF.waste;
+  let cur=0;
+  const w=el(`<div>
+    <h1>${d.name}</h1>
+    <p class="sub"><span class="pill ai"><span class="dot"></span>Task Mode · supervisor</span> &nbsp;<span class="pill info"><span class="dot"></span>Target ${d.target}</span></p>
+    <div class="callout ac" style="margin-bottom:14px">${d.intro}</div>
+    <div class="sensors" id="sens" style="margin-bottom:16px">${d.sensors.map(([k2,v,u,t])=>`<div class="s"><div class="k">${k2}</div><div class="v ${t}">${v} <small>${u}</small></div></div>`).join('')}</div>
+    <div class="flow" id="steps"></div>
+    <div class="callout wc" style="margin-top:14px"><b>Live guard:</b> ${d.guard}</div>
+    <div class="btnrow"><button class="btn pri" id="next">✓ Confirm step & continue</button><button class="btn" id="exit">Exit task</button></div>
+  </div>`);
+  const stepsEl=w.querySelector('#steps');
+  function render(){
+    stepsEl.innerHTML='';
+    d.steps.forEach(([hh,dd],i)=>{
+      const cls=i<cur?'done':i===cur?'now':'';
+      const num=i<cur?'✓':(i+1);
+      stepsEl.append(el(`<div class="step ${cls}"><div class="n">${num}</div><div><div class="h">${hh}</div><div class="d">${dd}</div></div>${i===cur?'<div class="d" style="margin-left:auto;align-self:center;font-family:var(--mono);color:var(--accent-deep)">NOW</div>':''}</div>`));
+    });
+  }
+  render();
+  w.querySelector('#next').onclick=function(){
+    if(cur<d.steps.length-1){cur++;render();
+      if(cur===d.steps.length-1)this.textContent='✓ Complete task';
+    } else {
+      // completion
+      w.querySelector('#steps').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:14px;border-color:var(--good)"><span class="kh">Task complete</span><h4>✓ ${d.name} completed successfully</h4><p>All steps verified. Please record observations for the logbook.</p><div class="askrow" style="margin-top:8px"><input placeholder="Observations (optional)…" style="flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit"><button class="btn pri" onclick="go('history')">Save & close</button></div></div>`));
+      this.disabled=true;this.style.opacity=.5;
+    }
+    window.scrollTo(0,9e9);
+  };
+  w.querySelector('#exit').onclick=()=>go('tasks');
+  return [w];
+}
+
+/* ================= COMPLIANCE ================= */
+function compliance(){
+  const w=el(`<div>
+    <h1>Compliance Forecast</h1>
+    <p class="sub">Today's discharge outlook, combining live effluent, trends and weather.</p>
+    <div class="card" style="margin-bottom:14px"><div class="readout">
+      <div class="gauge" style="--v:84;--c:var(--good)"><b>84<small>%</small></b></div>
+      <div style="flex:1;min-width:220px"><span class="kh">Confidence all limits met</span>
+      <p style="margin:.1em 0"><b>On track.</b> All parameters forecast within limits today.</p>
+      <p style="font-size:13px;color:var(--muted)">Only variable: UV runtime. Keep it above 20 h/day.</p></div>
+    </div></div>
+    <div class="grid g3">
+      <div class="card"><span class="kh">BOD</span><h4>12 <small style="font-size:12px;color:var(--muted)">mg/L</small></h4><p><span class="pill good"><span class="dot"></span>Limit 30 · safe</span></p></div>
+      <div class="card"><span class="kh">TSS</span><h4>14 <small style="font-size:12px;color:var(--muted)">mg/L</small></h4><p><span class="pill good"><span class="dot"></span>Limit 50 · safe</span></p></div>
+      <div class="card"><span class="kh">Faecal coliform</span><h4>—</h4><p><span class="pill warn"><span class="dot"></span>Depends on UV runtime</span></p></div>
+    </div>
+    <div class="callout" style="margin-top:14px"><b>What could change this?</b> Rain forecast at 16:00 may raise influent flow ~15%. I'll re-forecast if it hits and warn you before any limit is at risk.</div>
+  </div>`);
+  return [w];
+}
+
+/* ================= HISTORY ================= */
+function history(){
+  const w=el(`<div>
+    <h1>History</h1>
+    <p class="sub">Issues, maintenance and shift handovers — the plant's memory.</p>
+    <h3>Recent issues</h3>
+    <div class="grid g2">
+      <div class="card"><span class="kh">Closed · today</span><h4>Pump 2 low discharge</h4><p><span class="pill good"><span class="dot"></span>Resolved</span> Root cause: blocked suction strainer. Verified 3.2 bar.</p></div>
+      <div class="card"><span class="kh">Closed · 4 months ago</span><h4>Pump 2 low discharge</h4><p><span class="pill good"><span class="dot"></span>Resolved</span> Rag on strainer. 25 min fix.</p></div>
+      <div class="card"><span class="kh">Closed · last week</span><h4>Foaming in aeration</h4><p><span class="pill good"><span class="dot"></span>Resolved</span> Reduced wasting; recovered in 2 days.</p></div>
+      <div class="card"><span class="kh">Logged</span><h4>UV lamp age tracking</h4><p><span class="pill info"><span class="dot"></span>Monitoring</span> Replace at 9 months.</p></div>
+    </div>
+    <h3>Shift handover</h3>
+    <div class="card"><p style="margin:0 0 8px"><b>To next shift:</b> Pump 2 strainer cleaned & verified. Watch clarifier blanket — should settle by evening. UV runtime healthy. No open compliance risks.</p><div class="btnrow"><button class="btn pri">Sign off handover</button></div></div>
+  </div>`);
+  return [w];
+}
+
+/* generic link wiring */
+function wireLinks(root){
+  root.querySelectorAll('[data-go2]').forEach(b=>b.onclick=()=>go(b.dataset.go2,b.dataset.arg));
+}
+
+go('home');
+</script>
