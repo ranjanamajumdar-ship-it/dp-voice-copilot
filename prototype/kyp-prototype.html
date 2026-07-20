@@ -173,6 +173,35 @@
   .fig figcaption{padding:10px 16px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--ink-2);line-height:1.45;}
   .fig figcaption b{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);}
   .figsrc{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
+  /* ---- explainer video player ---- */
+  .player{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0c161b;box-shadow:var(--shadow);margin:14px 0;}
+  .stage{position:relative;aspect-ratio:16/8;background:radial-gradient(120% 120% at 50% 0,#12242c,#0a1318);overflow:hidden;}
+  .stage svg{position:absolute;inset:0;width:100%;height:100%;}
+  .hud{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .hud .m{display:flex;gap:8px;align-items:center;background:rgba(10,20,25,.72);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:#8fa2a6;opacity:.35;transition:.4s;}
+  .hud .m.on{opacity:1;color:#eaf1f0;border-color:var(--accent);}
+  .hud .m b{color:var(--accent-deep);color:#2CC2BA;}
+  .caption{position:absolute;left:0;right:0;bottom:0;padding:14px 16px;background:linear-gradient(0deg,rgba(6,12,15,.9),transparent);color:#eaf1f0;font-size:14px;line-height:1.4;min-height:56px;display:flex;align-items:flex-end;}
+  .bigplay{position:absolute;inset:0;margin:auto;width:60px;height:60px;border-radius:50%;border:none;background:rgba(44,194,186,.92);color:#04211f;font-size:24px;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:.15s;}
+  .bigplay:hover{transform:scale(1.06);}
+  .transport{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0c161b;border-top:1px solid rgba(255,255,255,.07);}
+  .transport .pp{border:none;background:none;color:#eaf1f0;font-size:15px;width:26px;cursor:pointer;}
+  .track{flex:1;height:6px;background:rgba(255,255,255,.14);border-radius:3px;position:relative;cursor:pointer;}
+  .track .prog{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:3px;width:0;}
+  .track .tick{position:absolute;top:-3px;width:2px;height:12px;background:rgba(255,255,255,.4);}
+  .transport .time{font-family:var(--mono);font-size:11px;color:#8fa2a6;font-variant-numeric:tabular-nums;}
+  .chapters{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;background:#0c161b;border-top:1px solid rgba(255,255,255,.07);}
+  .chapters .ch{font-size:11.5px;font-family:var(--mono);color:#8fa2a6;background:rgba(255,255,255,.06);border:1px solid transparent;border-radius:7px;padding:5px 9px;cursor:pointer;transition:.15s;}
+  .chapters .ch:hover{color:#eaf1f0;}
+  .chapters .ch.on{color:#eaf1f0;border-color:var(--accent);background:rgba(44,194,186,.14);}
+  .flowdash{stroke-dasharray:6 8;animation:dash 1.1s linear infinite;}
+  .player:not(.playing) .flowdash{animation-play-state:paused;}
+  @keyframes dash{to{stroke-dashoffset:-28;}}
+  @media (prefers-reduced-motion:reduce){.flowdash{animation:none;}}
+  /* process health bars */
+  .phrow{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;}
+  .pbar{grid-column:1/-1;height:7px;background:var(--line-2);border-radius:4px;overflow:hidden;}
+  .pbar i{display:block;height:100%;border-radius:4px;}
   .hidden{display:none!important;}
   .fade{animation:rise .35s ease;}
 
@@ -243,7 +272,7 @@ function toggleTheme(){
   r.setAttribute('data-theme',cur==='dark'?'light':'dark');
 }
 
-const CRUMB={home:'Home',ask:'Ask Your Plant',plant:'Plant Explorer',equip:'Plant › Equipment',biology:'Biology',
+const CRUMB={home:'Home',ask:'Ask Your Plant',plant:'Plant Explorer',process:'Plant › Process',equip:'Plant › Equipment',biology:'Biology',
   diagnose:'Diagnostics',tasks:'Tasks',task:'Tasks › Task Mode',compliance:'Compliance',history:'History',explain:'Learning Mode'};
 
 let navHist=[];
@@ -264,6 +293,7 @@ function go(screen,arg,isBack){
   if(screen==='home') s.append(...home());
   else if(screen==='ask') s.append(...ask());
   else if(screen==='plant') s.append(...plant());
+  else if(screen==='process') s.append(...process(arg));
   else if(screen==='equip') s.append(...equip(arg));
   else if(screen==='explain') s.append(...explain(arg));
   else if(screen==='biology') s.append(...biology());
@@ -470,8 +500,25 @@ const ASK_ANSWERS={
   'why did the blanket rise':{src:3,html:`The clarifier sludge blanket rose <b>0.4&nbsp;m</b> overnight because return-sludge flow (RAS) dropped when Pump&nbsp;2 slowed — its vibration trip lowered output around 02:30. Solids built up faster than they returned. It's still within safe range (1.5&nbsp;m of 2.4&nbsp;m). Clearing the Pump&nbsp;2 issue should restore normal blanket depth.`,chips:['Is this urgent?','Show Pump 2','What if I do nothing?']},
   'is pump 2 serious':{src:4,html:`Not yet — but worth acting today. Pump&nbsp;2 vibration is up <b>12%</b> over 48h, still below the alarm threshold. History shows a similar rise 4 months ago that turned out to be a partially blocked suction strainer. I'd run a quick diagnosis before it forces a trip.`,chips:['Start diagnosis','Has this happened before?','Can it wait to tomorrow?'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose'}},
   'will we meet limits today':{src:5,html:`Yes — I forecast <b>all discharge limits met</b> today. Effluent BOD is trending 12&nbsp;mg/L (limit 30), TSS 14&nbsp;mg/L (limit 50). The only variable is UV runtime; if it stays above 20h/day, faecal coliform stays compliant. Confidence <b>84%</b>.`,chips:['Show the forecast','What could change this?'],cta:{label:'Open compliance forecast',go:'compliance'}},
+  'how is biology':{src:6,html:`Biology is <b>stable at 88/100</b> (confidence 72%). Good settling, DO on target. One watch-item: slight foam this morning — if it thickens, check the F:M ratio. Log a settling test to push my confidence up.`,chips:['Open Biology','Why only 72% confidence?'],cta:{label:'Open Biology',go:'biology'}},
+  'energy':{src:4,html:`Energy today is tracking <b>~8% below</b> your 30-day average. Blower 1 in Auto is the big lever — it's modulating well. The clarifier scraper and UV run flat. No waste flagged. Biggest future saving would be trimming the DO setpoint 0.2 mg/L overnight.`,chips:['Show blower runtime','How to cut energy safely?']},
+  'safe':{src:5,html:`Before you isolate Pump 2: confirm it's stopped, close discharge then suction, apply lock-out/tag-out, and verify zero pressure. I'll guide each step and won't let you proceed until the zero-energy state is confirmed. Want me to start the guided isolation?`,chips:['Start guided isolation'],cta:{label:'▶ Pump isolation task',go:'task'}},
+  'similar failures':{src:3,html:`I found <b>2 similar events</b>: a Pump 2 low-discharge 4 months ago (blocked strainer, fixed in 25 min) and an aeration foaming episode last week (reduced wasting, recovered in 2 days). Both are in History with their root causes.`,chips:['Open History'],cta:{label:'Open History',go:'history'}},
+  'teach me':{src:3,html:`Happy to. I teach with <b>your</b> plant — live values, current mode and your SOPs, not generic textbook lines. Which shall we start with?`,chips:['The clarifier','Aeration & DO','UV disinfection'],cta:{label:'Open Learning Mode',go:'explain'}},
+  'can this wait':{src:4,html:`Pump 2 can likely wait until tomorrow — vibration is rising slowly and still below the trip threshold. But the clarifier blanket depends on it, so I'd at least run the 5-minute strainer check this shift. If vibration crosses 5.2 mm/s, don't wait.`,chips:['Diagnose now','Remind me next shift'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose'}},
+  'backwash':{src:4,html:`Filter 1 ΔP is 0.8 bar — a backwash is due soon but not urgent. I can supervise the cycle: take the filter offline, run 6 minutes, watch turbidity clear below 5 NTU, then return it. Start when you're ready.`,chips:['Start backwash'],cta:{label:'▶ Backwash task',go:'task'}},
+  'explain today':{src:4,html:`DO in Basin 1 dipped to <b>1.4 mg/L</b> at 04:00 after the 04:10 backwash pulled flow while Blower 1 was still at 40% manual — then recovered to 2.3. This dip appears most nights after backwash: normal for your plant, not a fault.`,chips:['Should I raise the blower?','Show last 7 nights']},
   'default':{src:3,html:`I read your live SCADA, the last 7 days of trends and the SOP library for that. In short: things look normal for your plant right now. Want me to look at a specific process or piece of equipment?`,chips:['How is biology?','Any risks today?','Explain today\'s DO trend']}
 };
+// Grouped example questions shown on the Ask screen, to convey the breadth of what the copilot can do.
+const ASK_GROUPS=[
+  ['Understand',['How is my plant today?','What changed since my last shift?','Which process needs attention?']],
+  ['Diagnose',['Is Pump 2 serious?','Why did the blanket rise?','Show me similar failures']],
+  ['Learn',['Teach me how the clarifier works','Explain today\'s DO trend','Why do we backwash?']],
+  ['Comply',['Will we meet limits today?','What\'s today\'s biggest compliance risk?','What could change the forecast?']],
+  ['Operate',['How much sludge should I waste?','Walk me through a safe pump isolation','Is a backwash due?']],
+  ['Optimise',['How is our energy today?','How can I cut energy safely?','Can this wait until tomorrow?']],
+];
 function ask(){
   const w=el(`<div>
     <h1>Ask Your Plant</h1>
@@ -479,12 +526,8 @@ function ask(){
     <div class="chat" id="chat">
       <div class="bub ai"><div class="who"><span class="dot"></span>Plant Copilot</div>Morning, Rahul. I'm watching all 14 data sources. Ask me anything — here are a few things on my mind today.</div>
     </div>
+    <div id="prompts" style="margin:6px 0 4px"></div>
     <div class="askbar">
-      <div class="chips" style="margin-bottom:10px;" id="suggest">
-        <button class="chip">Why did the blanket rise?</button>
-        <button class="chip">Is Pump 2 serious?</button>
-        <button class="chip">Will we meet limits today?</button>
-      </div>
       <div class="askrow">
         <button class="iconbtn mic" title="Hold to speak">🎤</button>
         <input id="askin" placeholder="Ask your plant…" autocomplete="off">
@@ -511,9 +554,175 @@ function ask(){
       scrollChat();
     },900);
   }
-  w.querySelectorAll('#suggest .chip').forEach(c=>c.onclick=()=>answer(c.textContent));
+  // grouped example prompts to show the breadth of the copilot
+  const pr=w.querySelector('#prompts');
+  ASK_GROUPS.forEach(([label,qs])=>{
+    const row=el(`<div style="margin-bottom:8px"><span class="kh" style="margin-bottom:5px">${label}</span><div class="chips"></div></div>`);
+    const cc=row.querySelector('.chips');
+    qs.forEach(q=>{const b=el(`<button class="chip">${q}</button>`);b.onclick=()=>{answer(q);};cc.append(b);});
+    pr.append(row);
+  });
   w.querySelector('#asksend').onclick=()=>{if(input.value.trim()){answer(input.value.trim());input.value='';}};
   input.onkeydown=(e)=>{if(e.key==='Enter'&&input.value.trim()){answer(input.value.trim());input.value='';}};
+  return [w];
+}
+
+/* ================= PROCESSES + EXPLAINER VIDEOS ================= */
+const PROCESSES={
+  aeration:{name:'Aeration',status:'good',stat:'Healthy',score:92,blurb:'DO on target · Blower 1 in Auto.',
+    equip:['blower1'],video:'aeration',diagram:'aeration',
+    subs:[['Dissolved oxygen',95],['Blower health',90],['MLSS balance',88]]},
+  clarification:{name:'Clarification',status:'warn',stat:'Watch',score:74,blurb:'Sludge blanket rising overnight — watch and confirm RAS flow.',
+    equip:['clarifier'],video:'clarifier',diagram:'clarifier',
+    subs:[['Settling / turbidity',80],['Blanket depth',62],['Scraper',95]]},
+  sludge:{name:'Sludge return',status:'warn',stat:'Watch',score:70,blurb:'RAS Pump 2 vibration climbing — diagnose before it trips.',
+    equip:['pump2'],video:null,diagram:null,
+    subs:[['Pump health',60],['Return flow',78],['Runtime',85]]},
+  disinfection:{name:'Disinfection',status:'good',stat:'Healthy',score:95,blurb:'UV runtime 21.4 h/day, above the 20 h threshold.',
+    equip:['uv'],video:'uv',diagram:'uv',
+    subs:[['UV intensity',92],['Runtime',98],['Lamp life',90]]},
+};
+const VIDEOS={
+  uv:{title:'How UV disinfection keeps runtime healthy',total:24,
+    hud:[{label:'Intensity',val:'88%',ch:2},{label:'Dose',val:'52 mJ/cm²',ch:2},{label:'Runtime',val:'21.4 h/day',ch:3}],
+    scenes:[
+      {t:'Inflow',cap:'Treated water enters the stainless-steel UV reactor chamber.'},
+      {t:'Lamp on',cap:'The UV lamp powers on — ultraviolet rays flood the chamber and inactivate bacteria, viruses and protozoa.'},
+      {t:'Dose',cap:'Dose = intensity × contact time. Intensity holds at 88%, keeping the dose inside the 40–60 mJ/cm² SOP band.'},
+      {t:'Verdict',cap:'Runtime today is 21.4 h/day — above the 20 h/day threshold. That’s why Disinfection reads healthy. ✓'},
+    ],
+    svg:`<svg viewBox="0 0 460 230" preserveAspectRatio="xMidYMid meet">
+      <rect x="70" y="80" width="300" height="60" rx="30" fill="rgba(91,156,240,.10)" stroke="#4a5f68" stroke-width="1.5"/>
+      <polyline class="flowdash" points="30,110 70,110" stroke="#5B9CF0" stroke-width="4" fill="none"/>
+      <polyline class="flowdash" points="370,110 430,110" stroke="#3FBE88" stroke-width="4" fill="none"/>
+      <rect id="uvlamp" x="98" y="105" width="244" height="10" rx="5" fill="#2CC2BA" style="opacity:.2"/>
+      <g id="uvrays" stroke="#2CC2BA" stroke-width="1.2" style="opacity:0">
+        <line x1="120" y1="90" x2="120" y2="130"/><line x1="160" y1="90" x2="160" y2="130"/>
+        <line x1="200" y1="90" x2="200" y2="130"/><line x1="240" y1="90" x2="240" y2="130"/>
+        <line x1="280" y1="90" x2="280" y2="130"/><line x1="320" y1="90" x2="320" y2="130"/></g>
+      <g font-family="ui-monospace,monospace" font-size="10" fill="#8fa2a6">
+        <text x="30" y="100">Feed in</text><text x="372" y="100" fill="#3FBE88">Disinfected out</text>
+        <text x="140" y="165" fill="#2CC2BA">UV lamp + quartz sleeve</text>
+      </g></svg>`,
+    render:(root,ct,ci)=>{
+      const lamp=root.querySelector('#uvlamp');if(lamp)lamp.style.opacity=ci>=1?1:.2;
+      const rays=root.querySelector('#uvrays');if(rays)rays.style.opacity=ci>=1?(.4+.35*Math.abs(Math.sin(ct*5))):0;
+    }},
+  clarifier:{title:'How the clarifier settles solids',total:21,
+    hud:[{label:'Blanket',val:'1.9 m',ch:1},{label:'Outlet TSS',val:'<250 NTU',ch:2},{label:'Scraper',val:'Running',ch:2}],
+    scenes:[
+      {t:'Inflow',cap:'Mixed liquor enters the feed well at the centre of the clarifier.'},
+      {t:'Settling',cap:'Gravity pulls dense floc down; it forms the sludge blanket while clear water rises to the weir.'},
+      {t:'Rake & draw',cap:'The rake — running continuously per SOP — sweeps settled sludge to the centre draw (RAS/WAS).'},
+    ],
+    svg:`<svg viewBox="0 0 460 230" preserveAspectRatio="xMidYMid meet">
+      <path d="M60 70 L400 70 L370 200 L90 200 Z" fill="rgba(91,156,240,.10)" stroke="#4a5f68" stroke-width="1.5"/>
+      <line x1="60" y1="70" x2="400" y2="70" stroke="#5B9CF0" stroke-width="2"/>
+      <rect id="clblanket" x="90" y="185" width="280" height="15" fill="rgba(224,168,60,.35)" stroke="#E0A83C" stroke-width="1" stroke-dasharray="4 3"/>
+      <rect x="215" y="55" width="30" height="70" fill="none" stroke="#4a5f68" stroke-width="1.5"/>
+      <g id="clrake"><line x1="230" y1="90" x2="120" y2="190" stroke="#2CC2BA" stroke-width="2.5"/><line x1="230" y1="90" x2="340" y2="190" stroke="#2CC2BA" stroke-width="2.5"/><circle cx="230" cy="90" r="5" fill="#2CC2BA"/></g>
+      <polyline class="flowdash" points="230,34 230,52" stroke="#5B9CF0" stroke-width="3" fill="none"/>
+      <g font-family="ui-monospace,monospace" font-size="10" fill="#8fa2a6">
+        <text x="248" y="38">Influent</text><text x="8" y="62" fill="#3FBE88">Effluent weir</text>
+        <text x="250" y="88" fill="#2CC2BA">Feed well</text></g></svg>`,
+    render:(root,ct,ci)=>{
+      const bl=root.querySelector('#clblanket');if(bl){const h=8+22*Math.min(1,ct/14);bl.setAttribute('height',h);bl.setAttribute('y',200-h);}
+      const rk=root.querySelector('#clrake');if(rk)rk.style.opacity=ci>=2?1:.4;
+    }},
+  aeration:{title:'How aeration keeps the biology breathing',total:21,
+    hud:[{label:'MLSS',val:'4,120 mg/L',ch:0},{label:'Blower',val:'62% Auto',ch:1},{label:'DO',val:'2.3 mg/L',ch:2}],
+    scenes:[
+      {t:'Air in',cap:'The blower pushes air through fine-bubble diffusers on the basin floor.'},
+      {t:'Bugs breathe',cap:'Rising bubbles give the MLSS microbes the oxygen they need to eat the organic load.'},
+      {t:'DO on target',cap:'Dissolved oxygen holds at 2.3 mg/L — right on your 2.0 target. Enough to nitrify, not so much it wastes energy.'},
+    ],
+    svg:`<svg viewBox="0 0 460 230" preserveAspectRatio="xMidYMid meet">
+      <rect x="60" y="70" width="330" height="120" fill="rgba(91,156,240,.10)" stroke="#4a5f68" stroke-width="1.5"/>
+      <line x1="60" y1="74" x2="390" y2="74" stroke="#5B9CF0" stroke-width="2"/>
+      <line x1="80" y1="180" x2="370" y2="180" stroke="#4a5f68" stroke-width="3"/>
+      <g id="airlines" stroke="#2CC2BA" stroke-width="2" fill="none">
+        <line class="flowdash" x1="120" y1="180" x2="120" y2="90"/><line class="flowdash" x1="180" y1="180" x2="180" y2="90"/>
+        <line class="flowdash" x1="240" y1="180" x2="240" y2="90"/><line class="flowdash" x1="300" y1="180" x2="300" y2="90"/></g>
+      <line id="doprobe" x1="330" y1="60" x2="330" y2="140" stroke="#3FBE88" stroke-width="2" style="opacity:.3"/>
+      <circle id="dodot" cx="330" cy="140" r="4" fill="#3FBE88" style="opacity:.3"/>
+      <g font-family="ui-monospace,monospace" font-size="10" fill="#8fa2a6">
+        <text x="100" y="205" fill="#2CC2BA">Fine-bubble diffusers</text><text x="300" y="55" fill="#3FBE88">DO probe</text></g></svg>`,
+    render:(root,ct,ci)=>{
+      const p=root.querySelector('#doprobe'),d=root.querySelector('#dodot');
+      const o=ci>=2?1:.3;if(p)p.style.opacity=o;if(d)d.style.opacity=o;
+    }},
+};
+function videoPlayer(key){
+  const V=VIDEOS[key];
+  if(!V)return el(`<div class="card"><span class="kh">Explainer</span><p class="sub" style="margin:0">No explainer video yet for this process. Once its SOP is mapped, a guided animation will appear here.</p></div>`);
+  const dur=V.total/V.scenes.length;
+  const wrap=el(`<div class="player">
+    <div class="stage" id="stg">${V.svg}<div class="hud" id="hud"></div><div class="caption" id="cap"></div><button class="bigplay" id="big">▶</button></div>
+    <div class="transport"><button class="pp" id="pp">▶</button><div class="track" id="trk"><div class="prog" id="prog"></div></div><span class="time" id="tm">0:00 / 0:00</span></div>
+    <div class="chapters" id="chs"></div>
+  </div>`);
+  const hud=wrap.querySelector('#hud');
+  V.hud.forEach((m,i)=>hud.append(el(`<div class="m" data-i="${i}"><span>${m.label}</span><b>${m.val}</b></div>`)));
+  const chs=wrap.querySelector('#chs');
+  V.scenes.forEach((s,i)=>{const b=el(`<button class="ch" data-i="${i}">${i+1}. ${s.t}</button>`);b.onclick=()=>{ct=i*dur+0.01;if(!playing)play();};chs.append(b);});
+  const trk=wrap.querySelector('#trk');
+  V.scenes.forEach((s,i)=>{if(i>0)trk.append(el(`<div class="tick" style="left:${i/V.scenes.length*100}%"></div>`));});
+  const prog=wrap.querySelector('#prog'),cap=wrap.querySelector('#cap'),tm=wrap.querySelector('#tm'),pp=wrap.querySelector('#pp'),big=wrap.querySelector('#big');
+  let ct=0,playing=false,raf=null,last=null;
+  const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  function update(){
+    const ci=Math.min(V.scenes.length-1,Math.floor(ct/dur));
+    cap.textContent=V.scenes[ci].cap;
+    prog.style.width=(ct/V.total*100)+'%';
+    tm.textContent=`${fmt(ct)} / ${fmt(V.total)}`;
+    hud.querySelectorAll('.m').forEach((m,i)=>m.classList.toggle('on',ci>=V.hud[i].ch));
+    chs.querySelectorAll('.ch').forEach((c,i)=>c.classList.toggle('on',i===ci));
+    V.render&&V.render(wrap,ct,ci);
+  }
+  function frame(ts){
+    if(!document.body.contains(wrap)){raf=null;return;}       // navigated away
+    if(!playing){raf=null;return;}                             // paused → let the page idle
+    if(last==null)last=ts;const dt=(ts-last)/1000;last=ts;
+    ct+=dt;
+    if(ct>=V.total){ct=V.total;update();playing=false;raf=null;wrap.classList.remove('playing');pp.textContent='▶';big.textContent='↻';big.style.display='grid';return;}
+    update();raf=requestAnimationFrame(frame);
+  }
+  function play(){if(ct>=V.total)ct=0;playing=true;wrap.classList.add('playing');pp.textContent='❚❚';big.style.display='none';last=null;if(!raf)raf=requestAnimationFrame(frame);}
+  function pause(){playing=false;if(raf){cancelAnimationFrame(raf);raf=null;}wrap.classList.remove('playing');pp.textContent='▶';big.style.display='grid';big.textContent='▶';}
+  big.onclick=()=>playing?pause():play();
+  pp.onclick=()=>playing?pause():play();
+  trk.onclick=(e)=>{const r=trk.getBoundingClientRect();ct=Math.max(0,Math.min(V.total,(e.clientX-r.left)/r.width*V.total));if(!playing)update();};
+  update();
+  return wrap;
+}
+function process(key){
+  const P=PROCESSES[key]||PROCESSES.aeration;
+  const w=el(`<div>
+    <h1>${P.name}</h1>
+    <p class="sub">Process health — tap equipment or watch the explainer.</p>
+    <div class="card" style="margin-bottom:14px"><div class="readout">
+      <div class="gauge" style="--v:${P.score};--c:var(--${P.status==='good'?'good':'warn'})"><b>${P.score}</b></div>
+      <div style="flex:1;min-width:240px">
+        <p style="margin:.1em 0;font-size:15px"><span class="pill ${P.status}"><span class="dot"></span>${P.stat}</span></p>
+        <p style="margin:.3em 0;color:var(--ink-2)">${P.blurb}</p>
+        <div style="margin-top:8px">${P.subs.map(([n,s])=>`<div class="phrow"><span style="font-size:12.5px">${n}</span><span class="src">${s}</span><div class="pbar"><i style="width:${s}%;background:var(--${s>=85?'good':s>=70?'warn':'crit'})"></i></div></div>`).join('')}</div>
+      </div>
+    </div></div>
+    <h2>Explainer</h2>
+    <p class="sub" style="margin-top:-8px">${P.video?'A guided walkthrough built from this process’s SOP — play, scrub, or jump to a chapter.':''}</p>
+    <div id="vid"></div>
+    <h2>Equipment in this process</h2>
+    <div class="grid g2" id="eqs"></div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn pri" id="ex">? Explain in Learning Mode</button>
+      <button class="btn" id="ask2">✳ Ask about this process</button>
+    </div>
+  </div>`);
+  w.querySelector('#vid').append(videoPlayer(P.video));
+  const eqs=w.querySelector('#eqs');
+  P.equip.forEach(k=>{const e=EQUIP[k];const c=el(`<button class="card click" style="text-align:left"><span class="kh">${e.proc}</span><h4>${e.name}</h4><p><span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p></button>`);c.onclick=()=>go('equip',k);eqs.append(c);});
+  w.querySelector('#ex').onclick=()=>go('explain',P.diagram==='uv'?'UV System':P.diagram==='clarifier'?'Clarifier':P.name);
+  w.querySelector('#ask2').onclick=()=>go('ask');
   return [w];
 }
 
@@ -527,14 +736,15 @@ const EQUIP={
 function plant(){
   const w=el(`<div>
     <h1>Plant Explorer</h1>
-    <p class="sub">Four processes, tap any to see its equipment. Colour shows health at a glance.</p>
+    <p class="sub">Four processes — tap any to open its health, explainer video and equipment.</p>
     <div class="grid g2" id="procs"></div>
     <h2>Equipment</h2>
     <div class="grid g2" id="eqs"></div>
   </div>`);
-  const procs=[['Aeration','good','DO on target · Blower 1 Auto'],['Clarification','warn','Blanket rising · watch'],['Sludge return','warn','Pump 2 vibration ↑'],['Disinfection','good','UV runtime healthy']];
   const pc=w.querySelector('#procs');
-  procs.forEach(([n,st,d])=>pc.append(el(`<div class="card"><span class="kh">Process</span><h4>${n}</h4><p><span class="pill ${st}"><span class="dot"></span>${st==='good'?'Healthy':'Watch'}</span> ${d}</p></div>`)));
+  for(const k in PROCESSES){const p=PROCESSES[k];
+    const c=el(`<button class="card click" style="text-align:left"><span class="kh">Process · health ${p.score}${p.video?' · ▶ video':''}</span><h4>${p.name}</h4><p><span class="pill ${p.status}"><span class="dot"></span>${p.stat}</span> ${p.blurb}</p></button>`);
+    c.onclick=()=>go('process',k);pc.append(c);}
   const eq=w.querySelector('#eqs');
   for(const k in EQUIP){const e=EQUIP[k];
     const c=el(`<button class="card click" style="text-align:left"><span class="kh">${e.proc}</span><h4>${e.name}</h4><p><span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p></button>`);
@@ -655,15 +865,11 @@ function biology(){
         <p style="font-size:13px;color:var(--muted);margin:.4em 0 0;">Watch: slight foam increase this morning. If it thickens, check F:M ratio.</p>
       </div>
     </div></div>
-    <h3>Biology timeline</h3>
-    <div class="tl">
-      <div class="d g"><div class="day">Mon</div><div class="st2">Healthy</div></div>
-      <div class="d g"><div class="day">Tue</div><div class="st2">Healthy</div></div>
-      <div class="d w"><div class="day">Wed</div><div class="st2">Slightly stressed</div></div>
-      <div class="d c"><div class="day">Thu</div><div class="st2">Foaming ↑</div></div>
-      <div class="d i"><div class="day">Fri</div><div class="st2">Nitrification recovering</div></div>
-      <div class="d g"><div class="day">Sat</div><div class="st2">Stable</div></div>
-    </div>
+    <h3>Process health scores</h3>
+    <div class="grid g2" id="prochealth"></div>
+    <h3 style="margin-top:24px">Biology timeline — tap a day</h3>
+    <div class="tl" id="tl"></div>
+    <div id="dayslot"></div>
     <h2>Log today's observation</h2>
     <p class="sub" style="margin-top:-6px">One capture per shift raises the copilot's confidence.</p>
     <div id="obs"></div>
@@ -674,6 +880,31 @@ function biology(){
       <div id="photoout" class="chips"></div>
     </div></div>
   </div>`);
+  // process health cards
+  const ph=w.querySelector('#prochealth');
+  for(const k in PROCESSES){const p=PROCESSES[k];
+    const c=el(`<button class="card click" style="text-align:left"><div class="phrow"><h4 style="margin:0">${p.name}</h4><span class="pill ${p.status}"><span class="dot"></span>${p.score}</span><div class="pbar"><i style="width:${p.score}%;background:var(--${p.status==='good'?'good':'warn'})"></i></div></div><p style="font-size:12.5px;color:var(--muted);margin:.4em 0 0">${p.blurb}</p></button>`);
+    c.onclick=()=>go('process',k);ph.append(c);}
+  // clickable timeline
+  const DAYS=[
+    ['Mon','g','Healthy','Textbook day. DO 2.1, SVI 95, firm brown blanket. Ciliates active on the last microscope check.'],
+    ['Tue','g','Healthy','Stable. Influent load normal, no foam. Wasting on schedule.'],
+    ['Wed','w','Slightly stressed','DO dipped to 1.6 during a load spike; nitrifiers slowed briefly. Recovered by evening.'],
+    ['Thu','c','Foaming increased','White foam over ~30% of the basin — classic young-sludge / high F:M sign. Reduced wasting in response.'],
+    ['Fri','i','Nitrification recovering','Foam receding, ammonia trending down. The wasting change is working; watch another day.'],
+    ['Sat','g','Stable','Back to normal bands. Confidence rising as observations resume.'],
+  ];
+  const tl=w.querySelector('#tl'),ds=w.querySelector('#dayslot');
+  DAYS.forEach(([d,c,s,detail])=>{
+    const cell=el(`<button class="d ${c}" style="text-align:left;cursor:pointer;font:inherit"><div class="day">${d}</div><div class="st2">${s}</div></button>`);
+    cell.onclick=()=>{
+      tl.querySelectorAll('.d').forEach(x=>x.style.boxShadow='');
+      cell.style.boxShadow='0 0 0 2px var(--accent)';
+      ds.innerHTML='';
+      ds.append(el(`<div class="card fade" style="margin-top:10px"><span class="kh">${d} · biology detail</span><h4>${s}</h4><p>${detail}</p><div class="btnrow"><button class="btn" onclick="go('explain','Aeration Basin 1')">Explain the biology</button></div></div>`));
+    };
+    tl.append(cell);
+  });
   // observation engine
   const groups=[['foam','Foam',['None','White','Brown','Thick']],['colour','Colour',['Brown','Dark brown','Black','Grey']],['settling','Settling',['Good','Average','Poor']],['odour','Odour',['Earthy','Chemical','Septic']]];
   const ob=w.querySelector('#obs');
