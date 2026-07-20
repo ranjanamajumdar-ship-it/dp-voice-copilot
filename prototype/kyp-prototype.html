@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Know Your Plant — Interactive Prototype</title>
 <style>
   :root{
@@ -55,6 +56,9 @@
   /* main */
   .main{position:relative;min-width:0;}
   .topbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:12px 22px;}
+  .backbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);width:30px;height:30px;border-radius:9px;font-size:20px;line-height:1;display:grid;place-items:center;padding:0 0 3px;transition:.12s;flex:none;}
+  .backbtn:hover:not(:disabled){border-color:var(--accent);color:var(--accent-deep);}
+  .backbtn:disabled{opacity:.35;cursor:default;}
   .topbar .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
   .topbar .status{margin-left:auto;display:flex;gap:8px;align-items:center;}
   .live{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--good);}
@@ -159,6 +163,16 @@
   .obtn:hover{border-color:var(--accent);}
   .obtn.sel{background:var(--accent-wash);border-color:var(--accent);color:var(--accent-deep);}
 
+  .soptable{display:grid;grid-template-columns:auto auto 1fr;gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:9px;overflow:hidden;margin:10px 0 2px;}
+  .soptable>div{background:var(--card);padding:7px 10px;font-size:12px;}
+  .soptable .hh{background:var(--mist);font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+  .soptable .pp{font-weight:600;}.soptable .rr{font-family:var(--mono);color:var(--accent-deep);white-space:nowrap;}.soptable .tt{color:var(--muted);}
+  .fig{margin:14px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:var(--shadow);}
+  .figbox{padding:14px 16px 6px;background:
+    repeating-linear-gradient(0deg,transparent,transparent 22px,color-mix(in srgb,var(--line) 40%,transparent) 22px,color-mix(in srgb,var(--line) 40%,transparent) 23px);}
+  .fig figcaption{padding:10px 16px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--ink-2);line-height:1.45;}
+  .fig figcaption b{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);}
+  .figsrc{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
   .hidden{display:none!important;}
   .fade{animation:rise .35s ease;}
 
@@ -200,6 +214,7 @@
   <!-- ===== MAIN ===== -->
   <div class="main">
     <div class="topbar">
+      <button class="backbtn" id="back" title="Go back" disabled>‹</button>
       <span class="crumb" id="crumb">Home</span>
       <div class="status">
         <span class="live"><i></i>SCADA live</span>
@@ -224,7 +239,17 @@ function toggleTheme(){
 const CRUMB={home:'Home',ask:'Ask Your Plant',plant:'Plant Explorer',equip:'Plant › Equipment',biology:'Biology',
   diagnose:'Diagnostics',tasks:'Tasks',task:'Tasks › Task Mode',compliance:'Compliance',history:'History',explain:'Learning Mode'};
 
-function go(screen,arg){
+let navHist=[];
+function go(screen,arg,isBack){
+  const back=$('#back');
+  if(!isBack){
+    // push the screen we're leaving, avoid duplicate consecutive entries
+    if(navHist.length===0 || navHist[navHist.length-1].screen!==window._cur?.screen){
+      if(window._cur) navHist.push(window._cur);
+    }
+  }
+  window._cur={screen,arg};
+  if(back){back.disabled=navHist.length===0;}
   document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.go===screen));
   $('#crumb').textContent=CRUMB[screen]||screen;
   stage.innerHTML='';
@@ -245,9 +270,150 @@ function go(screen,arg){
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>go(n.dataset.go));
+$('#back').onclick=()=>{const prev=navHist.pop();if(prev)go(prev.screen,prev.arg,true);};
 
 /* ---------- helpers ---------- */
 function h(str){const d=document.createElement('div');d.innerHTML=str;return [...d.childNodes];}
+
+/* ================= DIAGRAM LIBRARY (labeled SVG schematics, from SOP cut-aways) ================= */
+function figure(svg,cap,srcRef){
+  return `<figure class="fig">
+    <div class="figbox">${svg}</div>
+    <figcaption><b>Fig.</b> ${cap}${srcRef?` <span class="figsrc">— ${srcRef}</span>`:''}</figcaption>
+  </figure>`;
+}
+const DIAGRAMS={
+  clarifier:()=>figure(`
+    <svg viewBox="0 0 460 250" width="100%" role="img" aria-label="Clarifier cut-away diagram">
+      <defs><linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--water)" stop-opacity=".18"/><stop offset="1" stop-color="var(--water)" stop-opacity=".05"/></linearGradient></defs>
+      <!-- tank -->
+      <path d="M60 70 L400 70 L370 210 L90 210 Z" fill="url(#water)" stroke="var(--ink-2)" stroke-width="1.5"/>
+      <!-- water surface -->
+      <line x1="60" y1="70" x2="400" y2="70" stroke="var(--water)" stroke-width="2"/>
+      <!-- sludge blanket -->
+      <path d="M84 168 L376 168 L370 210 L90 210 Z" fill="var(--warn)" fill-opacity=".22" stroke="var(--warn)" stroke-width="1" stroke-dasharray="4 3"/>
+      <!-- feed well -->
+      <rect x="215" y="55" width="30" height="70" fill="none" stroke="var(--ink-2)" stroke-width="1.5"/>
+      <!-- scraper arm -->
+      <line x1="230" y1="90" x2="120" y2="200" stroke="var(--accent)" stroke-width="2.5"/>
+      <line x1="230" y1="90" x2="340" y2="200" stroke="var(--accent)" stroke-width="2.5"/>
+      <circle cx="230" cy="90" r="5" fill="var(--accent)"/>
+      <!-- influent arrow -->
+      <line x1="230" y1="30" x2="230" y2="52" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <!-- effluent weir -->
+      <path d="M60 70 l0 -8 l14 0 l0 8" fill="none" stroke="var(--good)" stroke-width="2"/>
+      <path d="M400 70 l0 -8 l-14 0 l0 8" fill="none" stroke="var(--good)" stroke-width="2"/>
+      <!-- sludge draw -->
+      <line x1="230" y1="210" x2="230" y2="238" stroke="var(--warn)" stroke-width="2.5" marker-end="url(#arw)"/>
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="4" refY="6" orient="auto"><path d="M0 0 L4 6 L8 0" fill="var(--ink)"/></marker>
+        <marker id="arw" markerWidth="8" markerHeight="8" refX="4" refY="6" orient="auto"><path d="M0 0 L4 6 L8 0" fill="var(--warn)"/></marker>
+      </defs>
+      <g font-family="var(--mono)" font-size="10" fill="var(--muted)">
+        <text x="248" y="30">Influent</text>
+        <text x="8" y="58">Effluent weir</text>
+        <text x="340" y="58" text-anchor="end">V-notch weir</text>
+        <text x="250" y="86" fill="var(--accent-deep)">Feed well</text>
+        <text x="345" y="150" fill="var(--accent-deep)">Rake / scraper</text>
+        <text x="120" y="160" fill="var(--warn)">Sludge blanket</text>
+        <text x="248" y="235" fill="var(--warn)">Sludge draw (RAS/WAS)</text>
+      </g>
+    </svg>`,
+    'How a clarifier settles solids: influent enters the feed well, clarified water overflows the weir, solids settle into the blanket, the rake sweeps them to the sludge draw.',
+    'DP SOP · Primary Clarifier'),
+
+  uv:()=>figure(`
+    <svg viewBox="0 0 460 190" width="100%" role="img" aria-label="UV reactor diagram">
+      <rect x="70" y="70" width="300" height="55" rx="27" fill="var(--water)" fill-opacity=".08" stroke="var(--ink-2)" stroke-width="1.5"/>
+      <!-- lamp -->
+      <rect x="95" y="93" width="250" height="9" rx="4" fill="var(--accent)"/>
+      <!-- UV glow -->
+      <g stroke="var(--accent)" stroke-width="1" opacity=".5">
+        <line x1="120" y1="80" x2="120" y2="115"/><line x1="160" y1="80" x2="160" y2="115"/>
+        <line x1="200" y1="80" x2="200" y2="115"/><line x1="240" y1="80" x2="240" y2="115"/>
+        <line x1="280" y1="80" x2="280" y2="115"/><line x1="320" y1="80" x2="320" y2="115"/>
+      </g>
+      <!-- inlet/outlet -->
+      <line x1="30" y1="97" x2="70" y2="97" stroke="var(--water)" stroke-width="3" marker-end="url(#ar2)"/>
+      <line x1="370" y1="97" x2="415" y2="97" stroke="var(--good)" stroke-width="3" marker-end="url(#ar3)"/>
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="var(--water)"/></marker>
+        <marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="var(--good)"/></marker>
+      </defs>
+      <g font-family="var(--mono)" font-size="10" fill="var(--muted)">
+        <text x="30" y="88">Feed in</text>
+        <text x="378" y="88" fill="var(--good)">Disinfected out</text>
+        <text x="130" y="150" fill="var(--accent-deep)">UV lamp + quartz sleeve</text>
+        <text x="150" y="65">Ultraviolet rays</text>
+        <text x="70" y="170" fill="var(--muted-2)">Dose target 40–60 mJ/cm² · 99.9% inactivation</text>
+      </g>
+    </svg>`,
+    'UV disinfection: water passes the lamp; UV dose (intensity × contact time) inactivates pathogens. Low intensity → replace the lamp; fouling → clean the quartz sleeve.',
+    'DP SOP · UV System'),
+
+  aeration:()=>figure(`
+    <svg viewBox="0 0 460 200" width="100%" role="img" aria-label="Aeration basin diagram">
+      <rect x="60" y="55" width="330" height="120" fill="var(--water)" fill-opacity=".08" stroke="var(--ink-2)" stroke-width="1.5"/>
+      <line x1="60" y1="60" x2="390" y2="60" stroke="var(--water)" stroke-width="2"/>
+      <!-- diffuser pipe -->
+      <line x1="80" y1="165" x2="370" y2="165" stroke="var(--ink-2)" stroke-width="3"/>
+      <!-- bubbles -->
+      <g fill="var(--accent)" opacity=".55">
+        <circle cx="110" cy="120" r="3"/><circle cx="118" cy="95" r="2"/><circle cx="150" cy="130" r="3.5"/><circle cx="158" cy="100" r="2.5"/>
+        <circle cx="200" cy="115" r="3"/><circle cx="210" cy="90" r="2"/><circle cx="250" cy="128" r="3.5"/><circle cx="258" cy="98" r="2.5"/>
+        <circle cx="300" cy="118" r="3"/><circle cx="310" cy="92" r="2"/><circle cx="340" cy="130" r="3"/>
+      </g>
+      <!-- floc -->
+      <g fill="var(--warn)" opacity=".4"><circle cx="130" cy="145" r="5"/><circle cx="230" cy="150" r="6"/><circle cx="320" cy="147" r="5"/></g>
+      <!-- blower -->
+      <rect x="395" y="150" width="40" height="26" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+      <line x1="415" y1="165" x2="375" y2="165" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar4)"/>
+      <!-- DO probe -->
+      <line x1="230" y1="45" x2="230" y2="130" stroke="var(--good)" stroke-width="2"/>
+      <circle cx="230" cy="130" r="4" fill="var(--good)"/>
+      <defs><marker id="ar4" markerWidth="8" markerHeight="8" refX="4" refY="6" orient="auto"><path d="M0 0 L4 6 L8 0" fill="var(--accent)"/></marker></defs>
+      <g font-family="var(--mono)" font-size="10" fill="var(--muted)">
+        <text x="238" y="48" fill="var(--good)">DO probe · target 2.0 mg/L</text>
+        <text x="100" y="188" fill="var(--accent-deep)">Fine-bubble diffusers</text>
+        <text x="392" y="145" fill="var(--accent-deep)">Blower</text>
+        <text x="245" y="158" fill="var(--warn)">MLSS floc</text>
+      </g>
+    </svg>`,
+    'Aeration: the blower feeds air through diffusers so microbes (MLSS floc) can breathe. Too little air starves nitrifiers; too much wastes energy — hence the DO setpoint.',
+    'DP SOP · Extended Aeration'),
+
+  settling:()=>figure(`
+    <svg viewBox="0 0 300 200" width="100%" role="img" aria-label="Settling test cylinder">
+      <!-- three cylinders showing 0, 30, poor -->
+      <g>
+        <rect x="30" y="30" width="46" height="150" rx="6" fill="var(--water)" fill-opacity=".12" stroke="var(--ink-2)" stroke-width="1.5"/>
+        <rect x="30" y="30" width="46" height="150" rx="6" fill="var(--warn)" fill-opacity=".3"/>
+        <text x="53" y="200" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">t=0 mixed</text>
+      </g>
+      <g>
+        <rect x="127" y="30" width="46" height="150" rx="6" fill="var(--water)" fill-opacity=".12" stroke="var(--ink-2)" stroke-width="1.5"/>
+        <rect x="127" y="128" width="46" height="52" rx="0" fill="var(--warn)" fill-opacity=".45"/>
+        <line x1="120" y1="128" x2="180" y2="128" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="150" y="200" font-family="var(--mono)" font-size="9" fill="var(--good)" text-anchor="middle">30 min · good</text>
+      </g>
+      <g>
+        <rect x="224" y="30" width="46" height="150" rx="6" fill="var(--water)" fill-opacity=".12" stroke="var(--ink-2)" stroke-width="1.5"/>
+        <rect x="224" y="70" width="46" height="110" rx="0" fill="var(--crit)" fill-opacity=".35"/>
+        <line x1="217" y1="70" x2="277" y2="70" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="247" y="200" font-family="var(--mono)" font-size="9" fill="var(--crit)" text-anchor="middle">bulking</text>
+      </g>
+    </svg>`,
+    'The 30-minute settling test (SV30): sludge that settles to a firm, low interface is healthy. A high, slow interface signals bulking — the copilot estimates this from your photo.',
+    'Low-cost biology method'),
+};
+function diagramFor(name){
+  const n=(name||'').toLowerCase();
+  if(n.includes('clarifier'))return DIAGRAMS.clarifier();
+  if(n.includes('uv'))return DIAGRAMS.uv();
+  if(n.includes('aeration')||n.includes('basin')||n.includes('blower'))return DIAGRAMS.aeration();
+  return '';
+}
 
 /* ================= HOME ================= */
 function home(){
@@ -374,6 +540,7 @@ function equip(k){
     <h1>${e.name}</h1>
     <p class="sub">${e.proc} · <span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p>
     <div class="sensors" style="margin-bottom:14px;">${e.vals.map(([k2,v,u,t])=>`<div class="s"><div class="k">${k2}</div><div class="v ${t}">${v} <small>${u}</small></div></div>`).join('')}</div>
+    ${diagramFor(e.name)||diagramFor(e.proc)||''}
     <div class="btnrow">
       <button class="btn pri" id="ex">? Explain this equipment</button>
       <button class="btn" id="dg">⚠ Diagnose a problem</button>
@@ -410,24 +577,61 @@ function explain(topic){
   const chat=w.querySelector('#chat');
   const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Reading 4 sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
   chat.append(t);
+  const fig=diagramFor(topic);
   setTimeout(()=>{
-    t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · your plant</div>
-      In your plant, ${topic} is where microbes eat the organic load. Right now DO is <b>2.3&nbsp;mg/L</b> (your target is 2.0) and Blower&nbsp;1 is in Auto at 62%. The blower feeds air so the bugs can breathe; too little and they suffocate, too much wastes energy. Your MLSS of 4,120&nbsp;mg/L means a healthy population is doing the work.`;
+    t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · your plant</div>${INTRO(topic)} Here's how it works:`;
+    if(fig){const f=el(`<div class="bub ai" style="max-width:100%;width:100%">${fig}</div>`);chat.append(f);}
+    window.scrollTo(0,9e9);
   },800);
-  const depths=['Go deeper — the biology','Why does DO matter?','Show the SOP','Explain today\'s DO trend'];
+  const depths=DEPTHS(topic);
   const dc=w.querySelector('#depth');
   depths.forEach(d=>{const b=el(`<button class="chip">${d}</button>`);b.onclick=()=>{
     chat.append(el(`<div class="bub op">${d}</div>`));
     const tt=el(`<div class="bub ai"><div class="who"><span class="dot"></span><span class="typing"><i></i><i></i><i></i></span></div></div>`);chat.append(tt);window.scrollTo(0,9e9);
-    setTimeout(()=>{tt.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot</div>${EXPLAIN_MORE(d)}`;window.scrollTo(0,9e9);},700);
+    setTimeout(()=>{tt.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="figsrc">SOP-referenced</span></div>${EXPLAIN_MORE(d,topic)}`;window.scrollTo(0,9e9);},700);
   };dc.append(b);});
   return [w];
 }
-function EXPLAIN_MORE(d){
+function INTRO(topic){
+  const n=(topic||'').toLowerCase();
+  if(n.includes('clarifier'))return `In your plant, the ${topic} lets solids settle out by gravity. Right now the sludge blanket sits at <b>1.9&nbsp;m</b> and outlet turbidity is well under your <b>250&nbsp;NTU</b> ceiling. The rake sweeps settled sludge to the centre draw; your SOP says keep the scraper running <b>continuously</b> to avoid bulking.`;
+  if(n.includes('uv'))return `In your plant, the ${topic} inactivates pathogens with ultraviolet light. Intensity is <b>88%</b> and runtime <b>21.4 h/day</b>. Your SOP target dose is <b>40–60&nbsp;mJ/cm²</b> for 99.9% disinfection — if intensity drops, the lamp needs replacing or the quartz sleeve cleaning.`;
+  return `In your plant, ${topic} is where microbes eat the organic load. Right now DO is <b>2.3&nbsp;mg/L</b> (target 2.0) and Blower&nbsp;1 is in Auto at 62%. The blower feeds air so the bugs can breathe; too little and they suffocate, too much wastes energy. MLSS of <b>4,120&nbsp;mg/L</b> means a healthy population is doing the work.`;
+}
+function DEPTHS(topic){
+  const n=(topic||'').toLowerCase();
+  if(n.includes('clarifier'))return ['Go deeper — settling','What raises the blanket?','Show the SOP ranges','Why keep the scraper running?'];
+  if(n.includes('uv'))return ['Go deeper — UV dose','Show the SOP ranges','Why does intensity drop?','When to replace the lamp?'];
+  return ['Go deeper — the biology','Why does DO matter?','Show the SOP ranges','Explain today\'s DO trend'];
+}
+function EXPLAIN_MORE(d,topic){
+  const n=(topic||'').toLowerCase();
+  // ---- clarifier ----
+  if(n.includes('clarifier')){
+    if(d.includes('SOP'))return sopTable('Primary Clarifier',[['pH','6.5–7.5','Adjust inlet acid/base; tune coagulant dosing'],['Outlet TSS / turbidity','&lt; 250 NTU (good &lt;100)','&gt;150 → check dosing, settling & scraper'],['Sludge wasting','Per calc sheet','Too little → carryover; too much → thin sludge downstream']]);
+    if(d.includes('blanket'))return `The blanket rises when solids arrive faster than they're drawn off — usually low RAS/WAS flow or a stalled scraper. Right now yours is <b>1.9&nbsp;m</b>. Your SOP: if outlet TSS climbs &gt;150&nbsp;ppm, increase blowdown and confirm the scraper is running.`;
+    if(d.includes('scraper'))return `The SOP requires the scraper to run <b>continuously — even when flow is stopped</b>. If it halts, sludge compacts and bulks, then escapes over the weir as turbidity. It's the single most important habit for a clarifier.`;
+    return `Settling is gravity separation: dense floc sinks, clear water rises to the weir. A firm, low blanket means good settling; a high slow blanket means bulking. I compare your blanket only against your own history.`;
+  }
+  // ---- UV ----
+  if(n.includes('uv')){
+    if(d.includes('SOP'))return sopTable('UV System',[['UV dose / intensity','40–60 mJ/cm²','Low → replace lamp; clean quartz sleeve'],['Disinfection','99.9%','Poor outlet → raise intensity, clean lamp'],['PPM','Lamp & pump monthly','Replace lamps per manufacturer schedule']]);
+    if(d.includes('intensity drop'))return `Intensity falls for two reasons: <b>lamp ageing</b> (output decays over months) or a <b>fouled quartz sleeve</b> (film blocks the light). Your SOP says clean the sleeve first; if intensity is still low, replace the lamp.`;
+    if(d.includes('replace'))return `Replace the lamp when intensity can't be restored above ~40&nbsp;mJ/cm² by cleaning, or at the manufacturer's hour limit. Yours is 6 months old and still at 88% — healthy. I'll flag it as it approaches end of life.`;
+    return `UV dose = intensity × contact time. More flow means less contact time, so the SOP couples a flow limit with the dose target. Below 40&nbsp;mJ/cm² pathogens survive; that's why intensity is watched continuously.`;
+  }
+  // ---- aeration (default) ----
   if(d.includes('DO trend'))return `DO dipped to <b>1.4 mg/L</b> at 04:00 after the 04:10 backwash pulled flow while Blower 1 was still at 40% manual. It recovered to 2.3. This same dip appears most nights after backwash — normal for your plant, not a fault.`;
-  if(d.includes('SOP'))return `Your SOP <b>AER-03</b> says: keep DO 1.8–2.5 mg/L during nitrification, verify blower Auto mode each shift, and log any manual override. Want me to check compliance with it right now?`;
+  if(d.includes('SOP'))return sopTable('Extended Aeration',[['DO','1.8–2.5 mg/L','Low → raise blower; high → trim to save energy'],['MLSS','Per F:M target','High → waste sludge; low → reduce wasting'],['Blower mode','Auto','Log any manual override each shift']]);
   if(d.includes('DO matter'))return `Below ~1.5 mg/L nitrifying bacteria slow down and ammonia can break through your discharge limit. Above ~3 you're just paying for electricity. That's why 2.0 is your sweet spot.`;
   return `The floc in your basin is a living community — bacteria, protozoa, rotifers. A healthy plant shows crawling ciliates under a microscope and settles into a firm brown blanket. Your last settling test looked textbook. I compare it only against your own history.`;
+}
+function sopTable(unit,rows){
+  return `Straight from your <b>${unit}</b> SOP:
+    <div class="soptable">
+      <div class="hh">Parameter</div><div class="hh">Range</div><div class="hh">If out of range</div>
+      ${rows.map(([p,r,t])=>`<div class="pp">${p}</div><div class="rr">${r}</div><div class="tt">${t}</div>`).join('')}
+    </div>`;
 }
 
 /* ================= BIOLOGY ================= */
@@ -457,6 +661,7 @@ function biology(){
     <p class="sub" style="margin-top:-6px">One capture per shift raises the copilot's confidence.</p>
     <div id="obs"></div>
     <h2>Settling test assistant</h2>
+    ${DIAGRAMS.settling()}
     <div class="card"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <button class="btn" id="photo">📸 Upload settling photo</button>
       <div id="photoout" class="chips"></div>
