@@ -229,6 +229,13 @@
 const $=(s,r=document)=>r.querySelector(s);
 const el=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
 const stage=$('#stage');
+// Gently reveal the newest chat message/card instead of yanking the page to the bottom.
+function scrollChat(){
+  const chat=$('#chat');
+  const last=chat?chat.lastElementChild:null;
+  if(last){last.scrollIntoView({behavior:'smooth',block:'center'});}
+  else{const items=document.querySelectorAll('.screen .card, .screen .step');const l=items[items.length-1];if(l)l.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
 
 function toggleTheme(){
   const r=document.documentElement;
@@ -494,14 +501,14 @@ function ask(){
     chat.append(el(`<div class="bub op">${q}</div>`));
     const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Reading ${a.src} sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
     chat.append(t);chat.scrollIntoView({block:'end'});
-    stage.scrollTo?.(0,9e9);window.scrollTo(0,9e9);
+    stage.scrollTo?.(0,9e9);scrollChat();
     setTimeout(()=>{
       t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="src"><u>${a.src} sources</u></span></div>${a.html}`;
       const cl=el(`<div class="chips" style="margin-top:10px;"></div>`);
       (a.chips||[]).forEach(c=>{const b=el(`<button class="chip">${c}</button>`);b.onclick=()=>answer(c);cl.append(b);});
       t.append(cl);
       if(a.cta){const b=el(`<div class="btnrow"><button class="btn pri">${a.cta.label}</button></div>`);b.querySelector('button').onclick=()=>go(a.cta.go);t.append(b);}
-      window.scrollTo(0,9e9);
+      scrollChat();
     },900);
   }
   w.querySelectorAll('#suggest .chip').forEach(c=>c.onclick=()=>answer(c.textContent));
@@ -581,14 +588,14 @@ function explain(topic){
   setTimeout(()=>{
     t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · your plant</div>${INTRO(topic)} Here's how it works:`;
     if(fig){const f=el(`<div class="bub ai" style="max-width:100%;width:100%">${fig}</div>`);chat.append(f);}
-    window.scrollTo(0,9e9);
+    scrollChat();
   },800);
   const depths=DEPTHS(topic);
   const dc=w.querySelector('#depth');
   depths.forEach(d=>{const b=el(`<button class="chip">${d}</button>`);b.onclick=()=>{
     chat.append(el(`<div class="bub op">${d}</div>`));
-    const tt=el(`<div class="bub ai"><div class="who"><span class="dot"></span><span class="typing"><i></i><i></i><i></i></span></div></div>`);chat.append(tt);window.scrollTo(0,9e9);
-    setTimeout(()=>{tt.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="figsrc">SOP-referenced</span></div>${EXPLAIN_MORE(d,topic)}`;window.scrollTo(0,9e9);},700);
+    const tt=el(`<div class="bub ai"><div class="who"><span class="dot"></span><span class="typing"><i></i><i></i><i></i></span></div></div>`);chat.append(tt);scrollChat();
+    setTimeout(()=>{tt.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="figsrc">SOP-referenced</span></div>${EXPLAIN_MORE(d,topic)}`;scrollChat();},700);
   };dc.append(b);});
   return [w];
 }
@@ -688,48 +695,135 @@ function biology(){
 }
 
 /* ================= DIAGNOSE ================= */
-const DTREE=[
-  {ai:`I ranked five likely causes for Pump 2's low discharge & rising vibration, by what your data suggests:`,list:['Blocked suction — <b>most likely</b>','Air lock','Impeller wear','Cavitation','Pressure-sensor fault'],opts:[['Diagnose blocked suction','s1'],['Why that order?','why'],['Has this happened before?','hist']]},
+// Each cause is its own branch: a live reading + a physical check, then its own remedial tasks.
+const CAUSES=[
+  {k:'suction',name:'Blocked suction',rank:'most likely',rc:'warn',
+    reason:`Suction ΔP already reads high (0.9&nbsp;bar) and vibration rose <i>gradually</i> — the classic signature of debris building on the strainer.`,
+    live:`suction strainer differential — <b>ΔP 0.9&nbsp;bar</b> (high)`,
+    ask:`Please visually inspect the strainer. What do you see?`,
+    yes:'Strainer looks clogged', no:'Strainer is clean',
+    fix:'Clean the strainer and restore flow.',
+    verify:['Discharge pressure','3.0–3.4 bar','3.2 bar'],
+    tasks:[{t:'Isolate Pump 2',go:'isolate'},{t:'Clean suction strainer'},{t:'Restart & verify pressure'}]},
+  {k:'airlock',name:'Air lock',rank:'possible',rc:'info',
+    reason:`Air trapped in the suction line can mimic low discharge — worth ruling out, though the high suction ΔP argues against it.`,
+    live:`casing vent — intermittent flow noise detected`,
+    ask:`Is there gurgling at the pump casing?`,
+    yes:'Yes, gurgling', no:'No gurgling',
+    fix:'Bleed the suction line via valve V22, then re-prime.',
+    verify:['Discharge pressure','3.0–3.4 bar','3.2 bar'],
+    tasks:[{t:'Bleed valve V22'},{t:'Re-prime pump'},{t:'Verify discharge 3.2 bar'}]},
+  {k:'impeller',name:'Impeller wear',rank:'possible',rc:'info',
+    reason:`Worn vanes lose head slowly over runtime — consistent with a gradual decline, not a sudden drop.`,
+    live:`runtime — <b>1,240 h</b> since last overhaul`,
+    ask:`Open the casing — are the vane edges rounded or eroded?`,
+    yes:'Vanes are worn', no:'Vanes look fine',
+    fix:'Replace or refurbish the impeller.',
+    verify:['Discharge pressure','3.0–3.4 bar','3.2 bar'],
+    tasks:[{t:'Isolate Pump 2',go:'isolate'},{t:'Replace impeller',go:'motor'},{t:'Restart & verify pressure'}]},
+  {k:'cavitation',name:'Cavitation',rank:'unlikely',rc:'muted',
+    reason:`Cavitation brings a rattling noise and unstable pressure — your trend is smooth, so this ranks low.`,
+    live:`discharge pressure — <b>steady</b>, not oscillating`,
+    ask:`Do you hear a gravel-like rattle at the pump?`,
+    yes:'Yes, rattling', no:'No, it\'s quiet',
+    fix:'Raise suction head / reduce throttling to stop vapour bubbles forming.',
+    verify:['Pump noise','no rattle','quiet'],
+    tasks:[{t:'Confirm suction valve fully open'},{t:'Reduce discharge throttling'},{t:'Verify rattle stops'}]},
+  {k:'sensor',name:'Pressure-sensor fault',rank:'unlikely',rc:'muted',
+    reason:`The sensor reads plausibly and tracks the trend, so a fault is least likely — but quick to rule out.`,
+    live:`sensor signal — within calibrated range`,
+    ask:`Compare against the local gauge — do the two agree?`,
+    yes:'They disagree', no:'They agree',
+    fix:'Recalibrate or replace the pressure transmitter.',
+    verify:['Sensor vs gauge','match ±0.1 bar','match'],
+    tasks:[{t:'Cross-check local gauge'},{t:'Recalibrate transmitter'},{t:'Verify reading'}]},
 ];
 function diagnose(){
   const w=el(`<div>
     <h1>Diagnostics · RAS Pump 2</h1>
-    <p class="sub">The diagnostic tree, as a conversation. I read the live values for each branch — you do the physical checks.</p>
+    <p class="sub">The diagnostic tree, as a conversation. Pick any cause to investigate — I read the live values, you do the physical checks.</p>
     <div class="chat" id="chat">
       <div class="bub op">Pump 2 discharge pressure is low.</div>
     </div>
     <div class="askbar"><div class="chips" id="opts"></div></div>
   </div>`);
   const chat=w.querySelector('#chat'),opts=w.querySelector('#opts');
+  const ruledOut=new Set();
   function aiSay(html,then){
     const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Copilot <span class="typing"><i></i><i></i><i></i></span></div></div>`);
-    chat.append(t);window.scrollTo(0,9e9);
-    setTimeout(()=>{t.innerHTML=`<div class="who"><span class="dot"></span>Copilot</div>${html}`;then&&then();window.scrollTo(0,9e9);},750);
+    chat.append(t);scrollChat();
+    setTimeout(()=>{t.innerHTML=`<div class="who"><span class="dot"></span>Copilot</div>${html}`;then&&then();scrollChat();},700);
   }
-  function setOpts(list){opts.innerHTML='';list.forEach(([label,fn])=>{const b=el(`<button class="chip">${label}</button>`);b.onclick=()=>{chat.append(el(`<div class="bub op">${label}</div>`));fn();};opts.append(b);});}
-  // step 0
-  aiSay(`I found <b>five likely causes</b>, ranked by your data:<ul><li>Blocked suction — <b>most likely</b></li><li>Air lock · Impeller wear</li><li>Cavitation · Pressure-sensor fault</li></ul>Diagnose blocked suction first?`,()=>{
-    setOpts([['Yes, start',step1],['Why that order?',()=>aiSay(`Suction ΔP is already reading high (0.9&nbsp;bar) and vibration rose gradually — the classic signature of debris building on the strainer. The sensor reads fine, so a fault is less likely.`,()=>setOpts([['OK, start',step1]]))],['Has this happened before?',()=>aiSay(`Yes — 4 months ago, same pump, same signature. Root cause then was a rag caught on the strainer. Fixed in 25 minutes.`,()=>setOpts([['Start diagnosis',step1]]))]]);
-  });
-  function step1(){aiSay(`<b>Step 1 of 3.</b> I'm reading suction strainer differential live: <b>ΔP 0.9&nbsp;bar</b> — that's high. Please visually inspect the strainer. What do you see?`,()=>setOpts([['Strainer looks clogged',step2],['Strainer is clean',()=>aiSay(`Interesting — then let's rule out air lock next. Is there gurgling at the pump casing?`,()=>setOpts([['Yes, gurgling',rootAir],['No',()=>aiSay('Then impeller wear is next. Let me open that branch.',()=>setOpts([['Continue',step2]]))]]))]]));}
-  function step2(){aiSay(`<b>Step 2 of 3.</b> That confirms it. <span class="pill warn"><span class="dot"></span>Root cause: blocked suction strainer.</span> Isolate the pump before cleaning — I'll guide the isolation as a task. Ready?`,()=>setOpts([['Show root cause & tasks',rootBlock]]));}
-  function rootAir(){rootCard('Air lock in suction line','Bleed the suction line via valve V22, then re-prime.',['Bleed V22','Re-prime pump','Verify discharge 3.2 bar']);}
-  function rootBlock(){rootCard('Blocked suction strainer','Clean the strainer and restore flow.',['Isolate Pump 2 (guided)','Clean suction strainer','Restart & verify pressure']);}
-  function rootCard(cause,fix,steps){
-    const c=el(`<div class="card fade" style="margin-top:6px"><span class="kh">Root cause confirmed</span>
-      <h4>${cause}</h4><p>${fix}</p>
-      <div class="flow" style="margin:12px 0">
-        ${steps.map((s,i)=>`<div class="step"><div class="n">${i+1}</div><div><div class="h">${s}</div></div></div>`).join('')}
-      </div>
-      <div class="btnrow"><button class="btn pri" id="dofix">▶ Start remedial task</button><button class="btn" id="verify">Verify only</button></div>
+  function setOpts(list){opts.innerHTML='';list.forEach(([label,fn,dis])=>{const b=el(`<button class="chip"${dis?' disabled style="opacity:.4"':''}>${label}</button>`);if(!dis)b.onclick=()=>{chat.append(el(`<div class="bub op">${label}</div>`));fn();};opts.append(b);});}
+
+  // ---- the cause menu: every cause is selectable, ranked ----
+  function showCauses(intro){
+    const remaining=CAUSES.filter(c=>!ruledOut.has(c.k));
+    const listHtml=CAUSES.map(c=>{
+      const done=ruledOut.has(c.k);
+      const rankPill=c.rc==='muted'?`<span class="figsrc">${c.rank}</span>`:`<span class="pill ${c.rc}"><span class="dot"></span>${c.rank}</span>`;
+      return `<li${done?' style="opacity:.5;text-decoration:line-through"':''}>${c.name} ${done?'<span class="figsrc">ruled out</span>':rankPill}</li>`;
+    }).join('');
+    aiSay(`${intro} I ranked <b>five likely causes</b> — <b>tap any one</b> to investigate it:<ul>${listHtml}</ul>`,()=>{
+      const chips=remaining.map(c=>[`Diagnose: ${c.name}`,()=>pickCause(c)]);
+      chips.push(['Why this order?',()=>aiSay(`I rank by how well each fits your live data:<ul>${CAUSES.map(c=>`<li><b>${c.name}</b> — ${c.reason}</li>`).join('')}</ul>`,()=>showChoicesOnly())]);
+      chips.push(['Has this happened before?',()=>aiSay(`Yes — 4 months ago, same pump, same signature. Root cause then was <b>blocked suction</b> (a rag on the strainer). Fixed in 25 minutes. That history is why blocked suction ranks first.`,()=>showChoicesOnly())]);
+      setOpts(chips);
+    });
+  }
+  // re-show just the tappable cause chips without re-printing the list
+  function showChoicesOnly(){
+    const remaining=CAUSES.filter(c=>!ruledOut.has(c.k));
+    setOpts(remaining.map(c=>[`Diagnose: ${c.name}`,()=>pickCause(c)]));
+  }
+
+  // ---- investigate one cause: live reading + physical check ----
+  function pickCause(c){
+    aiSay(`<b>Investigating ${c.name}.</b> Reading live: ${c.live}. ${c.ask}`,()=>{
+      setOpts([
+        [c.yes,()=>confirmCause(c)],
+        [c.no,()=>{
+          ruledOut.add(c.k);
+          const left=CAUSES.filter(x=>!ruledOut.has(x.k));
+          if(left.length){aiSay(`Good — that rules out <b>${c.name}</b>. ${left.length} cause${left.length>1?'s':''} left. Which next?`,()=>showChoicesOnly());}
+          else{aiSay(`We've ruled out all five standard causes. This warrants escalation — I'll log it for your shift engineer with the full check history.`,()=>setOpts([['Log for shift engineer',()=>go('history')]]));}
+        }]
+      ]);
+    });
+  }
+  function confirmCause(c){
+    aiSay(`That confirms it. <span class="pill warn"><span class="dot"></span>Root cause: ${c.name}.</span> Here's the fix and its remedial tasks — start them in any order.`,()=>{rootCard(c);});
+  }
+
+  // ---- root cause card: each task individually launchable ----
+  function rootCard(c){
+    const card=el(`<div class="card fade" style="margin-top:6px"><span class="kh">Root cause confirmed</span>
+      <h4>${c.name}</h4><p>${c.fix}</p>
+      <div class="kh" style="margin-top:12px">Remedial tasks · start any</div>
+      <div class="flow" id="tasks" style="margin:8px 0 4px"></div>
+      <div class="btnrow"><button class="btn" id="verify">Verify the fix</button><button class="btn" id="reopen">Try a different cause</button></div>
     </div>`);
-    chat.append(c);opts.innerHTML='';
-    c.querySelector('#dofix').onclick=()=>go('task','isolate');
-    c.querySelector('#verify').onclick=()=>{
-      c.querySelector('.btnrow').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:12px"><span class="kh">Verification</span><h4>Discharge pressure test</h4><p>Target band <b>3.0–3.4 bar</b>. Live reading after fix: <b>3.2 bar</b> <span class="pill good"><span class="dot"></span>PASS</span></p><div class="btnrow"><button class="btn pri" onclick="go('history')">Close issue & log</button></div></div>`));
+    chat.append(card);opts.innerHTML='';
+    const tl=card.querySelector('#tasks');
+    c.tasks.forEach((tk,i)=>{
+      const row=el(`<div class="step"><div class="n">${i+1}</div><div style="flex:1"><div class="h">${tk.t}</div><div class="d">${tk.go?'Guided in Task Mode':'Manual step'}</div></div></div>`);
+      const btn=el(`<button class="btn" style="align-self:center;padding:6px 12px;font-size:12.5px">${tk.go?'▶ Start':'✓ Mark done'}</button>`);
+      btn.onclick=()=>{
+        if(tk.go){go('task',tk.go);}
+        else{row.classList.add('done');btn.textContent='✓ Done';btn.disabled=true;btn.style.opacity=.6;}
+      };
+      row.append(btn);tl.append(row);
+    });
+    card.querySelector('#verify').onclick=()=>{
+      const[label,band,reading]=c.verify;
+      card.querySelector('.btnrow').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:12px"><span class="kh">Verification</span><h4>${label} test</h4><p>Target <b>${band}</b>. Live reading after fix: <b>${reading}</b> <span class="pill good"><span class="dot"></span>PASS</span></p><div class="btnrow"><button class="btn pri" onclick="go('history')">Close issue & log</button></div></div>`));
+      scrollChat();
     };
-    window.scrollTo(0,9e9);
+    card.querySelector('#reopen').onclick=()=>{aiSay(`No problem — the fix didn't resolve it. Let's reconsider the other causes.`,()=>showChoicesOnly());};
+    scrollChat();
   }
+
+  showCauses(`I found five likely causes for Pump 2's low discharge and rising vibration.`);
   return [w];
 }
 
@@ -787,7 +881,7 @@ function taskmode(k){
       w.querySelector('#steps').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:14px;border-color:var(--good)"><span class="kh">Task complete</span><h4>✓ ${d.name} completed successfully</h4><p>All steps verified. Please record observations for the logbook.</p><div class="askrow" style="margin-top:8px"><input placeholder="Observations (optional)…" style="flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit"><button class="btn pri" onclick="go('history')">Save & close</button></div></div>`));
       this.disabled=true;this.style.opacity=.5;
     }
-    window.scrollTo(0,9e9);
+    scrollChat();
   };
   w.querySelector('#exit').onclick=()=>go('tasks');
   return [w];
