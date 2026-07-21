@@ -268,6 +268,41 @@
     border:none;background:var(--mist);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--ink-2);cursor:pointer;transition:.12s;font-family:inherit;}
   .qq:hover{background:var(--accent-wash);color:var(--accent-deep);}
   .qq .ar{color:var(--muted-2);font-size:13px;flex:none;}
+  /* ---- Plant Explorer: section tabs ---- */
+  .segtabs{display:inline-flex;gap:3px;background:var(--mist);border:1px solid var(--line);border-radius:12px;padding:4px;margin:2px 0 20px;}
+  .segtabs button{border:none;background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--muted);
+    padding:8px 16px;border-radius:9px;cursor:pointer;transition:.14s;}
+  .segtabs button:hover{color:var(--ink);}
+  .segtabs button.on{background:var(--card);color:var(--accent-deep);box-shadow:var(--shadow);}
+  .stagerow{display:flex;align-items:center;gap:10px;margin:22px 0 12px;}
+  .stagerow:first-child{margin-top:0;}
+  .stagerow .st-eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-deep);}
+  .stagerow h3{margin:0;font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:-.01em;color:var(--ink);text-transform:none;}
+  .stagerow .gline{flex:1;height:1px;background:var(--line-2);}
+  .proccard .pc-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .proccard .pnum{width:22px;height:22px;border-radius:7px;flex:none;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--accent-wash);color:var(--accent-deep);}
+  .biolink{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:3px 8px;border-radius:999px;background:var(--good-wash);color:var(--good);font-weight:600;margin-top:8px;}
+  /* ---- Equipment: workspace table ---- */
+  .eqtable{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:var(--shadow);}
+  .eqrow{display:grid;grid-template-columns:220px 1fr;gap:16px;padding:15px 18px;align-items:start;}
+  .eqrow+.eqrow{border-top:1px solid var(--line-2);}
+  .eqrow .ws{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.01em;}
+  .eqrow .ws small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);font-weight:400;margin-top:2px;}
+  .eqchips{display:flex;flex-wrap:wrap;gap:7px;}
+  .eqchip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--mist);color:var(--ink-2);}
+  button.eqchip{cursor:pointer;transition:.12s;}
+  button.eqchip:hover{border-color:var(--accent);color:var(--accent-deep);background:var(--accent-wash);}
+  button.eqchip::after{content:" ›";color:var(--muted-2);}
+  /* ---- Water Quality: class table ---- */
+  .wqtable{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:var(--shadow);}
+  .wqtable th,.wqtable td{text-align:left;padding:12px 14px;font-size:13px;vertical-align:top;border-bottom:1px solid var(--line-2);}
+  .wqtable th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--mist);}
+  .wqtable tr:last-child td{border-bottom:none;}
+  .wqtable .cls{font-family:var(--disp);font-weight:800;font-size:16px;}
+  .wqtable .use{font-weight:600;color:var(--ink);}
+  .wqtable .crit{color:var(--ink-2);line-height:1.5;}
+  .wqtable .crit b{font-family:var(--mono);font-weight:600;color:var(--accent-deep);font-size:12px;}
+  .wqscroll{overflow-x:auto;}
   /* ---- Diagnosis: Dr. Paani's ranked-assessment guidance panel ---- */
   .assess{margin:11px 0 2px;border:1px solid var(--line);border-left:3px solid var(--accent);
     border-radius:0 12px 12px 0;overflow:hidden;background:var(--card);}
@@ -844,7 +879,34 @@ function videoPlayer(key){
   return wrap;
 }
 function process(key){
-  const P=PROCESSES[key]||PROCESSES.aeration;
+  if(PROC[key]) return processDetail(PROC[key]);
+  return processHealth(PROCESSES[key]||PROCESSES.aeration);
+}
+function processDetail(P){
+  const w=el(`<div>
+    <div class="eyebrow" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-deep)">${P.stage}</div>
+    <h1 style="margin-top:6px">${P.name}</h1>
+    <p class="sub">${P.purpose}</p>
+    ${P.video?`<h2>Explainer</h2><p class="sub" style="margin-top:-8px">A guided walkthrough built from this process's SOP.</p><div id="vid"></div>`:''}
+    ${P.diagram&&DIAGRAMS[P.diagram]?`<h2>How it works</h2>${DIAGRAMS[P.diagram]()}`:''}
+    ${P.params?`<h2>Key parameters</h2><div class="soptable"><div class="hh">Parameter</div><div class="hh">Range / target</div><div class="hh">Why it matters</div>${P.params.map(([p,r,n])=>`<div class="pp">${p}</div><div class="rr">${r}</div><div class="tt">${n}</div>`).join('')}</div>`:''}
+    ${P.notes?`<div class="callout ac" style="margin-top:14px">${P.notes}</div>`:''}
+    ${P.equip&&P.equip.length?`<h2>Equipment in this process</h2><div class="grid g2" id="eqs"></div>`:''}
+    <div class="btnrow" style="margin-top:16px">
+      <button class="btn pri" id="ex">? Explain in Learning Mode</button>
+      <button class="btn" id="ask2">✳ Ask Dr. Paani</button>
+      ${P.biologyLink?'<button class="btn" id="bio">🧫 Open Biology</button>':''}
+    </div>
+  </div>`);
+  if(P.video)w.querySelector('#vid').append(videoPlayer(P.video));
+  if(P.equip&&P.equip.length){const eqs=w.querySelector('#eqs');
+    P.equip.forEach(k=>{const e=EQUIP[k];if(!e)return;const c=el(`<button class="card click" style="text-align:left"><span class="kh">${e.proc}</span><h4>${e.name}</h4><p><span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p></button>`);c.onclick=()=>go('equip',k);eqs.append(c);});}
+  w.querySelector('#ex').onclick=()=>go('explain',P.explain||P.name);
+  w.querySelector('#ask2').onclick=()=>go('ask');
+  if(P.biologyLink)w.querySelector('#bio').onclick=()=>go('biology');
+  return [w];
+}
+function processHealth(P){
   const w=el(`<div>
     <h1>${P.name}</h1>
     <p class="sub">Process health — tap equipment or watch the explainer.</p>
@@ -881,23 +943,147 @@ const EQUIP={
   blower1:{name:'Blower 1',proc:'Aeration',status:'good',stat:'Healthy',vals:[['Output','62','%','st'],['Air flow','420','m³/h','st'],['Runtime','980','h','st'],['Mode','Auto','','']]},
   uv:{name:'UV Disinfection',proc:'Disinfection',status:'good',stat:'Healthy',vals:[['Runtime','21.4','h/day','st'],['Intensity','88','%','st'],['Lamp age','6','mo','st'],['Mode','Auto','','']]}
 };
+// ---- Educational process detail (with MBBR grounded in the DP SOP) ----
+const PROC={
+  // Primary
+  barscreen:{name:'Bar Screen',stage:'Primary · Preliminary',explain:'Bar Screen',
+    purpose:'The first barrier: coarse bars catch rags, plastics and large floating solids so they don’t clog pumps and downstream units.',
+    params:[['Bar spacing','6–25 mm','Coarse then fine screening'],['Cleaning','Manual / mechanical rake','Keep clear to avoid backup'],['Headloss','Low & stable','A rising level means the screen is blinding']]},
+  oilgrease:{name:'Oil & Grease Removal',stage:'Primary',explain:'Oil & Grease Removal',
+    purpose:'Fats, oils and grease float to the surface in a quiescent tank and are skimmed off; heavier grit settles as sludge. Two partitions separate scum from clarified water.',
+    params:[['Surface skimming','Continuous','Removes the floating FOG layer'],['Retention','Enough to let FOG rise',''],['Outlet','Clear water only','Scum must not carry over']]},
+  eqtank:{name:'Equalisation Tank',stage:'Primary',explain:'Equalisation Tank',
+    purpose:'Buffers swings in flow and load so the biology downstream sees a steady, homogenised feed — the single biggest lever for stable treatment.',
+    params:[['HRT','6–8 h typical','Sized to the daily flow pattern'],['Mixing','Coarse-bubble / mixer','Prevents solids settling'],['Transfer','Pumped at a steady rate','Smooths peaks into the bioreactor']]},
+  bio:{name:'Biological Treatment',stage:'Primary → Secondary',explain:'Aeration Basin 1',biologyLink:true,video:'aeration',diagram:'aeration',
+    purpose:'The heart of the plant: a living microbial community consumes dissolved organics (BOD/COD) and converts ammonia to nitrate. Health is inferred, not measured — see the Biology section.',
+    params:[['DO','1.8–2.5 mg/L','Enough to nitrify, not waste energy'],['MLSS','Per F:M target','The population doing the work'],['Blower','Auto','Feeds air to the diffusers']],
+    notes:'This process is scored and tracked in <b>Biology</b> — open it for the inferred health score, confidence and the settling-test assistant.'},
+  // Secondary
+  mbbr:{name:'MBBR — Moving Bed Bio Reactor',stage:'Secondary · Attached growth',explain:'Aeration Basin 1',video:'aeration',diagram:'aeration',
+    purpose:'Biomass grows as a biofilm on free-floating plastic media kept in suspension by aeration. Removes 50–70% BOD/COD and 60–80% ammonia through nitrification (NH₄⁺ → NO₃⁻). Because the biomass sticks to the media, sludge production is low and no recirculation is needed.',
+    params:[['DO','2–3.5 ppm','Keep >2; raise air under high load'],['pH','6.5–8.5','Nitrification consumes alkalinity'],['OUR','18–25 ppm/hr','Indicates biomass health'],['Nutrients (COD:TN:TP)','100 : 5 : 1','Dose Urea + DAP continuously'],['Media fill','30–70%','Of total reactor volume'],['Ammonia reduction','50–80%','~8 ppm alkalinity per 1 ppm NH₃']],
+    notes:'From the DP MBBR SOP: the clarifier scraper must run <b>continuously</b>, sludge recirculation is <b>not</b> required, and biofilm thickness self-regulates as excess sloughs off the media.'},
+  mbr:{name:'MBR — Membrane Bio Reactor',stage:'Secondary',explain:'Aeration Basin 1',
+    purpose:'Combines biological treatment with membrane filtration in one step. The membrane replaces the clarifier, so it holds a very high biomass and produces exceptionally clear, low-solids effluent — ideal ahead of reuse.',
+    params:[['MLSS','8,000–12,000 mg/L','Much higher than conventional'],['TMP','Watch the trend','Rising TMP → fouling, needs CIP'],['Flux','Per membrane spec','Permeate rate per m²']]},
+  sbr:{name:'SBR — Sequencing Batch Reactor',stage:'Secondary',explain:'Aeration Basin 1',
+    purpose:'A fill-and-draw system: one tank cycles through Fill → React (aerate) → Settle → Decant on a timer, so treatment and clarification happen in the same basin over time.',
+    params:[['Cycle','Fill / React / Settle / Decant','Timed phases'],['DO (react)','~2 mg/L',''],['Decant','Clear supernatant only','No solids carryover']]},
+  saff:{name:'SAFF — Submerged Aerated Fixed Film',stage:'Secondary · Attached growth',explain:'Aeration Basin 1',
+    purpose:'Biofilm grows on fixed submerged media while air is blown from below. Robust to load swings and simple to run — common in packaged plants.',
+    params:[['DO','>2 mg/L',''],['Media','Fixed pack','Biofilm surface'],['Air','Continuous','Both oxygen and mixing']]},
+  // Tertiary
+  filtration:{name:'Filtration (MGF / DMF)',stage:'Tertiary',explain:'Clarifier',
+    purpose:'Polishing filters pass water through graded sand/anthracite media to strip residual suspended solids and turbidity before disinfection.',
+    params:[['Outlet turbidity','< 2 NTU target',''],['Backwash','On ΔP or schedule','Restores the bed'],['ΔP','Low & stable','High ΔP → backwash due']]},
+  uv:{name:'UV Disinfection',stage:'Tertiary',explain:'UV System',video:'uv',diagram:'uv',
+    purpose:'Ultraviolet light inactivates bacteria, viruses and protozoa without chemicals. Dose = intensity × contact time.',
+    params:[['UV dose','40–60 mJ/cm²','Below this, pathogens survive'],['Intensity','Watch continuously','Low → clean sleeve, then replace lamp'],['Disinfection','99.9%','Target inactivation']]},
+  chlorination:{name:'Chlorination',stage:'Tertiary · Chemical',explain:'UV System',
+    purpose:'Chlorine dosing disinfects and leaves a measurable residual that protects water through storage and distribution.',
+    params:[['Residual','0.2–0.5 mg/L','Free chlorine after contact'],['Contact time','≥30 min','In the contact tank'],['Dose','To demand + residual','Avoid over-dosing']]},
+  disinfection:{name:'Disinfection',stage:'Tertiary',explain:'UV System',
+    purpose:'The final pathogen-kill step (UV and/or chlorine) that brings treated water within the coliform limits for its designated use.',
+    params:[['Faecal coliform','Per class','See Water Quality tab'],['Method','UV + / or chlorine',''],['Verification','Lab MPN/100 mL','Confirms compliance']]},
+  // Treated Water
+  uf:{name:'Ultrafiltration (UF)',stage:'Treated Water · Membrane',explain:'Clarifier',
+    purpose:'A fine membrane (~0.01–0.1 µm) removes colloids, fine particles and bacteria — usually the pre-treatment that protects an RO membrane.',
+    params:[['Pore size','0.01–0.1 µm',''],['SDI out','< 3','Protects downstream RO'],['CIP','On TMP rise','Clean-in-place cycle']]},
+  ro:{name:'Reverse Osmosis (RO)',stage:'Treated Water · Membrane',explain:'Clarifier',
+    purpose:'High-pressure membrane rejects dissolved salts, delivering high-grade water for demanding reuse (boiler feed, process water).',
+    params:[['Recovery','~75%','Permeate vs feed'],['Rejection','>97% salts',''],['Feed SDI','< 3','From UF upstream']]},
+};
+const PROC_TREE=[
+  {stage:'A',title:'Primary',items:['barscreen','oilgrease','eqtank','bio']},
+  {stage:'B',title:'Secondary treatment',items:['mbbr','mbr','sbr','saff']},
+  {stage:'C',title:'Tertiary',items:['filtration','uv','chlorination','disinfection']},
+  {stage:'D',title:'Treated Water',items:['uf','ro']},
+];
+// ---- Equipment grouped by workspace ----
+const EQUIP_GROUPS=[
+  ['Water Coming In','Preliminary',[['Screens'],['Inlet Pumps'],['Grit Chamber']]],
+  ['Biological Treatment','Secondary',[['Aeration Tanks'],['Blowers','blower1'],['Diffusers'],['MBBR / MBR']]],
+  ['Water Cleaning','Tertiary',[['Clarifiers','clarifier'],['MGF'],['ACF'],['UF'],['RO']]],
+  ['Chemical Treatment','Dosing',[['Dosing Pumps'],['Dosing Tanks'],['Chlorination'],['UV','uv']]],
+  ['Sludge Management','Sludge',[['Sludge Pumps','pump2'],['Thickener'],['Filter Press']]],
+  ['Storage & Distribution','Reuse',[['Treated Water Tanks'],['Transfer Pumps']]],
+  ['Plant Utilities','Common',[['Valves'],['Sensors'],['Common Equipment']]],
+];
+// ---- CPCB designated-best-use water classes ----
+const WQ_CLASSES=[
+  ['A','Drinking water source — without conventional treatment, but after disinfection','Total coliform ≤ <b>50</b> MPN/100 mL · pH <b>6.5–8.5</b> · DO ≥ <b>6</b> mg/L · BOD ≤ <b>2</b> mg/L'],
+  ['B','Outdoor bathing','Total coliform ≤ <b>500</b> MPN/100 mL · pH <b>6.5–8.5</b> · DO ≥ <b>5</b> mg/L · BOD ≤ <b>3</b> mg/L'],
+  ['C','Drinking water source — after conventional treatment & disinfection','Total coliform ≤ <b>5000</b> MPN/100 mL · pH <b>6.5–8.5</b> · DO ≥ <b>4</b> mg/L · BOD ≤ <b>3</b> mg/L'],
+  ['D','Propagation of wildlife & fisheries','pH <b>6.5–8.5</b> · DO ≥ <b>4</b> mg/L · Free ammonia (as N) ≤ <b>1.2</b> mg/L'],
+  ['E','Irrigation, industrial cooling, controlled waste disposal','pH <b>6.0–8.5</b> · EC ≤ <b>2250</b> µmho/cm · SAR ≤ <b>26</b> · Boron ≤ <b>2</b> mg/L'],
+];
+let plantTab='process';
 function plant(){
   const w=el(`<div>
     <h1>Plant Explorer</h1>
-    <p class="sub">Four processes — tap any to open its health, explainer video and equipment.</p>
-    <div class="grid g2" id="procs"></div>
-    <h2>Equipment</h2>
-    <div class="grid g2" id="eqs"></div>
+    <p class="sub">Explore the plant three ways — by process, by equipment, or by the water quality it must meet.</p>
+    <div class="segtabs" id="segtabs">
+      <button data-t="process">Process</button>
+      <button data-t="equipment">Equipment</button>
+      <button data-t="quality">Water Quality</button>
+    </div>
+    <div id="panel"></div>
   </div>`);
-  const pc=w.querySelector('#procs');
-  for(const k in PROCESSES){const p=PROCESSES[k];
-    const c=el(`<button class="card click" style="text-align:left"><span class="kh">Process · health ${p.score}${p.video?' · ▶ video':''}</span><h4>${p.name}</h4><p><span class="pill ${p.status}"><span class="dot"></span>${p.stat}</span> ${p.blurb}</p></button>`);
-    c.onclick=()=>go('process',k);pc.append(c);}
-  const eq=w.querySelector('#eqs');
-  for(const k in EQUIP){const e=EQUIP[k];
-    const c=el(`<button class="card click" style="text-align:left"><span class="kh">${e.proc}</span><h4>${e.name}</h4><p><span class="pill ${e.status}"><span class="dot"></span>${e.stat}</span></p></button>`);
-    c.onclick=()=>go('equip',k);eq.append(c);}
+  const panel=w.querySelector('#panel');
+  function paint(){
+    w.querySelectorAll('#segtabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===plantTab));
+    panel.innerHTML='';
+    if(plantTab==='process')panel.append(procPanel());
+    else if(plantTab==='equipment')panel.append(eqPanel());
+    else panel.append(wqPanel());
+  }
+  w.querySelectorAll('#segtabs button').forEach(b=>b.onclick=()=>{plantTab=b.dataset.t;paint();});
+  paint();
   return [w];
+}
+function procPanel(){
+  const p=el(`<div class="fade"></div>`);
+  PROC_TREE.forEach(grp=>{
+    p.append(el(`<div class="stagerow"><span class="st-eyebrow">${grp.stage}</span><h3>${grp.title}</h3><span class="gline"></span></div>`));
+    const grid=el(`<div class="grid g2"></div>`);
+    grp.items.forEach((k,i)=>{const P=PROC[k];
+      const c=el(`<button class="card click proccard" style="text-align:left">
+        <div class="pc-h"><span class="pnum">${i+1}</span><h4 style="margin:0">${P.name}</h4></div>
+        <p>${P.purpose.length>110?P.purpose.slice(0,108)+'…':P.purpose}</p>
+        ${P.biologyLink?'<span class="biolink">🧫 Links to Biology</span>':''}${P.video?' <span class="biolink" style="background:var(--accent-wash);color:var(--accent-deep)">▶ Explainer</span>':''}
+      </button>`);
+      c.onclick=()=>go('process',k);grid.append(c);});
+    p.append(grid);
+  });
+  return p;
+}
+function eqPanel(){
+  const p=el(`<div class="fade"><div class="eqtable" id="eqt"></div></div>`);
+  const t=p.querySelector('#eqt');
+  EQUIP_GROUPS.forEach(([ws,tag,items])=>{
+    const row=el(`<div class="eqrow"><div class="ws">${ws}<small>${tag}</small></div><div class="eqchips"></div></div>`);
+    const cc=row.querySelector('.eqchips');
+    items.forEach(([label,key])=>{
+      if(key&&EQUIP[key]){const b=el(`<button class="eqchip">${label}</button>`);b.onclick=()=>go('equip',key);cc.append(b);}
+      else cc.append(el(`<span class="eqchip">${label}</span>`));
+    });
+    t.append(row);
+  });
+  return p;
+}
+function wqPanel(){
+  const p=el(`<div class="fade">
+    <p class="sub">CPCB designated best-use classes. Treated water is targeted to a class based on where it will be discharged or reused.</p>
+    <div class="wqscroll"><table class="wqtable">
+      <thead><tr><th>Class</th><th>Designated best use</th><th>Key criteria</th></tr></thead>
+      <tbody>${WQ_CLASSES.map(([c,u,k])=>`<tr><td class="cls">${c}</td><td class="use">${u}</td><td class="crit">${k}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <div class="callout" style="margin-top:16px"><b>Where do we stand?</b> Today's effluent is tracking to <b>Class C</b> targets. Dr. Paani forecasts all limits met — open Compliance for the live forecast.</div>
+    <div class="btnrow"><button class="btn pri" id="comp">⚖ Open Compliance</button></div>
+  </div>`);
+  p.querySelector('#comp').onclick=()=>go('compliance');
+  return p;
 }
 function equip(k){
   const e=EQUIP[k]||EQUIP.pump2;
