@@ -202,6 +202,43 @@
   .phrow{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;}
   .pbar{grid-column:1/-1;height:7px;background:var(--line-2);border-radius:4px;overflow:hidden;}
   .pbar i{display:block;height:100%;border-radius:4px;}
+  /* ---- Ask: categorised question picker (Hick / Fitts / Doherty) ---- */
+  .qbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  .qlauncher{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--card);
+    border-radius:999px;padding:10px 16px;font-size:13.5px;font-weight:600;color:var(--ink);box-shadow:var(--shadow);transition:.14s;}
+  .qlauncher:hover{border-color:var(--accent);color:var(--accent-deep);}
+  .qlauncher .chev{color:var(--muted);transition:transform .2s;font-size:11px;}
+  .qlauncher.open .chev{transform:rotate(180deg);}
+  .qhint{font-size:12px;color:var(--muted-2);}
+  .qhint button{border:none;background:none;color:var(--accent-deep);font:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;}
+  .qpop{position:absolute;left:0;bottom:100%;margin-bottom:12px;width:min(460px,100%);
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 24px 60px rgba(14,26,32,.20),0 3px 10px rgba(14,26,32,.08);padding:8px;z-index:30;
+    transform-origin:bottom left;animation:qpop .17s cubic-bezier(.2,.75,.3,1);}
+  @keyframes qpop{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:none;}}
+  .qpop .pophead{display:flex;align-items:center;gap:10px;padding:8px 10px 8px;}
+  .qpop .pophead .qt{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);}
+  .qpop .pophead .qsub{font-size:13px;color:var(--muted);margin-left:auto;}
+  .qback{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;flex:none;
+    display:grid;place-items:center;font-size:17px;color:var(--ink);cursor:pointer;transition:.12s;}
+  .qback:hover{border-color:var(--accent);color:var(--accent-deep);}
+  .qlist{display:flex;flex-direction:column;gap:2px;animation:qslide .18s ease;}
+  @keyframes qslide{from{opacity:0;transform:translateX(6px);}to{opacity:1;transform:none;}}
+  .qrow{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;width:100%;
+    border:none;background:none;text-align:left;padding:11px 12px;border-radius:13px;cursor:pointer;transition:.12s;}
+  .qrow:hover{background:var(--mist);}
+  .qrow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+  .qicon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:var(--accent-wash);}
+  .qrow.q .qicon{background:var(--mist);font-size:15px;color:var(--accent-deep);}
+  .qrow .tt{display:block;font-weight:600;font-size:14.5px;color:var(--ink);line-height:1.25;}
+  .qrow.q .tt{font-weight:500;}
+  .qrow .dd{display:block;font-size:12px;color:var(--muted);line-height:1.3;margin-top:2px;}
+  .qpop{max-height:min(66vh,460px);overflow:auto;}
+  .qrow .arrow{color:var(--muted-2);font-size:17px;padding-right:4px;}
+  .lawnote{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px 14px;box-shadow:var(--shadow);}
+  .lawnote h6{margin:0 0 8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);}
+  .lawnote .l{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:4px 0;font-size:12.5px;color:var(--ink-2);}
+  .lawnote .l b{color:var(--accent-deep);white-space:nowrap;}
   .hidden{display:none!important;}
   .fade{animation:rise .35s ease;}
 
@@ -510,24 +547,34 @@ const ASK_ANSWERS={
   'explain today':{src:4,html:`DO in Basin 1 dipped to <b>1.4 mg/L</b> at 04:00 after the 04:10 backwash pulled flow while Blower 1 was still at 40% manual — then recovered to 2.3. This dip appears most nights after backwash: normal for your plant, not a fault.`,chips:['Should I raise the blower?','Show last 7 nights']},
   'default':{src:3,html:`I read your live SCADA, the last 7 days of trends and the SOP library for that. In short: things look normal for your plant right now. Want me to look at a specific process or piece of equipment?`,chips:['How is biology?','Any risks today?','Explain today\'s DO trend']}
 };
-// Grouped example questions shown on the Ask screen, to convey the breadth of what the copilot can do.
-const ASK_GROUPS=[
-  ['Understand',['How is my plant today?','What changed since my last shift?','Which process needs attention?']],
-  ['Diagnose',['Is Pump 2 serious?','Why did the blanket rise?','Show me similar failures']],
-  ['Learn',['Teach me how the clarifier works','Explain today\'s DO trend','Why do we backwash?']],
-  ['Comply',['Will we meet limits today?','What\'s today\'s biggest compliance risk?','What could change the forecast?']],
-  ['Operate',['How much sludge should I waste?','Walk me through a safe pump isolation','Is a backwash due?']],
-  ['Optimise',['How is our energy today?','How can I cut energy safely?','Can this wait until tomorrow?']],
+// Categorised example questions, disclosed progressively (Hick's Law: 6 chunks, not 18 flat options).
+const ASK_CATS=[
+  {icon:'📊',label:'Understand',desc:'The state of your plant, right now',qs:['How is my plant today?','What changed since my last shift?','Which process needs attention?']},
+  {icon:'🩺',label:'Diagnose',desc:'Find and fix what\'s going wrong',qs:['Is Pump 2 serious?','Why did the blanket rise?','Show me similar failures']},
+  {icon:'🎓',label:'Learn',desc:'Understand how your plant works',qs:['Teach me how the clarifier works','Explain today\'s DO trend','Why do we backwash?']},
+  {icon:'⚖️',label:'Comply',desc:'Stay within discharge limits',qs:['Will we meet limits today?','What\'s today\'s biggest compliance risk?','What could change the forecast?']},
+  {icon:'🛠️',label:'Operate',desc:'Get guided through a procedure',qs:['How much sludge should I waste?','Walk me through a safe pump isolation','Is a backwash due?']},
+  {icon:'⚡',label:'Optimise',desc:'Run leaner and save energy',qs:['How is our energy today?','How can I cut energy safely?','Can this wait until tomorrow?']},
 ];
 function ask(){
-  const w=el(`<div>
+  const w=el(`<div style="display:flex;flex-direction:column;min-height:calc(100vh - 150px)">
     <h1>Ask Your Plant</h1>
     <p class="sub">Natural language or voice. The copilot already knows your live plant state.</p>
-    <div class="chat" id="chat">
+    <div class="chat" id="chat" style="flex:1">
       <div class="bub ai"><div class="who"><span class="dot"></span>Plant Copilot</div>Morning, Rahul. I'm watching all 14 data sources. Ask me anything — here are a few things on my mind today.</div>
     </div>
-    <div id="prompts" style="margin:6px 0 4px"></div>
-    <div class="askbar">
+    <div class="askbar" style="position:relative">
+      <div class="qbar">
+        <button class="qlauncher" id="qlaunch" aria-expanded="false">✦ Suggested questions<span class="chev">⌃</span></button>
+        <span class="qhint">Grouped by topic · <button id="qwhy">why?</button></span>
+      </div>
+      <div class="lawnote hidden" id="lawnote">
+        <h6>Design principles applied here</h6>
+        <div class="l"><b>Hick's Law</b><span>6 topic groups instead of 18 loose questions — fewer choices, faster decisions.</span></div>
+        <div class="l"><b>Fitts's Law</b><span>Large, full-width tap targets sitting close to the input — quick to hit, glove-friendly.</span></div>
+        <div class="l"><b>Doherty Threshold</b><span>The menu opens and the copilot starts replying in well under 400 ms, so attention never breaks.</span></div>
+      </div>
+      <div class="qpop hidden" id="qpop"></div>
       <div class="askrow">
         <button class="iconbtn mic" title="Hold to speak">🎤</button>
         <input id="askin" placeholder="Ask your plant…" autocomplete="off">
@@ -552,16 +599,40 @@ function ask(){
       t.append(cl);
       if(a.cta){const b=el(`<div class="btnrow"><button class="btn pri">${a.cta.label}</button></div>`);b.querySelector('button').onclick=()=>go(a.cta.go);t.append(b);}
       scrollChat();
-    },900);
+    },650);
   }
-  // grouped example prompts to show the breadth of the copilot
-  const pr=w.querySelector('#prompts');
-  ASK_GROUPS.forEach(([label,qs])=>{
-    const row=el(`<div style="margin-bottom:8px"><span class="kh" style="margin-bottom:5px">${label}</span><div class="chips"></div></div>`);
-    const cc=row.querySelector('.chips');
-    qs.forEach(q=>{const b=el(`<button class="chip">${q}</button>`);b.onclick=()=>{answer(q);};cc.append(b);});
-    pr.append(row);
-  });
+  // ---- categorised question picker: progressive disclosure ----
+  const pop=w.querySelector('#qpop'),launch=w.querySelector('#qlaunch');
+  function openPop(){pop.classList.remove('hidden');launch.classList.add('open');launch.setAttribute('aria-expanded','true');showCats();}
+  function closePop(){pop.classList.add('hidden');launch.classList.remove('open');launch.setAttribute('aria-expanded','false');}
+  function showCats(){
+    pop.innerHTML='';
+    const head=el(`<div class="pophead"><span class="qt">Ask about…</span><span class="qsub">pick a topic</span></div>`);
+    pop.append(head);
+    const list=el(`<div class="qlist"></div>`);
+    ASK_CATS.forEach(c=>{
+      const r=el(`<button class="qrow"><span class="qicon">${c.icon}</span><span><span class="tt">${c.label}</span><span class="dd">${c.desc}</span></span><span class="arrow">›</span></button>`);
+      r.onclick=(e)=>{e.stopPropagation();showQs(c);};list.append(r);
+    });
+    pop.append(list);
+  }
+  function showQs(c){
+    pop.innerHTML='';
+    const head=el(`<div class="pophead"><button class="qback" id="qb" aria-label="Back">‹</button><span class="qt">${c.icon} ${c.label}</span><span class="qsub">${c.desc}</span></div>`);
+    pop.append(head);head.querySelector('#qb').onclick=(e)=>{e.stopPropagation();showCats();};
+    const list=el(`<div class="qlist"></div>`);
+    c.qs.forEach(q=>{
+      const r=el(`<button class="qrow q"><span class="qicon">✳</span><span class="tt">${q}</span><span class="arrow">→</span></button>`);
+      r.onclick=()=>{closePop();answer(q);};list.append(r);
+    });
+    pop.append(list);
+  }
+  launch.onclick=(e)=>{e.stopPropagation();pop.classList.contains('hidden')?openPop():closePop();};
+  w.querySelector('#qwhy').onclick=(e)=>{e.stopPropagation();w.querySelector('#lawnote').classList.toggle('hidden');};
+  // click-away to dismiss (kept scoped so it doesn't leak across screens)
+  const away=(e)=>{if(!document.body.contains(pop)){document.removeEventListener('click',away);return;}
+    if(!pop.classList.contains('hidden')&&!pop.contains(e.target)&&e.target!==launch)closePop();};
+  document.addEventListener('click',away);
   w.querySelector('#asksend').onclick=()=>{if(input.value.trim()){answer(input.value.trim());input.value='';}};
   input.onkeydown=(e)=>{if(e.key==='Enter'&&input.value.trim()){answer(input.value.trim());input.value='';}};
   return [w];
