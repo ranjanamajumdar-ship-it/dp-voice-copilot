@@ -340,8 +340,6 @@
   .rlist{display:flex;flex-direction:column;gap:7px;margin:9px 0 4px;}
   .rtask{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 12px;transition:.14s;}
   .rtask.done{background:var(--good-wash);border-color:color-mix(in srgb,var(--good) 30%,transparent);}
-  .rcheck{flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted-2);background:var(--card);color:var(--good);font-size:13px;font-weight:700;display:grid;place-items:center;cursor:pointer;transition:.12s;}
-  .rtask.done .rcheck{border-color:var(--good);background:var(--good);color:#fff;}
   .rbody{flex:1;min-width:0;}
   .rname{font-weight:600;font-size:14px;}
   .rtask.done .rname{text-decoration:line-through;color:var(--muted);}
@@ -1492,14 +1490,12 @@ function faultConvo(faultKey){
     c.tasks.forEach((tk)=>{
       const mins=tk.min||(tk.go?'~20 min':'~10 min');
       const row=el(`<div class="rtask">
-        <button class="rcheck" aria-label="Mark done">○</button>
         <div class="rbody"><div class="rname">${tk.t}</div><div class="rmeta">⏱ ${mins}${tk.go?' · step-by-step guide available':''}</div></div>
         ${tk.go?'<button class="rguide">▶ Guide</button>':''}
         <button class="rdone">Mark done</button>
       </div>`);
-      const check=row.querySelector('.rcheck'),done=row.querySelector('.rdone');
-      const toggle=()=>{const on=row.classList.toggle('done');check.textContent=on?'✓':'○';done.textContent=on?'✓ Done':'Mark done';};
-      check.onclick=toggle; done.onclick=toggle;
+      const done=row.querySelector('.rdone');
+      done.onclick=()=>{const on=row.classList.toggle('done');done.textContent=on?'✓ Done':'Mark done';};
       if(tk.go)row.querySelector('.rguide').onclick=()=>go('task',tk.go);
       tl.append(row);
     });
