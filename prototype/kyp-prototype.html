@@ -116,12 +116,20 @@
   @keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
 
   .askbar{position:sticky;bottom:0;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 0 4px;margin-top:14px;}
-  .askrow{display:flex;gap:8px;align-items:center;}
-  .askrow input{flex:1;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:11px 16px;font-size:14px;color:var(--ink);font-family:inherit;}
-  .askrow input:focus{outline:none;border-color:var(--accent);}
-  .iconbtn{border:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex:none;}
-  .mic{background:var(--accent-wash);color:var(--accent-deep);}
+  /* single rounded search box (radius matched to cards, not a pill) */
+  .askrow{display:flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--card);
+    border-radius:14px;padding:7px 7px 7px 8px;box-shadow:var(--shadow);transition:border-color .14s;}
+  .askrow:focus-within{border-color:var(--accent);}
+  .askrow input{flex:1;border:none;background:none;padding:9px 6px;font-size:15px;color:var(--ink);font-family:inherit;}
+  .askrow input:focus{outline:none;}
+  .iconbtn{border:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex:none;}
+  .mic{background:transparent;color:var(--muted);}
+  .mic:hover{background:var(--mist);color:var(--accent-deep);}
   .send{background:var(--accent);color:#fff;}
+  .send:hover{background:var(--accent-deep);}
+  /* Dr. Paani avatar chip */
+  .drav{display:inline-flex;flex:none;align-items:center;}
+  .drav svg{display:block;}
 
   /* stepper / task */
   .flow{display:flex;flex-direction:column;gap:8px;}
@@ -239,6 +247,27 @@
   .lawnote h6{margin:0 0 8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);}
   .lawnote .l{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:4px 0;font-size:12.5px;color:var(--ink-2);}
   .lawnote .l b{color:var(--accent-deep);white-space:nowrap;}
+  /* visible category cards with hover-disclosed questions */
+  .sugg{margin-top:18px;}
+  .sugg-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px;flex-wrap:wrap;}
+  .qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start;}
+  .qcard{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:14px;box-shadow:var(--shadow);
+    transition:border-color .15s,box-shadow .15s,transform .15s;}
+  .qcard:hover,.qcard:focus-within{border-color:var(--accent);box-shadow:0 10px 26px rgba(14,26,32,.10);}
+  .qcard:focus-within{outline:none;}
+  .qcard-h{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;}
+  .qcard .qicon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:var(--accent-wash);}
+  .qcard .tt{display:block;font-weight:700;font-size:14.5px;color:var(--ink);line-height:1.2;}
+  .qcard .dd{display:block;font-size:12px;color:var(--muted);line-height:1.3;margin-top:2px;}
+  .qcard-cue{color:var(--muted-2);font-size:17px;transition:transform .18s,color .18s;}
+  .qcard:hover .qcard-cue,.qcard:focus-within .qcard-cue{transform:rotate(90deg);color:var(--accent-deep);}
+  .qcard-qs{display:flex;flex-direction:column;gap:5px;max-height:0;opacity:0;overflow:hidden;
+    transition:max-height .22s ease,opacity .18s,margin-top .2s;}
+  .qcard:hover .qcard-qs,.qcard:focus-within .qcard-qs{max-height:220px;opacity:1;margin-top:11px;}
+  .qq{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;
+    border:none;background:var(--mist);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--ink-2);cursor:pointer;transition:.12s;font-family:inherit;}
+  .qq:hover{background:var(--accent-wash);color:var(--accent-deep);}
+  .qq .ar{color:var(--muted-2);font-size:13px;flex:none;}
   .hidden{display:none!important;}
   .fade{animation:rise .35s ease;}
 
@@ -250,6 +279,7 @@
     .nav{flex-direction:column;gap:3px;font-size:10px;padding:6px 8px;min-width:64px;}
     .nav .ic{font-size:18px;}.nav .badge{position:absolute;}
     .g2,.g3,.g4{grid-template-columns:1fr;}
+    .qgrid{grid-template-columns:1fr;}
     .sensors{grid-template-columns:repeat(2,1fr);}
     .tl{grid-template-columns:repeat(2,1fr);}
     .screen{padding:18px 16px 90px;}
@@ -266,7 +296,7 @@
     <div class="navlabel">Plant</div>
     <button class="nav" data-go="plant"><span class="ic">⊞</span>Plant Explorer</button>
     <button class="nav" data-go="biology"><span class="ic">🧫</span>Biology</button>
-    <button class="nav" data-go="diagnose"><span class="ic">🩺</span>Diagnostics<span class="badge">1</span></button>
+    <button class="nav" data-go="diagnose"><span class="ic">🩺</span>Diagnostics<span class="badge">2</span></button>
     <button class="nav" data-go="tasks"><span class="ic">☑</span>Tasks</button>
     <div class="navlabel">Records</div>
     <button class="nav" data-go="compliance"><span class="ic">⚖</span>Compliance</button>
@@ -284,7 +314,7 @@
       <span class="crumb" id="crumb">Home</span>
       <div class="status">
         <span class="live"><i></i>SCADA live</span>
-        <span class="pill ai"><span class="dot"></span>Copilot on</span>
+        <span class="pill ai"><svg viewBox="0 0 40 46" width="13" height="13" style="margin-right:1px"><path d="M20 4C20 4 33 25 33 31A13 13 0 1 1 7 31C7 25 20 4 20 4Z" fill="currentColor" opacity=".25"/><circle cx="15.5" cy="30" r="2" fill="currentColor"/><circle cx="24.5" cy="30" r="2" fill="currentColor"/><path d="M15.5 34.6 Q20 38.2 24.5 34.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Dr. Paani</span>
       </div>
     </div>
     <div id="stage"></div>
@@ -309,7 +339,9 @@ function toggleTheme(){
   r.setAttribute('data-theme',cur==='dark'?'light':'dark');
 }
 
-const CRUMB={home:'Home',ask:'Ask Your Plant',plant:'Plant Explorer',process:'Plant › Process',equip:'Plant › Equipment',biology:'Biology',
+// Dr. Paani — the copilot's identity: a friendly water-droplet doctor.
+const DROP=`<span class="drav"><svg viewBox="0 0 40 46" width="16" height="16" aria-label="Dr. Paani"><path d="M20 4C20 4 33 25 33 31A13 13 0 1 1 7 31C7 25 20 4 20 4Z" fill="var(--water-wash)" stroke="var(--water)" stroke-width="2.5"/><circle cx="15.5" cy="30" r="1.9" fill="var(--water)"/><circle cx="24.5" cy="30" r="1.9" fill="var(--water)"/><path d="M15.5 34.6 Q20 38.2 24.5 34.6" fill="none" stroke="var(--water)" stroke-width="1.8" stroke-linecap="round"/></svg></span>`;
+const CRUMB={home:'Home',ask:'Ask Dr. Paani',plant:'Plant Explorer',process:'Plant › Process',equip:'Plant › Equipment',biology:'Biology',
   diagnose:'Diagnostics',tasks:'Tasks',task:'Tasks › Task Mode',compliance:'Compliance',history:'History',explain:'Learning Mode'};
 
 let navHist=[];
@@ -334,7 +366,7 @@ function go(screen,arg,isBack){
   else if(screen==='equip') s.append(...equip(arg));
   else if(screen==='explain') s.append(...explain(arg));
   else if(screen==='biology') s.append(...biology());
-  else if(screen==='diagnose') s.append(...diagnose());
+  else if(screen==='diagnose') s.append(...diagnose(arg));
   else if(screen==='tasks') s.append(...tasks());
   else if(screen==='task') s.append(...taskmode(arg));
   else if(screen==='compliance') s.append(...compliance());
@@ -514,17 +546,16 @@ function home(){
         <p><span class="pill warn"><span class="dot"></span>Watch</span> Pump 2 vibration +12%</p></div>
       <div class="card"><span class="kh">Recommended actions</span>
         <p>1 · <a class="lk" data-go2="equip" data-arg="clarifier">Inspect clarifier</a></p>
-        <p>2 · <a class="lk" data-go2="diagnose">Review Pump 2</a></p>
+        <p>2 · <a class="lk" data-go2="diagnose" data-arg="pump2">Review Pump 2</a></p>
         <p>3 · <a class="lk" data-go2="equip" data-arg="uv">Check UV runtime</a></p></div>
       <div class="card"><span class="kh">Since last shift</span>
         <p>MLSS +180 mg/L</p><p>Blower 1 → Auto</p><p>Backwash done 04:10</p></div>
     </div>
     <h2>Quick actions</h2>
-    <div class="grid g4">
+    <div class="grid g3">
       <button class="card click" data-go2="task" data-arg="waste"><h4>▶ Start task</h4><p>Sludge wasting, backwash…</p></button>
       <button class="card click" data-go2="biology"><h4>📸 Log observation</h4><p>Foam · colour · settling</p></button>
-      <button class="card click" data-go2="ask"><h4>✳ Ask your plant</h4><p>Natural language or voice</p></button>
-      <button class="card click" data-go2="history"><h4>🗒 Shift handover</h4><p>Review + sign off</p></button>
+      <button class="card click" data-go2="ask"><h4>💧 Ask Dr. Paani</h4><p>Natural language or voice</p></button>
     </div>
     <div class="callout ac" style="margin-top:18px;"><b>Try it:</b> every underlined item is live. Tap “Review Pump 2” to enter a guided diagnosis, or “Start task” to run Task Mode.</div>
   </div>`);
@@ -535,14 +566,14 @@ function home(){
 /* ================= ASK ================= */
 const ASK_ANSWERS={
   'why did the blanket rise':{src:3,html:`The clarifier sludge blanket rose <b>0.4&nbsp;m</b> overnight because return-sludge flow (RAS) dropped when Pump&nbsp;2 slowed — its vibration trip lowered output around 02:30. Solids built up faster than they returned. It's still within safe range (1.5&nbsp;m of 2.4&nbsp;m). Clearing the Pump&nbsp;2 issue should restore normal blanket depth.`,chips:['Is this urgent?','Show Pump 2','What if I do nothing?']},
-  'is pump 2 serious':{src:4,html:`Not yet — but worth acting today. Pump&nbsp;2 vibration is up <b>12%</b> over 48h, still below the alarm threshold. History shows a similar rise 4 months ago that turned out to be a partially blocked suction strainer. I'd run a quick diagnosis before it forces a trip.`,chips:['Start diagnosis','Has this happened before?','Can it wait to tomorrow?'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose'}},
+  'is pump 2 serious':{src:4,html:`Not yet — but worth acting today. Pump&nbsp;2 vibration is up <b>12%</b> over 48h, still below the alarm threshold. History shows a similar rise 4 months ago that turned out to be a partially blocked suction strainer. I'd run a quick diagnosis before it forces a trip.`,chips:['Start diagnosis','Has this happened before?','Can it wait to tomorrow?'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose',arg:'pump2'}},
   'will we meet limits today':{src:5,html:`Yes — I forecast <b>all discharge limits met</b> today. Effluent BOD is trending 12&nbsp;mg/L (limit 30), TSS 14&nbsp;mg/L (limit 50). The only variable is UV runtime; if it stays above 20h/day, faecal coliform stays compliant. Confidence <b>84%</b>.`,chips:['Show the forecast','What could change this?'],cta:{label:'Open compliance forecast',go:'compliance'}},
   'how is biology':{src:6,html:`Biology is <b>stable at 88/100</b> (confidence 72%). Good settling, DO on target. One watch-item: slight foam this morning — if it thickens, check the F:M ratio. Log a settling test to push my confidence up.`,chips:['Open Biology','Why only 72% confidence?'],cta:{label:'Open Biology',go:'biology'}},
   'energy':{src:4,html:`Energy today is tracking <b>~8% below</b> your 30-day average. Blower 1 in Auto is the big lever — it's modulating well. The clarifier scraper and UV run flat. No waste flagged. Biggest future saving would be trimming the DO setpoint 0.2 mg/L overnight.`,chips:['Show blower runtime','How to cut energy safely?']},
   'safe':{src:5,html:`Before you isolate Pump 2: confirm it's stopped, close discharge then suction, apply lock-out/tag-out, and verify zero pressure. I'll guide each step and won't let you proceed until the zero-energy state is confirmed. Want me to start the guided isolation?`,chips:['Start guided isolation'],cta:{label:'▶ Pump isolation task',go:'task'}},
   'similar failures':{src:3,html:`I found <b>2 similar events</b>: a Pump 2 low-discharge 4 months ago (blocked strainer, fixed in 25 min) and an aeration foaming episode last week (reduced wasting, recovered in 2 days). Both are in History with their root causes.`,chips:['Open History'],cta:{label:'Open History',go:'history'}},
   'teach me':{src:3,html:`Happy to. I teach with <b>your</b> plant — live values, current mode and your SOPs, not generic textbook lines. Which shall we start with?`,chips:['The clarifier','Aeration & DO','UV disinfection'],cta:{label:'Open Learning Mode',go:'explain'}},
-  'can this wait':{src:4,html:`Pump 2 can likely wait until tomorrow — vibration is rising slowly and still below the trip threshold. But the clarifier blanket depends on it, so I'd at least run the 5-minute strainer check this shift. If vibration crosses 5.2 mm/s, don't wait.`,chips:['Diagnose now','Remind me next shift'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose'}},
+  'can this wait':{src:4,html:`Pump 2 can likely wait until tomorrow — vibration is rising slowly and still below the trip threshold. But the clarifier blanket depends on it, so I'd at least run the 5-minute strainer check this shift. If vibration crosses 5.2 mm/s, don't wait.`,chips:['Diagnose now','Remind me next shift'],cta:{label:'▶ Diagnose Pump 2',go:'diagnose',arg:'pump2'}},
   'backwash':{src:4,html:`Filter 1 ΔP is 0.8 bar — a backwash is due soon but not urgent. I can supervise the cycle: take the filter offline, run 6 minutes, watch turbidity clear below 5 NTU, then return it. Start when you're ready.`,chips:['Start backwash'],cta:{label:'▶ Backwash task',go:'task'}},
   'explain today':{src:4,html:`DO in Basin 1 dipped to <b>1.4 mg/L</b> at 04:00 after the 04:10 backwash pulled flow while Blower 1 was still at 40% manual — then recovered to 2.3. This dip appears most nights after backwash: normal for your plant, not a fault.`,chips:['Should I raise the blower?','Show last 7 nights']},
   'default':{src:3,html:`I read your live SCADA, the last 7 days of trends and the SOP library for that. In short: things look normal for your plant right now. Want me to look at a specific process or piece of equipment?`,chips:['How is biology?','Any risks today?','Explain today\'s DO trend']}
@@ -557,29 +588,29 @@ const ASK_CATS=[
   {icon:'⚡',label:'Optimise',desc:'Run leaner and save energy',qs:['How is our energy today?','How can I cut energy safely?','Can this wait until tomorrow?']},
 ];
 function ask(){
-  const w=el(`<div style="display:flex;flex-direction:column;min-height:calc(100vh - 150px)">
-    <h1>Ask Your Plant</h1>
-    <p class="sub">Natural language or voice. The copilot already knows your live plant state.</p>
-    <div class="chat" id="chat" style="flex:1">
-      <div class="bub ai"><div class="who"><span class="dot"></span>Plant Copilot</div>Morning, Rahul. I'm watching all 14 data sources. Ask me anything — here are a few things on my mind today.</div>
+  const w=el(`<div>
+    <h1>Ask Dr. Paani</h1>
+    <p class="sub">Your plant's doctor. Ask in natural language or by voice — Dr. Paani already knows your live plant state.</p>
+    <div class="chat" id="chat">
+      <div class="bub ai"><div class="who">${DROP}Dr. Paani</div>Hello Rahul — I'm <b>Dr. Paani</b>, your plant's doctor 💧 I'm watching all 14 data sources. Ask me anything, or pick a topic below.</div>
     </div>
-    <div class="askbar" style="position:relative">
-      <div class="qbar">
-        <button class="qlauncher" id="qlaunch" aria-expanded="false">✦ Suggested questions<span class="chev">⌃</span></button>
-        <span class="qhint">Grouped by topic · <button id="qwhy">why?</button></span>
+    <div class="askrow">
+      <button class="iconbtn mic" title="Hold to speak">🎤</button>
+      <input id="askin" placeholder="Ask Dr. Paani…" autocomplete="off">
+      <button class="iconbtn send" id="asksend">↑</button>
+    </div>
+    <div class="sugg">
+      <div class="sugg-h">
+        <span class="kh" style="margin:0">Suggested questions</span>
+        <span class="qhint">Hover a topic to see its questions · <button id="qwhy">why grouped?</button></span>
       </div>
       <div class="lawnote hidden" id="lawnote">
         <h6>Design principles applied here</h6>
-        <div class="l"><b>Hick's Law</b><span>6 topic groups instead of 18 loose questions — fewer choices, faster decisions.</span></div>
-        <div class="l"><b>Fitts's Law</b><span>Large, full-width tap targets sitting close to the input — quick to hit, glove-friendly.</span></div>
-        <div class="l"><b>Doherty Threshold</b><span>The menu opens and the copilot starts replying in well under 400 ms, so attention never breaks.</span></div>
+        <div class="l"><b>Hick's Law</b><span>6 topic cards instead of 18 loose questions — fewer choices, faster decisions.</span></div>
+        <div class="l"><b>Fitts's Law</b><span>Large cards and full-width question targets — quick to hit, glove-friendly.</span></div>
+        <div class="l"><b>Doherty Threshold</b><span>Questions reveal on hover and Dr. Paani replies in well under 400 ms, so attention never breaks.</span></div>
       </div>
-      <div class="qpop hidden" id="qpop"></div>
-      <div class="askrow">
-        <button class="iconbtn mic" title="Hold to speak">🎤</button>
-        <input id="askin" placeholder="Ask your plant…" autocomplete="off">
-        <button class="iconbtn send" id="asksend">↑</button>
-      </div>
+      <div class="qgrid" id="qgrid"></div>
     </div>
   </div>`);
   const chat=w.querySelector('#chat');
@@ -589,50 +620,29 @@ function ask(){
     let a=ASK_ANSWERS.default;
     for(const k in ASK_ANSWERS){if(k!=='default'&&key.includes(k.slice(0,14))){a=ASK_ANSWERS[k];break;}}
     chat.append(el(`<div class="bub op">${q}</div>`));
-    const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Reading ${a.src} sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
-    chat.append(t);chat.scrollIntoView({block:'end'});
-    stage.scrollTo?.(0,9e9);scrollChat();
+    const t=el(`<div class="bub ai"><div class="who">${DROP}Dr. Paani is reading ${a.src} sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
+    chat.append(t);scrollChat();
     setTimeout(()=>{
-      t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="src"><u>${a.src} sources</u></span></div>${a.html}`;
+      t.innerHTML=`<div class="who">${DROP}Dr. Paani · <span class="src"><u>${a.src} sources</u></span></div>${a.html}`;
       const cl=el(`<div class="chips" style="margin-top:10px;"></div>`);
       (a.chips||[]).forEach(c=>{const b=el(`<button class="chip">${c}</button>`);b.onclick=()=>answer(c);cl.append(b);});
       t.append(cl);
-      if(a.cta){const b=el(`<div class="btnrow"><button class="btn pri">${a.cta.label}</button></div>`);b.querySelector('button').onclick=()=>go(a.cta.go);t.append(b);}
+      if(a.cta){const b=el(`<div class="btnrow"><button class="btn pri">${a.cta.label}</button></div>`);b.querySelector('button').onclick=()=>go(a.cta.go,a.cta.arg);t.append(b);}
       scrollChat();
     },650);
   }
-  // ---- categorised question picker: progressive disclosure ----
-  const pop=w.querySelector('#qpop'),launch=w.querySelector('#qlaunch');
-  function openPop(){pop.classList.remove('hidden');launch.classList.add('open');launch.setAttribute('aria-expanded','true');showCats();}
-  function closePop(){pop.classList.add('hidden');launch.classList.remove('open');launch.setAttribute('aria-expanded','false');}
-  function showCats(){
-    pop.innerHTML='';
-    const head=el(`<div class="pophead"><span class="qt">Ask about…</span><span class="qsub">pick a topic</span></div>`);
-    pop.append(head);
-    const list=el(`<div class="qlist"></div>`);
-    ASK_CATS.forEach(c=>{
-      const r=el(`<button class="qrow"><span class="qicon">${c.icon}</span><span><span class="tt">${c.label}</span><span class="dd">${c.desc}</span></span><span class="arrow">›</span></button>`);
-      r.onclick=(e)=>{e.stopPropagation();showQs(c);};list.append(r);
-    });
-    pop.append(list);
-  }
-  function showQs(c){
-    pop.innerHTML='';
-    const head=el(`<div class="pophead"><button class="qback" id="qb" aria-label="Back">‹</button><span class="qt">${c.icon} ${c.label}</span><span class="qsub">${c.desc}</span></div>`);
-    pop.append(head);head.querySelector('#qb').onclick=(e)=>{e.stopPropagation();showCats();};
-    const list=el(`<div class="qlist"></div>`);
-    c.qs.forEach(q=>{
-      const r=el(`<button class="qrow q"><span class="qicon">✳</span><span class="tt">${q}</span><span class="arrow">→</span></button>`);
-      r.onclick=()=>{closePop();answer(q);};list.append(r);
-    });
-    pop.append(list);
-  }
-  launch.onclick=(e)=>{e.stopPropagation();pop.classList.contains('hidden')?openPop():closePop();};
-  w.querySelector('#qwhy').onclick=(e)=>{e.stopPropagation();w.querySelector('#lawnote').classList.toggle('hidden');};
-  // click-away to dismiss (kept scoped so it doesn't leak across screens)
-  const away=(e)=>{if(!document.body.contains(pop)){document.removeEventListener('click',away);return;}
-    if(!pop.classList.contains('hidden')&&!pop.contains(e.target)&&e.target!==launch)closePop();};
-  document.addEventListener('click',away);
+  // ---- visible category cards; questions disclosed on hover/focus ----
+  const grid=w.querySelector('#qgrid');
+  ASK_CATS.forEach(c=>{
+    const card=el(`<div class="qcard" tabindex="0">
+      <div class="qcard-h"><span class="qicon">${c.icon}</span><span><span class="tt">${c.label}</span><span class="dd">${c.desc}</span></span><span class="qcard-cue">›</span></div>
+      <div class="qcard-qs"></div>
+    </div>`);
+    const qs=card.querySelector('.qcard-qs');
+    c.qs.forEach(q=>{const b=el(`<button class="qq">${q}<span class="ar">→</span></button>`);b.onclick=()=>answer(q);qs.append(b);});
+    grid.append(card);
+  });
+  w.querySelector('#qwhy').onclick=()=>w.querySelector('#lawnote').classList.toggle('hidden');
   w.querySelector('#asksend').onclick=()=>{if(input.value.trim()){answer(input.value.trim());input.value='';}};
   input.onkeydown=(e)=>{if(e.key==='Enter'&&input.value.trim()){answer(input.value.trim());input.value='';}};
   return [w];
@@ -837,7 +847,7 @@ function equip(k){
     <div id="slot" style="margin-top:16px;"></div>
   </div>`);
   w.querySelector('#ex').onclick=()=>go('explain',e.name);
-  w.querySelector('#dg').onclick=()=>go('diagnose');
+  w.querySelector('#dg').onclick=()=>go('diagnose',FAULTS[k]?k:undefined);
   w.querySelector('#tr').onclick=()=>{
     const slot=w.querySelector('#slot');
     slot.innerHTML='';
@@ -863,11 +873,11 @@ function explain(topic){
     <div class="askbar"><div class="chips" id="depth"></div></div>
   </div>`);
   const chat=w.querySelector('#chat');
-  const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Reading 4 sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
+  const t=el(`<div class="bub ai"><div class="who">${DROP}Dr. Paani is reading 4 sources <span class="typing"><i></i><i></i><i></i></span></div></div>`);
   chat.append(t);
   const fig=diagramFor(topic);
   setTimeout(()=>{
-    t.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · your plant</div>${INTRO(topic)} Here's how it works:`;
+    t.innerHTML=`<div class="who">${DROP}Dr. Paani · your plant</div>${INTRO(topic)} Here's how it works:`;
     if(fig){const f=el(`<div class="bub ai" style="max-width:100%;width:100%">${fig}</div>`);chat.append(f);}
     scrollChat();
   },800);
@@ -875,8 +885,8 @@ function explain(topic){
   const dc=w.querySelector('#depth');
   depths.forEach(d=>{const b=el(`<button class="chip">${d}</button>`);b.onclick=()=>{
     chat.append(el(`<div class="bub op">${d}</div>`));
-    const tt=el(`<div class="bub ai"><div class="who"><span class="dot"></span><span class="typing"><i></i><i></i><i></i></span></div></div>`);chat.append(tt);scrollChat();
-    setTimeout(()=>{tt.innerHTML=`<div class="who"><span class="dot"></span>Plant Copilot · <span class="figsrc">SOP-referenced</span></div>${EXPLAIN_MORE(d,topic)}`;scrollChat();},700);
+    const tt=el(`<div class="bub ai"><div class="who">${DROP}<span class="typing"><i></i><i></i><i></i></span></div></div>`);chat.append(tt);scrollChat();
+    setTimeout(()=>{tt.innerHTML=`<div class="who">${DROP}Dr. Paani · <span class="figsrc">SOP-referenced</span></div>${EXPLAIN_MORE(d,topic)}`;scrollChat();},700);
   };dc.append(b);});
   return [w];
 }
@@ -997,8 +1007,12 @@ function biology(){
 }
 
 /* ================= DIAGNOSE ================= */
-// Each cause is its own branch: a live reading + a physical check, then its own remedial tasks.
-const CAUSES=[
+// Each fault has its own ranked causes; each cause is a branch: live reading + physical check + remedial tasks.
+const FAULTS={
+ pump2:{eq:'RAS Pump 2',status:'warn',stat:'Vibration +12% / 48h',symptom:'Pump 2 discharge pressure is low.',
+  intro:`I found five likely causes for Pump 2's low discharge and rising vibration.`,
+  history:`Yes — 4 months ago, same pump, same signature. Root cause then was <b>blocked suction</b> (a rag on the strainer). Fixed in 25 minutes. That history is why blocked suction ranks first.`,
+  causes:[
   {k:'suction',name:'Blocked suction',rank:'most likely',rc:'warn',
     reason:`Suction ΔP already reads high (0.9&nbsp;bar) and vibration rose <i>gradually</i> — the classic signature of debris building on the strainer.`,
     live:`suction strainer differential — <b>ΔP 0.9&nbsp;bar</b> (high)`,
@@ -1039,25 +1053,84 @@ const CAUSES=[
     fix:'Recalibrate or replace the pressure transmitter.',
     verify:['Sensor vs gauge','match ±0.1 bar','match'],
     tasks:[{t:'Cross-check local gauge'},{t:'Recalibrate transmitter'},{t:'Verify reading'}]},
-];
-function diagnose(){
+]},
+ clarifier:{eq:'Secondary Clarifier',status:'warn',stat:'Outlet turbidity rising',symptom:'Clarifier effluent turbidity is climbing.',
+  intro:`I found four likely causes for the clarifier's rising outlet turbidity.`,
+  history:`Yes — last month during a storm inflow. Root cause was a <b>stalled scraper</b>; restarting it cleared the turbidity within an hour.`,
+  causes:[
+  {k:'scraper',name:'Scraper stalled',rank:'most likely',rc:'warn',
+    reason:`Your SOP requires the scraper to run <i>continuously</i>. If it stops, sludge compacts and escapes over the weir as turbidity — and the torque trace just flatlined.`,
+    live:`scraper torque sensor — <b>flatlined</b> (no rotation)`,
+    ask:`Look at the bridge — is the scraper arm actually rotating?`,
+    yes:'Scraper is not moving', no:'Scraper is rotating',
+    fix:'Clear any obstruction and restart the scraper drive.',
+    verify:['Outlet turbidity','&lt; 250 NTU','180 NTU'],
+    tasks:[{t:'Inspect scraper drive'},{t:'Restart scraper'},{t:'Verify turbidity falls'}]},
+  {k:'blanket',name:'High sludge blanket',rank:'possible',rc:'info',
+    reason:`Under-wasting lets the blanket climb until solids carry over the weir. Yours is 1.9 m and rising.`,
+    live:`blanket sensor — <b>1.9&nbsp;m</b> and rising`,
+    ask:`Is the blanket within ~0.5 m of the weir?`,
+    yes:'Blanket is very high', no:'Blanket looks normal',
+    fix:'Increase sludge wasting / blowdown to drop the blanket.',
+    verify:['Blanket depth','&lt; 1.5 m','1.3 m'],
+    tasks:[{t:'Waste sludge',go:'waste'},{t:'Confirm RAS flow'},{t:'Verify blanket falls'}]},
+  {k:'overload',name:'Hydraulic overload',rank:'possible',rc:'info',
+    reason:`Flow above design shortens settling time, so fine solids escape. Inflow is reading 118% of design.`,
+    live:`inflow — <b>118% of design</b>`,
+    ask:`Is the inlet flow above the design rate?`,
+    yes:'Flow is above design', no:'Flow is normal',
+    fix:'Attenuate inflow via the equalisation tank and rebalance parallel units.',
+    verify:['Overflow rate','within design','ok'],
+    tasks:[{t:'Throttle inlet / use EQ tank'},{t:'Rebalance parallel units'},{t:'Verify turbidity'}]},
+  {k:'dosing',name:'Coagulant dosing off',rank:'unlikely',rc:'muted',
+    reason:`If chemical dosing has stopped, fine particles won't flocculate — but your unit runs mostly on gravity, so this ranks low.`,
+    live:`dosing pump — <b>running</b>, tank not empty`,
+    ask:`Check the dosing pump — is it stroking, with coagulant in the tank?`,
+    yes:'Dosing has stopped', no:'Dosing is fine',
+    fix:'Restart dosing and refill the coagulant tank.',
+    verify:['Outlet turbidity','&lt; 250 NTU','190 NTU'],
+    tasks:[{t:'Restart dosing pump'},{t:'Refill coagulant'},{t:'Verify turbidity'}]},
+]},
+};
+// Diagnostics landing: the list of open faults to work through.
+function diagnose(faultKey){
+  if(!faultKey||!FAULTS[faultKey]) return faultList();
+  return faultConvo(faultKey);
+}
+function faultList(){
+  const keys=Object.keys(FAULTS);
   const w=el(`<div>
-    <h1>Diagnostics · RAS Pump 2</h1>
-    <p class="sub">The diagnostic tree, as a conversation. Pick any cause to investigate — I read the live values, you do the physical checks.</p>
+    <h1>Diagnostics</h1>
+    <p class="sub">${keys.length} open issues to work through. Pick one — Dr. Paani turns its diagnostic tree into a conversation.</p>
+    <div class="grid g2" id="faults"></div>
+  </div>`);
+  const f=w.querySelector('#faults');
+  keys.forEach(k=>{const x=FAULTS[k];
+    const c=el(`<button class="card click" style="text-align:left"><span class="kh">${x.eq}</span><h4>${x.symptom}</h4><p><span class="pill ${x.status}"><span class="dot"></span>${x.stat}</span> · ${x.causes.length} likely causes</p><p style="color:var(--accent-deep);font-weight:600;font-size:13px;margin-top:6px">Diagnose ›</p></button>`);
+    c.onclick=()=>go('diagnose',k);f.append(c);});
+  return [w];
+}
+function faultConvo(faultKey){
+  const f=FAULTS[faultKey];
+  const CAUSES=f.causes;
+  const w=el(`<div>
+    <h1>Diagnostics · ${f.eq}</h1>
+    <p class="sub">The diagnostic tree, as a conversation. Pick any cause to investigate — Dr. Paani reads the live values, you do the physical checks.</p>
     <div class="chat" id="chat">
-      <div class="bub op">Pump 2 discharge pressure is low.</div>
+      <div class="bub op">${f.symptom}</div>
     </div>
     <div class="askbar"><div class="chips" id="opts"></div></div>
   </div>`);
   const chat=w.querySelector('#chat'),opts=w.querySelector('#opts');
   const ruledOut=new Set();
   function aiSay(html,then){
-    const t=el(`<div class="bub ai"><div class="who"><span class="dot"></span>Copilot <span class="typing"><i></i><i></i><i></i></span></div></div>`);
+    const t=el(`<div class="bub ai"><div class="who">${DROP}Dr. Paani <span class="typing"><i></i><i></i><i></i></span></div></div>`);
     chat.append(t);scrollChat();
-    setTimeout(()=>{t.innerHTML=`<div class="who"><span class="dot"></span>Copilot</div>${html}`;then&&then();scrollChat();},700);
+    setTimeout(()=>{t.innerHTML=`<div class="who">${DROP}Dr. Paani</div>${html}`;then&&then();scrollChat();},700);
   }
   function setOpts(list){opts.innerHTML='';list.forEach(([label,fn,dis])=>{const b=el(`<button class="chip"${dis?' disabled style="opacity:.4"':''}>${label}</button>`);if(!dis)b.onclick=()=>{chat.append(el(`<div class="bub op">${label}</div>`));fn();};opts.append(b);});}
 
+  const NUM={4:'four',5:'five'};
   // ---- the cause menu: every cause is selectable, ranked ----
   function showCauses(intro){
     const remaining=CAUSES.filter(c=>!ruledOut.has(c.k));
@@ -1066,20 +1139,17 @@ function diagnose(){
       const rankPill=c.rc==='muted'?`<span class="figsrc">${c.rank}</span>`:`<span class="pill ${c.rc}"><span class="dot"></span>${c.rank}</span>`;
       return `<li${done?' style="opacity:.5;text-decoration:line-through"':''}>${c.name} ${done?'<span class="figsrc">ruled out</span>':rankPill}</li>`;
     }).join('');
-    aiSay(`${intro} I ranked <b>five likely causes</b> — <b>tap any one</b> to investigate it:<ul>${listHtml}</ul>`,()=>{
+    aiSay(`${intro} I ranked <b>${NUM[CAUSES.length]||CAUSES.length} likely causes</b> — <b>tap any one</b> to investigate it:<ul>${listHtml}</ul>`,()=>{
       const chips=remaining.map(c=>[`Diagnose: ${c.name}`,()=>pickCause(c)]);
       chips.push(['Why this order?',()=>aiSay(`I rank by how well each fits your live data:<ul>${CAUSES.map(c=>`<li><b>${c.name}</b> — ${c.reason}</li>`).join('')}</ul>`,()=>showChoicesOnly())]);
-      chips.push(['Has this happened before?',()=>aiSay(`Yes — 4 months ago, same pump, same signature. Root cause then was <b>blocked suction</b> (a rag on the strainer). Fixed in 25 minutes. That history is why blocked suction ranks first.`,()=>showChoicesOnly())]);
+      chips.push(['Has this happened before?',()=>aiSay(f.history,()=>showChoicesOnly())]);
       setOpts(chips);
     });
   }
-  // re-show just the tappable cause chips without re-printing the list
   function showChoicesOnly(){
     const remaining=CAUSES.filter(c=>!ruledOut.has(c.k));
     setOpts(remaining.map(c=>[`Diagnose: ${c.name}`,()=>pickCause(c)]));
   }
-
-  // ---- investigate one cause: live reading + physical check ----
   function pickCause(c){
     aiSay(`<b>Investigating ${c.name}.</b> Reading live: ${c.live}. ${c.ask}`,()=>{
       setOpts([
@@ -1088,7 +1158,7 @@ function diagnose(){
           ruledOut.add(c.k);
           const left=CAUSES.filter(x=>!ruledOut.has(x.k));
           if(left.length){aiSay(`Good — that rules out <b>${c.name}</b>. ${left.length} cause${left.length>1?'s':''} left. Which next?`,()=>showChoicesOnly());}
-          else{aiSay(`We've ruled out all five standard causes. This warrants escalation — I'll log it for your shift engineer with the full check history.`,()=>setOpts([['Log for shift engineer',()=>go('history')]]));}
+          else{aiSay(`We've ruled out every standard cause. This warrants escalation — I'll log it for your shift engineer with the full check history.`,()=>setOpts([['Log for shift engineer',()=>go('history')]]));}
         }]
       ]);
     });
@@ -1125,7 +1195,7 @@ function diagnose(){
     scrollChat();
   }
 
-  showCauses(`I found five likely causes for Pump 2's low discharge and rising vibration.`);
+  showCauses(f.intro);
   return [w];
 }
 
@@ -1214,7 +1284,7 @@ function compliance(){
 function history(){
   const w=el(`<div>
     <h1>History</h1>
-    <p class="sub">Issues, maintenance and shift handovers — the plant's memory.</p>
+    <p class="sub">Issues and maintenance — the plant's memory.</p>
     <h3>Recent issues</h3>
     <div class="grid g2">
       <div class="card"><span class="kh">Closed · today</span><h4>Pump 2 low discharge</h4><p><span class="pill good"><span class="dot"></span>Resolved</span> Root cause: blocked suction strainer. Verified 3.2 bar.</p></div>
@@ -1222,8 +1292,6 @@ function history(){
       <div class="card"><span class="kh">Closed · last week</span><h4>Foaming in aeration</h4><p><span class="pill good"><span class="dot"></span>Resolved</span> Reduced wasting; recovered in 2 days.</p></div>
       <div class="card"><span class="kh">Logged</span><h4>UV lamp age tracking</h4><p><span class="pill info"><span class="dot"></span>Monitoring</span> Replace at 9 months.</p></div>
     </div>
-    <h3>Shift handover</h3>
-    <div class="card"><p style="margin:0 0 8px"><b>To next shift:</b> Pump 2 strainer cleaned & verified. Watch clarifier blanket — should settle by evening. UV runtime healthy. No open compliance risks.</p><div class="btnrow"><button class="btn pri">Sign off handover</button></div></div>
   </div>`);
   return [w];
 }
