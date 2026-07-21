@@ -348,6 +348,9 @@
   .rmeta{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:2px;}
   .rguide{flex:none;border:1px solid var(--line);background:var(--mist);border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--accent-deep);cursor:pointer;transition:.12s;}
   .rguide:hover{border-color:var(--accent);background:var(--accent-wash);}
+  .rdone{flex:none;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:.12s;}
+  .rdone:hover{border-color:var(--good);color:var(--good);}
+  .rtask.done .rdone{background:var(--good);border-color:var(--good);color:#fff;}
   /* ---- Issue-closed success screen ---- */
   .success{text-align:center;padding:20px 0 10px;}
   .successmark{width:74px;height:74px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;font-size:38px;color:#fff;background:var(--good);box-shadow:0 10px 30px color-mix(in srgb,var(--good) 40%,transparent);animation:pop .3s cubic-bezier(.2,.8,.3,1.2);}
@@ -1492,9 +1495,11 @@ function faultConvo(faultKey){
         <button class="rcheck" aria-label="Mark done">○</button>
         <div class="rbody"><div class="rname">${tk.t}</div><div class="rmeta">⏱ ${mins}${tk.go?' · step-by-step guide available':''}</div></div>
         ${tk.go?'<button class="rguide">▶ Guide</button>':''}
+        <button class="rdone">Mark done</button>
       </div>`);
-      const check=row.querySelector('.rcheck');
-      check.onclick=()=>{const done=row.classList.toggle('done');check.textContent=done?'✓':'○';};
+      const check=row.querySelector('.rcheck'),done=row.querySelector('.rdone');
+      const toggle=()=>{const on=row.classList.toggle('done');check.textContent=on?'✓':'○';done.textContent=on?'✓ Done':'Mark done';};
+      check.onclick=toggle; done.onclick=toggle;
       if(tk.go)row.querySelector('.rguide').onclick=()=>go('task',tk.go);
       tl.append(row);
     });
