@@ -1610,14 +1610,39 @@ function taskmode(k){
   w.querySelector('#next').onclick=function(){
     if(cur<d.steps.length-1){cur++;render();
       if(cur===d.steps.length-1)this.textContent='✓ Complete task';
+      scrollChat();
     } else {
-      // completion
-      w.querySelector('#steps').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:14px;border-color:var(--good)"><span class="kh">Task complete</span><h4>✓ ${d.name} completed successfully</h4><p>All steps verified. Please record observations for the logbook.</p><div class="askrow" style="margin-top:8px"><input placeholder="Observations (optional)…" style="flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit"><button class="btn pri" onclick="go('history')">Save & close</button></div></div>`));
-      this.disabled=true;this.style.opacity=.5;
+      taskComplete();
     }
-    scrollChat();
   };
   w.querySelector('#exit').onclick=()=>go('tasks');
+  function taskComplete(){
+    const whereMap={waste:'Aeration Basin 1',isolate:'RAS Pump 2',backwash:'Filter 1 · Tertiary'};
+    const where=whereMap[k]||d.name;
+    HISTORY.forEach(e=>e.latest=false);
+    const entry={group:'Today',time:'Now',ampm:'',status:'good',type:'task',latest:true,
+      title:`${d.name} completed`,where,who:'Dr. Paani + Rahul K.',dp:true,note:'All steps verified.'};
+    HISTORY.unshift(entry);
+    w.innerHTML=`
+      <div class="success fade">
+        <div class="successmark">✓</div>
+        <h1 style="text-wrap:balance">Task completed</h1>
+        <p class="sub" style="margin-bottom:18px">${d.name} · all steps verified</p>
+        <div class="card" style="max-width:460px;margin:0 auto;text-align:left">
+          <div class="srow"><span>Procedure</span><b>${d.name}</b></div>
+          <div class="srow"><span>Target</span><b>${d.target}</b></div>
+          <div class="srow"><span>Completed by</span><b>${DROP} Dr. Paani + Rahul K.</b></div>
+          <div style="padding-top:12px"><input id="obs" placeholder="Add observations for the logbook (optional)…" style="width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;color:var(--ink);font-family:inherit;font-size:13.5px;box-sizing:border-box"></div>
+        </div>
+        <p style="color:var(--muted);font-size:13px;margin-top:14px">Logged to History automatically.</p>
+        <div class="btnrow" style="justify-content:center"><button class="btn pri" id="toh">View in History</button><button class="btn" id="tot">Back to Tasks</button></div>
+      </div>`;
+    const obs=w.querySelector('#obs');
+    const saveObs=()=>{if(obs.value.trim())entry.note='Observations: '+obs.value.trim();};
+    w.querySelector('#toh').onclick=()=>{saveObs();go('history');};
+    w.querySelector('#tot').onclick=()=>{saveObs();go('tasks');};
+    window.scrollTo(0,0);
+  }
   return [w];
 }
 
