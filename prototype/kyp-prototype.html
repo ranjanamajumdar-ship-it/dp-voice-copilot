@@ -268,6 +268,37 @@
     border:none;background:var(--mist);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--ink-2);cursor:pointer;transition:.12s;font-family:inherit;}
   .qq:hover{background:var(--accent-wash);color:var(--accent-deep);}
   .qq .ar{color:var(--muted-2);font-size:13px;flex:none;}
+  /* ---- Diagnosis: Dr. Paani's ranked-assessment guidance panel ---- */
+  .assess{margin:11px 0 2px;border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:0 12px 12px 0;overflow:hidden;background:var(--card);}
+  .assess-h{display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--accent-wash);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-deep);
+    border-bottom:1px solid color-mix(in srgb,var(--accent) 22%,transparent);}
+  .assess-h .drav svg{width:15px;height:15px;}
+  .acause{display:flex;align-items:center;gap:11px;padding:10px 12px;}
+  .acause+.acause{border-top:1px solid var(--line-2);}
+  .acause .anum{width:22px;height:22px;border-radius:7px;flex:none;display:grid;place-items:center;
+    font-family:var(--mono);font-size:11px;font-weight:600;background:var(--mist);color:var(--muted);}
+  .acause .aname{flex:1;font-weight:600;font-size:13.5px;color:var(--ink);}
+  .acause.out{opacity:.5;}
+  .acause.out .aname{text-decoration:line-through;}
+  /* ---- Tasks grouped by urgency ---- */
+  .taskcard .tk-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;}
+  .prbars{display:inline-flex;gap:2.5px;align-items:flex-end;}
+  .prbars i{width:3px;border-radius:1px;background:var(--line);display:block;}
+  .prbars i:nth-child(1){height:6px;}.prbars i:nth-child(2){height:9px;}.prbars i:nth-child(3){height:12px;}
+  .prbars.high i{background:var(--crit);}
+  .prbars.med i:nth-child(1),.prbars.med i:nth-child(2){background:var(--warn);}
+  .prbars.low i:nth-child(1){background:var(--good);}
+  .due{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:999px;font-weight:600;letter-spacing:.03em;}
+  .due.today{background:var(--warn-wash);color:var(--warn);}
+  .due.week{background:var(--water-wash);color:var(--water);}
+  .due.later{background:var(--mist);color:var(--muted);}
+  .grouphead{display:flex;align-items:center;gap:9px;margin:22px 0 11px;}
+  .grouphead:first-of-type{margin-top:4px;}
+  .grouphead h3{margin:0;}
+  .grouphead .gcount{font-family:var(--mono);font-size:10px;background:var(--mist);color:var(--muted);border-radius:999px;padding:1px 8px;}
+  .grouphead .gline{flex:1;height:1px;background:var(--line-2);}
   /* ---- History timeline (time-rail) ---- */
   .htl{display:flex;flex-direction:column;margin-top:6px;}
   .hgroup{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
@@ -1170,12 +1201,17 @@ function faultConvo(faultKey){
   // ---- the cause menu: every cause is selectable, ranked ----
   function showCauses(intro){
     const remaining=CAUSES.filter(c=>!ruledOut.has(c.k));
-    const listHtml=CAUSES.map(c=>{
+    const rows=CAUSES.map((c,i)=>{
       const done=ruledOut.has(c.k);
-      const rankPill=c.rc==='muted'?`<span class="figsrc">${c.rank}</span>`:`<span class="pill ${c.rc}"><span class="dot"></span>${c.rank}</span>`;
-      return `<li${done?' style="opacity:.5;text-decoration:line-through"':''}>${c.name} ${done?'<span class="figsrc">ruled out</span>':rankPill}</li>`;
+      const rankPill=done?`<span class="figsrc">ruled out</span>`
+        :c.rc==='muted'?`<span class="figsrc">${c.rank}</span>`:`<span class="pill ${c.rc}"><span class="dot"></span>${c.rank}</span>`;
+      return `<div class="acause${done?' out':''}"><span class="anum">${i+1}</span><span class="aname">${c.name}</span>${rankPill}</div>`;
     }).join('');
-    aiSay(`${intro} I ranked <b>${NUM[CAUSES.length]||CAUSES.length} likely causes</b> — <b>tap any one</b> to investigate it:<ul>${listHtml}</ul>`,()=>{
+    aiSay(`${intro} I've ranked what fits your live data best — <b>tap a cause below to investigate it</b>.
+      <div class="assess">
+        <div class="assess-h">${DROP} Dr. Paani's assessment · ${NUM[CAUSES.length]||CAUSES.length} likely causes</div>
+        ${rows}
+      </div>`,()=>{
       const chips=remaining.map(c=>[`Diagnose: ${c.name}`,()=>pickCause(c)]);
       chips.push(['Why this order?',()=>aiSay(`I rank by how well each fits your live data:<ul>${CAUSES.map(c=>`<li><b>${c.name}</b> — ${c.reason}</li>`).join('')}</ul>`,()=>showChoicesOnly())]);
       chips.push(['Has this happened before?',()=>aiSay(f.history,()=>showChoicesOnly())]);
@@ -1235,12 +1271,37 @@ function faultConvo(faultKey){
   return [w];
 }
 
-/* ================= TASKS ================= */
-const TASKS=[['waste','Sludge Wasting','MLSS high · 18 m³ recommended','ai'],['backwash','Backwash','Filter ΔP normal','good'],['cip','CIP','Not due','good'],['isolate','Pump Isolation','For Pump 2 repair','warn'],['dosing','Chemical Dosing','On schedule','good'],['clarifier','Clarifier Cleaning','Not due','good'],['filter','Filter Cleaning','Not due','good'],['valve','Valve Replacement','On request','good'],['motor','Motor Replacement','On request','good']];
+/* ================= TASKS (grouped by urgency) ================= */
+const TASKS=[
+  {k:'waste',n:'Sludge Wasting',d:'MLSS high — 18 m³ recommended',urg:'today',pr:'high',due:'Due today'},
+  {k:'isolate',n:'Pump Isolation',d:'Prep for Pump 2 strainer repair',urg:'today',pr:'high',due:'Due today'},
+  {k:'backwash',n:'Backwash',d:'Filter 1 ΔP at 0.8 bar',urg:'week',pr:'med',due:'This week'},
+  {k:'dosing',n:'Chemical Dosing',d:'Coagulant top-up due Thursday',urg:'week',pr:'med',due:'Thu'},
+  {k:'cip',n:'CIP',d:'Membrane clean-in-place',urg:'later',pr:'low',due:'Next month'},
+  {k:'clarifier',n:'Clarifier Cleaning',d:'Routine — not due yet',urg:'later',pr:'low',due:'Scheduled'},
+  {k:'filter',n:'Filter Cleaning',d:'Routine — not due yet',urg:'later',pr:'low',due:'Scheduled'},
+  {k:'valve',n:'Valve Replacement',d:'Raise when required',urg:'later',pr:'low',due:'On request'},
+  {k:'motor',n:'Motor Replacement',d:'Raise when required',urg:'later',pr:'low',due:'On request'},
+];
+const TASK_GROUPS=[['today','Due today'],['week','This week'],['later','Scheduled & on request']];
 function tasks(){
-  const w=el(`<div><h1>Tasks</h1><p class="sub">Guide-enabled procedures. Starting one puts the copilot in supervisor mode.</p><div class="grid g3" id="tk"></div></div>`);
+  const w=el(`<div><h1>Tasks</h1><p class="sub">Guide-enabled procedures, ordered by urgency. Starting one puts Dr. Paani in supervisor mode.</p><div id="tk"></div></div>`);
   const tk=w.querySelector('#tk');
-  TASKS.forEach(([k,n,d,st])=>{const c=el(`<button class="card click" style="text-align:left"><span class="kh">Procedure</span><h4>${n}</h4><p><span class="pill ${st}"><span class="dot"></span>${d}</span></p></button>`);c.onclick=()=>go('task',k);tk.append(c);});
+  TASK_GROUPS.forEach(([urg,label])=>{
+    const items=TASKS.filter(t=>t.urg===urg);
+    if(!items.length)return;
+    tk.append(el(`<div class="grouphead"><h3>${label}</h3><span class="gcount">${items.length}</span><span class="gline"></span></div>`));
+    const grid=el(`<div class="grid g3"></div>`);
+    items.forEach(t=>{
+      const dueCls=t.urg==='today'?'today':t.urg==='week'?'week':'later';
+      const c=el(`<button class="card click taskcard" style="text-align:left">
+        <div class="tk-top"><span class="prbars ${t.pr}"><i></i><i></i><i></i></span><span class="due ${dueCls}">${t.due}</span></div>
+        <h4>${t.n}</h4><p>${t.d}</p>
+      </button>`);
+      c.onclick=()=>go('task',t.k);grid.append(c);
+    });
+    tk.append(grid);
+  });
   return [w];
 }
 
