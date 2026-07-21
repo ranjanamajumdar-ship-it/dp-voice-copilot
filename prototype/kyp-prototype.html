@@ -334,6 +334,52 @@
   .grouphead h3{margin:0;}
   .grouphead .gcount{font-family:var(--mono);font-size:10px;background:var(--mist);color:var(--muted);border-radius:999px;padding:1px 8px;}
   .grouphead .gline{flex:1;height:1px;background:var(--line-2);}
+  /* ---- Diagnosis remedial tasks (uniform done-state + time) ---- */
+  .rhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  .rest{font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .rlist{display:flex;flex-direction:column;gap:7px;margin:9px 0 4px;}
+  .rtask{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 12px;transition:.14s;}
+  .rtask.done{background:var(--good-wash);border-color:color-mix(in srgb,var(--good) 30%,transparent);}
+  .rcheck{flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted-2);background:var(--card);color:var(--good);font-size:13px;font-weight:700;display:grid;place-items:center;cursor:pointer;transition:.12s;}
+  .rtask.done .rcheck{border-color:var(--good);background:var(--good);color:#fff;}
+  .rbody{flex:1;min-width:0;}
+  .rname{font-weight:600;font-size:14px;}
+  .rtask.done .rname{text-decoration:line-through;color:var(--muted);}
+  .rmeta{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:2px;}
+  .rguide{flex:none;border:1px solid var(--line);background:var(--mist);border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--accent-deep);cursor:pointer;transition:.12s;}
+  .rguide:hover{border-color:var(--accent);background:var(--accent-wash);}
+  /* ---- Issue-closed success screen ---- */
+  .success{text-align:center;padding:20px 0 10px;}
+  .successmark{width:74px;height:74px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;font-size:38px;color:#fff;background:var(--good);box-shadow:0 10px 30px color-mix(in srgb,var(--good) 40%,transparent);animation:pop .3s cubic-bezier(.2,.8,.3,1.2);}
+  @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+  .srow{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line-2);font-size:13.5px;}
+  .srow:last-child{border-bottom:none;}
+  .srow>span{color:var(--muted);flex:none;}
+  .srow b{text-align:right;display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .srow .okc{color:var(--good);}
+  /* ---- Compliance comparison ---- */
+  .cmptable{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:var(--shadow);}
+  .cmprow{display:grid;grid-template-columns:1.4fr .8fr .8fr 150px auto;gap:14px;align-items:center;padding:12px 16px;}
+  .cmprow+.cmprow{border-top:1px solid var(--line-2);}
+  .cmprow.head{background:var(--mist);font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);}
+  .cmprow .pname{font-weight:600;font-size:13.5px;}
+  .cmprow .val{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;}
+  .cmprow .lim{font-family:var(--mono);font-size:13px;color:var(--muted);}
+  .cbar{height:8px;border-radius:5px;background:var(--line-2);overflow:hidden;position:relative;}
+  .cbar i{display:block;height:100%;border-radius:5px;}
+  .cbar.ok i{background:var(--good);} .cbar.warnb i{background:var(--warn);}
+  @media (max-width:820px){.cmprow{grid-template-columns:1fr auto;gap:6px}.cmprow .cbar,.cmprow.head{display:none}}
+  /* ---- History filters + latest highlight + type icons ---- */
+  .hfilters{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 20px;}
+  .hfilter{font-size:12.5px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;transition:.12s;font-family:inherit;}
+  .hfilter:hover{color:var(--ink);}
+  .hfilter.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .hev.latest .hcard{border-color:var(--good);box-shadow:0 0 0 2px var(--good-wash),0 8px 22px rgba(14,26,32,.08);}
+  .latestbadge{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;background:var(--good);color:#fff;padding:2px 8px;border-radius:999px;font-weight:700;}
+  .hev .node.pulse{animation:npulse 1.8s ease-out infinite;}
+  @keyframes npulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  .htype{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;}
+  @media (prefers-reduced-motion:reduce){.hev .node.pulse{animation:none;}}
   /* ---- History timeline (time-rail) ---- */
   .htl{display:flex;flex-direction:column;margin-top:6px;}
   .hgroup{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
@@ -968,11 +1014,13 @@ const PROC={
     purpose:'Combines biological treatment with membrane filtration in one step. The membrane replaces the clarifier, so it holds a very high biomass and produces exceptionally clear, low-solids effluent — ideal ahead of reuse.',
     params:[['MLSS','8,000–12,000 mg/L','Much higher than conventional'],['TMP','Watch the trend','Rising TMP → fouling, needs CIP'],['Flux','Per membrane spec','Permeate rate per m²']]},
   sbr:{name:'SBR — Sequencing Batch Reactor',stage:'Secondary',explain:'Aeration Basin 1',
-    purpose:'A fill-and-draw system: one tank cycles through Fill → React (aerate) → Settle → Decant on a timer, so treatment and clarification happen in the same basin over time.',
-    params:[['Cycle','Fill / React / Settle / Decant','Timed phases'],['DO (react)','~2 mg/L',''],['Decant','Clear supernatant only','No solids carryover']]},
+    purpose:'A fill-and-draw reactor: one tank cycles Fill → React → Settle → Decant → Idle on a timer, so aeration, reaction and clarification all happen in the same basin. Removes 50–80% BOD/COD and 60–80% ammonia (NH₄⁺ → NO₃⁻). Typically 3–6 cycles per day, PLC-automated.',
+    params:[['DO (react)','2–4 ppm','≥2 for nitrification'],['pH','6.5–8.5','Nitrification consumes alkalinity'],['MLSS','2,000–4,000 mg/L','Drives sludge wasting'],['F/M','0.1–0.5 kg BOD/kg MLSS·d',''],['Ammonia reduction','50–90%','Cross-check alkalinity if low'],['Outlet TSS','< 50 ppm','Raise settle time if high']],
+    notes:'From the DP SBR SOP: valves, blower, recirculation and decanter run in <b>Auto from the PLC</b>. Keep aeration/mixing running even during shutdown so the biomass doesn\'t starve.'},
   saff:{name:'SAFF — Submerged Aerated Fixed Film',stage:'Secondary · Attached growth',explain:'Aeration Basin 1',
     purpose:'Biofilm grows on fixed submerged media while air is blown from below. Robust to load swings and simple to run — common in packaged plants.',
-    params:[['DO','>2 mg/L',''],['Media','Fixed pack','Biofilm surface'],['Air','Continuous','Both oxygen and mixing']]},
+    params:[['DO','>2 mg/L',''],['Media','Fixed pack','Biofilm surface'],['Air','Continuous','Both oxygen and mixing']],
+    notes:'General reference — a plant-specific SAFF SOP isn\'t in the library yet; ranges will sharpen once it\'s added.'},
   // Tertiary
   filtration:{name:'Filtration (MGF / DMF)',stage:'Tertiary',explain:'Clarifier',
     purpose:'Polishing filters pass water through graded sand/anthracite media to strip residual suspended solids and turbidity before disinfection.',
@@ -988,11 +1036,13 @@ const PROC={
     params:[['Faecal coliform','Per class','See Water Quality tab'],['Method','UV + / or chlorine',''],['Verification','Lab MPN/100 mL','Confirms compliance']]},
   // Treated Water
   uf:{name:'Ultrafiltration (UF)',stage:'Treated Water · Membrane',explain:'Clarifier',
-    purpose:'A fine membrane (~0.01–0.1 µm) removes colloids, fine particles and bacteria — usually the pre-treatment that protects an RO membrane.',
-    params:[['Pore size','0.01–0.1 µm',''],['SDI out','< 3','Protects downstream RO'],['CIP','On TMP rise','Clean-in-place cycle']]},
+    purpose:'A fine membrane removes ~90% of suspended solids, pathogens and colloids — the polishing step that protects the downstream RO. Outlet TSS below 1 ppm.',
+    params:[['Outlet TSS','< 1 ppm (>90% ↓)','If high → backwash / CEB'],['TMP','1–1.5 bar','High → fouling & membrane damage'],['Backwash','~120 s / 30–40 min cycle',''],['CEB','Every 24 h','Hypo 200 ppm + citric 550 ppm'],['CIP','Every 3–6 months','Restores permeability']],
+    notes:'From the DP UF SOP: running at excessively high TMP causes rapid fouling and can damage the membrane; too low a TMP gives poor filtration and low flux.'},
   ro:{name:'Reverse Osmosis (RO)',stage:'Treated Water · Membrane',explain:'Clarifier',
-    purpose:'High-pressure membrane rejects dissolved salts, delivering high-grade water for demanding reuse (boiler feed, process water).',
-    params:[['Recovery','~75%','Permeate vs feed'],['Rejection','>97% salts',''],['Feed SDI','< 3','From UF upstream']]},
+    purpose:'High-pressure membrane rejects 90–95% of dissolved salts (TDS) for high-grade reuse. Feed passes a 5–10 µm micro-cartridge filter and is dosed with antiscalant / SMBS / pH adjuster to protect the membrane.',
+    params:[['Outlet TDS','< 100 ppm (>90% ↓)','If high → CIP / replace membrane'],['Delta pressure','< 3 bar (max ~4.5)','High → fouling/scaling'],['Cartridge ΔP','< 0.5 bar','High → change cartridge'],['Recovery','Raise gradually','Permeate ÷ feed'],['Dosing','Antiscalant · SMBS · pH','On the feed line']],
+    notes:'From the DP RO SOP: never exceed the feed-pressure limit (membrane-rupture risk) and never let membranes dry out during shutdown.'},
 };
 const PROC_TREE=[
   {stage:'A',title:'Primary',items:['barscreen','oilgrease','eqtank','bio']},
@@ -1427,30 +1477,58 @@ function faultConvo(faultKey){
 
   // ---- root cause card: each task individually launchable ----
   function rootCard(c){
+    const est=c.tasks.reduce((a,tk)=>a+(tk.go?20:10),0);
     const card=el(`<div class="card fade" style="margin-top:6px"><span class="kh">Root cause confirmed</span>
       <h4>${c.name}</h4><p>${c.fix}</p>
-      <div class="kh" style="margin-top:12px">Remedial tasks · start any</div>
-      <div class="flow" id="tasks" style="margin:8px 0 4px"></div>
+      <div class="rhead"><span class="kh" style="margin:0">Remedial tasks · tick each when done</span><span class="rest">⏱ est. ~${est} min total</span></div>
+      <div id="tasks" class="rlist"></div>
       <div class="btnrow"><button class="btn" id="verify">Verify the fix</button><button class="btn" id="reopen">Try a different cause</button></div>
     </div>`);
     chat.append(card);opts.innerHTML='';
     const tl=card.querySelector('#tasks');
-    c.tasks.forEach((tk,i)=>{
-      const row=el(`<div class="step"><div class="n">${i+1}</div><div style="flex:1"><div class="h">${tk.t}</div><div class="d">${tk.go?'Guided in Task Mode':'Manual step'}</div></div></div>`);
-      const btn=el(`<button class="btn" style="align-self:center;padding:6px 12px;font-size:12.5px">${tk.go?'▶ Start':'✓ Mark done'}</button>`);
-      btn.onclick=()=>{
-        if(tk.go){go('task',tk.go);}
-        else{row.classList.add('done');btn.textContent='✓ Done';btn.disabled=true;btn.style.opacity=.6;}
-      };
-      row.append(btn);tl.append(row);
+    c.tasks.forEach((tk)=>{
+      const mins=tk.min||(tk.go?'~20 min':'~10 min');
+      const row=el(`<div class="rtask">
+        <button class="rcheck" aria-label="Mark done">○</button>
+        <div class="rbody"><div class="rname">${tk.t}</div><div class="rmeta">⏱ ${mins}${tk.go?' · step-by-step guide available':''}</div></div>
+        ${tk.go?'<button class="rguide">▶ Guide</button>':''}
+      </div>`);
+      const check=row.querySelector('.rcheck');
+      check.onclick=()=>{const done=row.classList.toggle('done');check.textContent=done?'✓':'○';};
+      if(tk.go)row.querySelector('.rguide').onclick=()=>go('task',tk.go);
+      tl.append(row);
     });
     card.querySelector('#verify').onclick=()=>{
       const[label,band,reading]=c.verify;
-      card.querySelector('.btnrow').insertAdjacentElement('afterend',el(`<div class="card fade" style="margin-top:12px"><span class="kh">Verification</span><h4>${label} test</h4><p>Target <b>${band}</b>. Live reading after fix: <b>${reading}</b> <span class="pill good"><span class="dot"></span>PASS</span></p><div class="btnrow"><button class="btn pri" onclick="go('history')">Close issue & log</button></div></div>`));
+      const vc=el(`<div class="card fade" style="margin-top:12px"><span class="kh">Verification</span><h4>${label} test</h4><p>Target <b>${band}</b>. Live reading after fix: <b>${reading}</b> <span class="pill good"><span class="dot"></span>PASS</span></p><div class="btnrow"><button class="btn pri" id="closeit">✓ Close issue & log</button></div></div>`);
+      card.querySelector('.btnrow').insertAdjacentElement('afterend',vc);
+      vc.querySelector('#closeit').onclick=()=>closeIssue(c);
       scrollChat();
     };
     card.querySelector('#reopen').onclick=()=>{aiSay(`No problem — the fix didn't resolve it. Let's reconsider the other causes.`,()=>showChoicesOnly());};
     scrollChat();
+  }
+  function closeIssue(c){
+    HISTORY.forEach(e=>e.latest=false);
+    HISTORY.unshift({group:'Today',time:'Now',ampm:'',status:'good',type:'issue',latest:true,
+      title:`${f.eq} — ${c.name} resolved`,where:`${f.eq}`,who:'Dr. Paani + Rahul K.',dp:true,note:c.fix});
+    w.innerHTML=`
+      <div class="success fade">
+        <div class="successmark">✓</div>
+        <h1 style="text-wrap:balance">Issue closed</h1>
+        <p class="sub" style="margin-bottom:18px">${f.eq} · ${c.name}</p>
+        <div class="card" style="max-width:460px;margin:0 auto;text-align:left">
+          <div class="srow"><span>Root cause</span><b>${c.name}</b></div>
+          <div class="srow"><span>Fix applied</span><b>${c.fix}</b></div>
+          <div class="srow"><span>Verified</span><b class="okc">✓ ${c.verify[0]} ${c.verify[2]}</b></div>
+          <div class="srow"><span>Closed by</span><b>${DROP} Dr. Paani + Rahul K.</b></div>
+        </div>
+        <p style="color:var(--muted);font-size:13px;margin-top:14px">Logged to History automatically.</p>
+        <div class="btnrow" style="justify-content:center"><button class="btn pri" id="toh">View in History</button><button class="btn" id="don">Back to Diagnostics</button></div>
+      </div>`;
+    w.querySelector('#toh').onclick=()=>go('history');
+    w.querySelector('#don').onclick=()=>go('diagnose');
+    window.scrollTo(0,0);
   }
 
   showCauses(f.intro);
@@ -1543,78 +1621,114 @@ function taskmode(k){
 }
 
 /* ================= COMPLIANCE ================= */
+// [param, our value, unit, govt limit label, our numeric, limit numeric (for the bar), status]
+const CMP=[
+  ['pH','7.4','','6.5 – 9.0',null,null,'ok'],
+  ['BOD','12','mg/L','≤ 30',12,30,'ok'],
+  ['COD','84','mg/L','≤ 250',84,250,'ok'],
+  ['TSS','14','mg/L','≤ 50',14,50,'ok'],
+  ['Ammoniacal N','3.1','mg/L','≤ 50',3.1,50,'ok'],
+  ['Faecal coliform','~800','MPN/100mL','≤ 1000',800,1000,'warn'],
+];
 function compliance(){
+  const rows=CMP.map(([p,v,u,lim,ov,lv,st])=>{
+    const pct=lv?Math.min(100,Math.round(ov/lv*100)):100;
+    return `<div class="cmprow">
+      <div class="pname">${p}</div>
+      <div class="val">${v}${u?` <small style="color:var(--muted-2)">${u}</small>`:''}</div>
+      <div class="lim">${lim}</div>
+      <div class="cbar ${st==='ok'?'ok':'warnb'}"><i style="width:${pct}%"></i></div>
+      <div><span class="pill ${st==='ok'?'good':'warn'}"><span class="dot"></span>${st==='ok'?'Within limit':'Watch'}</span></div>
+    </div>`;
+  }).join('');
   const w=el(`<div>
     <h1>Compliance Forecast</h1>
-    <p class="sub">Today's discharge outlook, combining live effluent, trends and weather.</p>
-    <div class="card" style="margin-bottom:14px"><div class="readout">
+    <p class="sub">How today's effluent compares against the CPCB discharge norms.</p>
+    <div class="card" style="margin-bottom:16px"><div class="readout">
       <div class="gauge" style="--v:84;--c:var(--good)"><b>84<small>%</small></b></div>
-      <div style="flex:1;min-width:220px"><span class="kh">Confidence all limits met</span>
-      <p style="margin:.1em 0"><b>On track.</b> All parameters forecast within limits today.</p>
-      <p style="font-size:13px;color:var(--muted)">Only variable: UV runtime. Keep it above 20 h/day.</p></div>
+      <div style="flex:1;min-width:220px"><span class="kh">Confidence · all norms met today</span>
+      <p style="margin:.1em 0"><b>5 of 6 parameters comfortably within limits.</b></p>
+      <p style="font-size:13px;color:var(--muted)">Faecal coliform is the only one to watch — it depends on UV runtime staying above 20 h/day.</p></div>
     </div></div>
-    <div class="grid g3">
-      <div class="card"><span class="kh">BOD</span><h4>12 <small style="font-size:12px;color:var(--muted)">mg/L</small></h4><p><span class="pill good"><span class="dot"></span>Limit 30 · safe</span></p></div>
-      <div class="card"><span class="kh">TSS</span><h4>14 <small style="font-size:12px;color:var(--muted)">mg/L</small></h4><p><span class="pill good"><span class="dot"></span>Limit 50 · safe</span></p></div>
-      <div class="card"><span class="kh">Faecal coliform</span><h4>—</h4><p><span class="pill warn"><span class="dot"></span>Depends on UV runtime</span></p></div>
+    <div class="rhead"><span class="kh" style="margin:0">Our plant vs CPCB norms</span><span class="rest">Inland surface-water discharge</span></div>
+    <div class="cmptable" style="margin:8px 0 4px">
+      <div class="cmprow head"><div>Parameter</div><div>Our value</div><div>CPCB limit</div><div>Headroom</div><div>Status</div></div>
+      ${rows}
     </div>
-    <div class="callout" style="margin-top:14px"><b>What could change this?</b> Rain forecast at 16:00 may raise influent flow ~15%. I'll re-forecast if it hits and warn you before any limit is at risk.</div>
+    <div class="callout" style="margin-top:14px"><b>What could change this?</b> Rain forecast at 16:00 may raise influent flow ~15%. Dr. Paani will re-forecast if it hits and warn you before any limit is at risk.</div>
+    <div class="btnrow"><button class="btn" id="wq">View the full water-quality classes</button></div>
   </div>`);
+  w.querySelector('#wq').onclick=()=>{plantTab='quality';go('plant');};
   return [w];
 }
 
 /* ================= HISTORY ================= */
 const HISTORY=[
-  {group:'Today',time:'06:04',ampm:'AM',status:'good',title:'Pump 2 low discharge — resolved',
+  {group:'Today',time:'06:04',ampm:'AM',status:'good',type:'issue',title:'Pump 2 low discharge — resolved',
     where:'RAS Pump 2 · Sludge return',who:'Dr. Paani + Rahul K.',dp:true,
     note:'Root cause: blocked suction strainer. Verified 3.2 bar.',go:['equip','pump2']},
-  {group:'Today',time:'04:10',ampm:'AM',status:'info',title:'Backwash completed',
+  {group:'Today',time:'04:10',ampm:'AM',status:'info',type:'maintenance',title:'Backwash completed',
     where:'Filter 1 · Tertiary',who:'Automatic cycle',dp:true,
     note:'6-minute cycle. Turbidity cleared below 5 NTU.',go:['task','backwash']},
-  {group:'Yesterday',time:'10:30',ampm:'PM',status:'good',title:'Sludge wasting',
+  {group:'Yesterday',time:'10:30',ampm:'PM',status:'good',type:'task',title:'Sludge wasting',
     where:'Aeration Basin 1',who:'Priya S.',initials:'PS',
     note:'18 m³ wasted. MLSS brought back into band.',go:['task','waste']},
-  {group:'This week',time:'Mon',ampm:'',status:'good',title:'Foaming in aeration — resolved',
+  {group:'This week',time:'Mon',ampm:'',status:'good',type:'issue',title:'Foaming in aeration — resolved',
     where:'Aeration Basin 1',who:'Dr. Paani',dp:true,
     note:'Reduced wasting; biology recovered in 2 days.'},
-  {group:'Earlier',time:'Mar',ampm:"'26",status:'good',title:'Pump 2 low discharge — resolved',
+  {group:'Earlier',time:'Mar',ampm:"'26",status:'good',type:'issue',title:'Pump 2 low discharge — resolved',
     where:'RAS Pump 2',who:'Anil K.',initials:'AK',
     note:'Rag caught on strainer. 25-minute fix.'},
-  {group:'Ongoing',time:'—',ampm:'',status:'info',title:'UV lamp age tracking',
+  {group:'Ongoing',time:'—',ampm:'',status:'info',type:'maintenance',title:'UV lamp age tracking',
     where:'UV Disinfection · Tertiary',who:'Dr. Paani',dp:true,
     note:'Monitoring — schedule replacement at 9 months.',go:['equip','uv']},
 ];
+const HFILTERS=[['all','All'],['issue','Issues'],['maintenance','Maintenance'],['task','Tasks']];
+let histFilter='all';
 function history(){
   const w=el(`<div>
     <h1>History</h1>
-    <p class="sub">The plant's memory — issues, maintenance and interventions on one timeline.</p>
+    <p class="sub">The plant's memory — issues, maintenance and tasks on one timeline. Filter by type, newest first.</p>
+    <div class="hfilters" id="hf"></div>
     <div class="htl" id="htl"></div>
   </div>`);
-  const tl=w.querySelector('#htl');
-  let lastGroup=null;
-  HISTORY.forEach(e=>{
-    if(e.group!==lastGroup){tl.append(el(`<div class="hgroup">${e.group}</div>`));lastGroup=e.group;}
-    const av=e.dp
-      ? `<span class="hav dp">${DROP}</span>`
-      : `<span class="hav" style="background:linear-gradient(135deg,var(--accent),var(--water))">${e.initials||'•'}</span>`;
-    const tag=e.go?'button':'div';
-    const ev=el(`<div class="hev">
-      <div class="when"><b>${e.time}</b>${e.ampm?`<small>${e.ampm}</small>`:''}</div>
-      <div class="rail"><span class="node ${e.status}"></span></div>
-      <div class="body">
-        <${tag} class="hcard">
-          <div class="htop"><h4>${e.title}</h4><span class="pill ${e.status}"><span class="dot"></span>${e.status==='good'?'Resolved':'Monitoring'}</span>${e.go?'<span class="go">›</span>':''}</div>
-          <div class="hmeta">
-            <div class="row"><span class="mi">⬡</span>${e.where}</div>
-            <div class="row"><span class="mi">${e.note?'✎':''}</span>${e.note}</div>
-            <div class="row person">${av}${e.who}</div>
-          </div>
-        </${tag}>
-      </div>
-    </div>`);
-    if(e.go){ev.querySelector('.hcard').onclick=()=>go(e.go[0],e.go[1]);}
-    tl.append(ev);
+  const hf=w.querySelector('#hf');
+  HFILTERS.forEach(([k,label])=>{
+    const n=k==='all'?HISTORY.length:HISTORY.filter(e=>e.type===k).length;
+    const b=el(`<button class="hfilter${k===histFilter?' on':''}">${label} · ${n}</button>`);
+    b.onclick=()=>{histFilter=k;paint();};hf.append(b);
   });
+  const tl=w.querySelector('#htl');
+  function paint(){
+    hf.querySelectorAll('.hfilter').forEach((b,i)=>b.classList.toggle('on',HFILTERS[i][0]===histFilter));
+    tl.innerHTML='';
+    const items=HISTORY.filter(e=>histFilter==='all'||e.type===histFilter);
+    if(!items.length){tl.append(el(`<div class="empty"><div class="big">🗂️</div>No ${histFilter} entries yet.</div>`));return;}
+    let lastGroup=null;
+    items.forEach(e=>{
+      if(e.group!==lastGroup){tl.append(el(`<div class="hgroup">${e.group}</div>`));lastGroup=e.group;}
+      const av=e.dp?`<span class="hav dp">${DROP}</span>`:`<span class="hav" style="background:linear-gradient(135deg,var(--accent),var(--water))">${e.initials||'•'}</span>`;
+      const tag=e.go?'button':'div';
+      const statusLabel=e.status==='good'?'Resolved':'Monitoring';
+      const ev=el(`<div class="hev${e.latest?' latest':''}">
+        <div class="when"><b>${e.time}</b>${e.ampm?`<small>${e.ampm}</small>`:''}</div>
+        <div class="rail"><span class="node ${e.status}${e.latest?' pulse':''}"></span></div>
+        <div class="body">
+          <${tag} class="hcard">
+            <div class="htop"><h4>${e.title}</h4>${e.latest?'<span class="latestbadge">✓ Just closed</span>':''}<span class="htype">${e.type}</span>${e.go?'<span class="go">›</span>':''}</div>
+            <div class="hmeta">
+              <div class="row"><span class="mi">⬡</span>${e.where}</div>
+              ${e.note?`<div class="row"><span class="mi">✎</span>${e.note}</div>`:''}
+              <div class="row person">${av}${e.who} · <span style="color:var(--muted-2)">${statusLabel}</span></div>
+            </div>
+          </${tag}>
+        </div>
+      </div>`);
+      if(e.go)ev.querySelector('.hcard').onclick=()=>go(e.go[0],e.go[1]);
+      tl.append(ev);
+    });
+  }
+  paint();
   return [w];
 }
 
