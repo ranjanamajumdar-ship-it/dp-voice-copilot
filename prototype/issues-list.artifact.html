@@ -147,6 +147,18 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
 .body{flex:1;overflow-y:auto;background:var(--canvas);min-height:0;-webkit-overflow-scrolling:touch;}
 .list{padding:var(--s1) var(--s2) var(--s4);}
 
+/* ══════════════ THE FOLD ══════════════
+   Operators do not scroll, so a screen that ends flush at a card edge
+   reads as "that is everything". Two honest cues, both driven by real
+   overflow — never shown when the list actually fits:
+   1. tuneFold() offsets the list in 4px steps (staying on the grid) so
+      the viewport edge always cuts THROUGH a card, never between two.
+   2. an inner bottom shadow: content visibly passes under the edge.
+   No gradient fade — a fade softens the cut and reads as a tidy ending,
+   which is the exact illusion being fixed.                            */
+.scrollarea.more{box-shadow:inset 0 -16px 14px -14px rgba(9,20,45,.22);}
+.scrollarea{transition:box-shadow .18s;}
+
 .sechead{display:flex;align-items:center;gap:var(--s1);
   padding:var(--s3) var(--s-half) var(--s1h);}
 .sechead:first-child{padding-top:var(--s2);}
@@ -504,6 +516,7 @@ select.ctl{background:var(--sh-surface);border-color:var(--sh-border);color:var(
   <div class="spec-head">
     <h1>Screen 13 · Issues List — <b>Soft UI on a Carbon grid</b></h1>
     <p>Surfaces follow the reference style: floating white cards on a tinted canvas, 12px radii, soft elevation, tonal chips. Structure stays Carbon: 8px / 2x spacing grid, IBM Plex Sans, 16px gutters. Filters now live in a <b>bottom sheet on mobile</b> and a <b>right-side drawer on desktop</b> — one component, two containers.</p>
+    <p style="margin-top:8px;"><b>The fold:</b> because operators don’t scroll, the viewport edge is tuned so it always cuts <em>through</em> a card — never flush with one, never in the gap between two — and content visibly passes under a shadowed edge. Both cues appear only when there is genuinely more below; a list that fits shows neither.</p>
   </div>
 
   <div class="controls">
@@ -822,7 +835,7 @@ function mobile(){
      <button class="iconbtn" data-ovf="__screen" aria-label="${t().actions}">⋯</button>
    </div>
    ${viewbar()}${appliedBar()}
-   <div class="body"><div class="list">${listHtml(false)}</div></div>
+   <div class="body scrollarea"><div class="list">${listHtml(false)}</div></div>
    <div class="bnav">
      <button><span class="i">⌂</span>Home</button>
      <button class="on"><span class="i">⚠</span>Issues</button>
@@ -862,7 +875,7 @@ function desktop(){
         ${P().readonly?` · ${t().readonly}`:''}</small></h1>
         ${plantSel()}<div class="dsearch">⌕ ${t().find}</div></div>
       ${viewbar()}${appliedBar()}${kpis()}
-      <div class="dbody"><div class="dlist">${listHtml(true)}</div></div>
+      <div class="dbody scrollarea"><div class="dlist">${listHtml(true)}</div></div>
     </div>
    </div>
    <div class="scrim${st.panel?' on':''}" data-close="1"></div>${panel()}</div>`;
@@ -952,6 +965,56 @@ function rat(){
    <div class="note"><strong>Filter behaviour</strong><p>${p.note}</p></div>`;
 }
 
+/* ═════════════ THE FOLD ═════════════
+   Operators do not scroll, so the bottom edge of the screen must never
+   look like the end of the list. Offset the list by the SMALLEST 4px
+   step that makes the viewport edge cut through a card rather than land
+   flush with one or fall in the gap between two.
+   Both cues are gated on real overflow — a list that fits shows neither,
+   because faking "there is more" would be a lie.                       */
+/* A card is "clearly cut" anywhere in this band. The upper bound is
+   generous because clipping even the last fifth of a card severs its
+   footer row mid-content, which reads as incomplete. What must be avoided
+   is a 3-8px sliver (~0.95) or the fold landing in a gap. */
+const SLICE_LO=.30, SLICE_HI=.80, STEP=4, MAX_TRIM=44;
+
+function tuneFold(sc){
+  if(!sc) return;
+  sc.style.marginBottom='';                                   // measure unbiased
+  const H0=sc.clientHeight;
+  if(sc.scrollHeight<=H0+1){ setEdge(sc); return; }           // it fits: no cue, no trim
+  const cRect=sc.getBoundingClientRect();
+  const rows=[...sc.querySelectorAll('.card,.chronicrow')].map(r=>{
+    const b=r.getBoundingClientRect();
+    return {top:b.top-cRect.top+sc.scrollTop, h:b.height};
+  });
+  if(!rows.length){ setEdge(sc); return; }
+
+  /* Trim the viewport from the BOTTOM rather than padding the top: the
+     reclaimed strip sits above the nav where spacing is expected, instead
+     of opening an odd gap under the filter bar. */
+  const fracAt=trim=>{
+    const fold=H0-trim;
+    for(const r of rows) if(fold>=r.top&&fold<=r.top+r.h) return (fold-r.top)/r.h;
+    return null;                                              // fold in a gap
+  };
+  let best=0,bestScore=-1;
+  for(let d=0;d<=MAX_TRIM;d+=STEP){
+    const f=fracAt(d);
+    if(f===null) continue;
+    if(f>=SLICE_LO&&f<=SLICE_HI){ best=d; bestScore=1; break; }  // cheapest wins
+    const score=Math.min(f,1-f);                              // else: farthest from an edge
+    if(score>bestScore){ bestScore=score; best=d; }
+  }
+  if(best) sc.style.marginBottom=best+'px';
+  setEdge(sc);
+}
+function setEdge(sc){
+  const more=sc.scrollHeight>sc.clientHeight+1
+    && sc.scrollTop+sc.clientHeight < sc.scrollHeight-2;
+  sc.classList.toggle('more',more);
+}
+
 /* ═════════════ RENDER ═════════════ */
 function render(){
   document.documentElement.lang=st.lang;
@@ -962,6 +1025,8 @@ function render(){
   sr.style.display=rs.length>1?'':'none';
   document.getElementById('device').innerHTML=st.view==='mobile'?mobile():desktop();
   document.getElementById('rat').innerHTML=rat();
+  const sc=document.querySelector('.scrollarea');
+  if(sc){ tuneFold(sc); sc.addEventListener('scroll',()=>setEdge(sc),{passive:true}); }
 }
 function resetRole(){
   st.role=Object.keys(P().roles)[0];
