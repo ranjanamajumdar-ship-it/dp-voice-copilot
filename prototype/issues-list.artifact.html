@@ -395,7 +395,17 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
   border-radius:var(--r-pill);cursor:pointer;transition:.15s;}
 .opt:hover:not(:disabled){border-color:var(--ink-3);}
 .opt[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff;}
-.opt:disabled{opacity:.42;cursor:not-allowed;}
+/* Legible-but-clearly-inert. The "0" has to be readable for the state to
+   explain itself, so this uses a muted-but-AA ink rather than a low
+   opacity; the difference from a live option is carried by the surface
+   and the absent hover, not by making the text hard to see. */
+.opt:disabled,.crow:disabled{opacity:1;cursor:not-allowed;color:#656D80;
+  background:var(--surface-2);border-color:var(--hairline);}
+.opt:disabled .oc,.crow:disabled .oc{color:#656D80;}
+.crow:disabled .box{border-color:var(--hairline);background:var(--surface-2);}
+.dimhint{font-size:12px;color:var(--ink-2);line-height:1.45;
+  background:var(--surface-2);border-radius:var(--r-md);padding:var(--s1) var(--s1h);
+  margin-bottom:var(--s1);}
 .opt .oc{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-3);}
 .opt[aria-pressed=true] .oc{color:rgba(255,255,255,.75);}
 .opt .sh{font-size:9px;}
@@ -408,7 +418,6 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
   border:none;background:none;cursor:pointer;border-radius:var(--r-md);text-align:left;width:100%;
   font-size:13.5px;}
 .crow:hover:not(:disabled){background:var(--canvas);}
-.crow:disabled{opacity:.42;cursor:not-allowed;}
 .crow .box{width:18px;height:18px;border-radius:var(--r-sm);border:1.5px solid var(--border);
   flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;}
 .crow[aria-pressed=true] .box{background:var(--navy);border-color:var(--navy);}
@@ -593,7 +602,9 @@ const S={
   searchZone:'Search zones',searchOp:'Search people',clear:'Clear',clearAll:'Clear all',
   reset:'Reset',show:n=>n===1?'Show 1 issue':`Show ${n} issues`,showNone:'No matches',
   plusChronic:n=>` · ${n} chronic`,showChronic:n=>`Show ${n} chronic`,
-  noOpts:'Nothing to show',actions:'Actions',issue:'Issue'},
+  noOpts:'Nothing to show',actions:'Actions',issue:'Issue',
+  dimHint:'Dimmed options have no matches alongside your current choices.',
+  noMatch:'0 matches with your current filters — clear one to enable this'},
  hi:{overdue:'अतिदेय',inprogress:'चालू',notstarted:'शुरू नहीं',chronic:'पुरानी',
   vAll:'सभी',vEmg:'आपातकाल',vApprove:'मंज़ूरी चाहिए',filters:'फ़िल्टर',
   due:'देय',over:'अतिदेय',find:'समस्या खोजें',step:(a,b)=>`चरण ${a}/${b}`,
@@ -607,7 +618,9 @@ const S={
   searchZone:'क्षेत्र खोजें',searchOp:'व्यक्ति खोजें',clear:'हटाएँ',clearAll:'सभी हटाएँ',
   reset:'रीसेट',show:n=>`${n} दिखाएँ`,showNone:'कोई मेल नहीं',
   plusChronic:n=>` · ${n} पुरानी`,showChronic:n=>`${n} पुरानी दिखाएँ`,
-  noOpts:'कुछ नहीं',actions:'कार्रवाई',issue:'समस्या'}
+  noOpts:'कुछ नहीं',actions:'कार्रवाई',issue:'समस्या',
+  dimHint:'धुँधले विकल्पों का आपकी वर्तमान पसंद के साथ कोई मेल नहीं है।',
+  noMatch:'वर्तमान फ़िल्टरों के साथ 0 मेल — सक्षम करने के लिए एक हटाएँ'}
 };
 const SHAPE={emergency:'⬤',major:'▲',minor:'◆',info:'•'};
 const RANK={emergency:0,major:1,minor:2,info:3};
@@ -928,28 +941,42 @@ function desktop(){
    ≤6 options -> all shown as toggles (no click to discover)
    >6 options -> searchable checkbox list
    every option carries a live facet count; zero-count options disable   */
+/* An option is disabled only when choosing it would empty the list. That
+   is correct behaviour, but silent dead controls read as breakage — so
+   each one states why on hover/AT, and the group prints a hint. */
+const gHead=g=>`<div class="gh"><h4>${t()[GL[g]]}</h4>
+    ${st.f[g].length?`<button class="gclear" data-gclear="${g}">${t().clear}</button>`:''}</div>`;
+
 function optGroup(g,vals,withShape){
   const on=st.f[g];
-  const body=vals.map(v=>{
-    const c=facet(g,v),sel=on.includes(v);
-    return `<button class="opt" aria-pressed="${sel}" data-tog="${g}|${v}" ${!c&&!sel?'disabled':''}>
+  /* canonical order is preserved here: severity reads Emergency->Info and
+     status follows the section order. Only 4 options, all visible. */
+  const items=vals.map(v=>({v,c:facet(g,v),sel:on.includes(v)}));
+  const body=items.map(({v,c,sel})=>{
+    const dead=!c&&!sel;
+    return `<button class="opt" aria-pressed="${sel}" data-tog="${g}|${v}"
+      ${dead?`disabled title="${t().noMatch}"`:''}>
       ${withShape?`<span class="sh" aria-hidden="true">${SHAPE[v]}</span>`:''}
       ${labelOf(g,v)}<span class="oc">${c}</span></button>`;
   }).join('');
-  return `<div class="fgroup"><div class="gh"><h4>${t()[GL[g]]}</h4>
-    ${on.length?`<button class="gclear" data-gclear="${g}">${t().clear}</button>`:''}</div>
+  return `<div class="fgroup">${gHead(g)}
     <div class="opts">${body}</div></div>`;
 }
 function listGroup(g,vals,ph){
   const on=st.f[g],q=st.srch[g].toLowerCase();
-  const shown=vals.filter(v=>v.toLowerCase().includes(q));
-  const rows=shown.map(v=>{
-    const c=facet(g,v),sel=on.includes(v);
-    return `<button class="crow" aria-pressed="${sel}" data-tog="${g}|${v}" ${!c&&!sel?'disabled':''}>
-      <span class="box">${sel?'✓':''}</span><span class="lb">${v}</span><span class="oc">${c}</span></button>`;
-  }).join('')||`<div class="nores">${t().noOpts}</div>`;
-  return `<div class="fgroup"><div class="gh"><h4>${t()[GL[g]]}</h4>
-    ${on.length?`<button class="gclear" data-gclear="${g}">${t().clear}</button>`:''}</div>
+  const items=vals.filter(v=>v.toLowerCase().includes(q))
+    .map(v=>({v,c:facet(g,v),sel:on.includes(v)}));
+  /* long lists DO reorder: selectable options first, so the user never
+     scrolls a wall of dead rows to reach a live one. Canonical order
+     carries no meaning for zones or people, unlike severity. */
+  const live=items.filter(i=>i.c||i.sel), dead=items.filter(i=>!i.c&&!i.sel);
+  const rows=[...live,...dead].map(({v,c,sel})=>
+    `<button class="crow" aria-pressed="${sel}" data-tog="${g}|${v}"
+      ${!c&&!sel?`disabled title="${t().noMatch}"`:''}>
+      <span class="box">${sel?'✓':''}</span><span class="lb">${v}</span>
+      <span class="oc">${c}</span></button>`).join('')
+    ||`<div class="nores">${t().noOpts}</div>`;
+  return `<div class="fgroup">${gHead(g)}
     <div class="searchbox">⌕<input type="text" data-srch="${g}" value="${st.srch[g]}" placeholder="${ph}"></div>
     <div class="checklist">${rows}</div></div>`;
 }
@@ -974,7 +1001,12 @@ function panel(){
     const applyLbl=!n?t().showNone
       :!nMain?t().showChronic(nChr)
       :t().show(nMain)+(nChr?t().plusChronic(nChr):'');
+    /* the hint is emitted once, and only when something is actually
+       dimmed — a standing note would be noise on a clean drawer */
+    const anyDead=[['sev',sevs],['status',stats],['zone',zones],['op',R().mine?[]:ops]]
+      .some(([g,vs])=>vs.some(v=>!facet(g,v)&&!st.f[g].includes(v)));
     return shell(t().filters,
+      (anyDead?`<p class="dimhint">${t().dimHint}</p>`:'')+
       optGroup('sev',sevs,true)+
       optGroup('status',stats,false)+
       (zones.length>6?listGroup('zone',zones,t().searchZone):optGroup('zone',zones,false))+
