@@ -3,328 +3,290 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>13 · Issues List — Role-adaptive (Digital Paani)</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>13 · Issues List — Digital Paani</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* DigitalPaani palette (from existing prototypes) */
   --navy:#092454; --navy-mid:#1a2d5d; --navy-tint:#E8EBF2;
   --teal:#6AA8B0; --teal-deep:#3F7A83; --teal-light:#B0C3D6; --teal-tint:#E8F0F2;
-  --sage:#8AB878; --sage-forest:#2E5924; --sage-tint:#F1F8EC;
+  --sage-forest:#2E5924; --sage-tint:#F1F8EC;
   --rust:#C4511E; --rust-tint:#FAF0EB;
-  --paper:#F7F6F2; --ink:#1A1A1A; --muted:#6F6F6F; --muted-2:#8A8A8A;
+  --paper:#F7F6F2; --ink:#1A1A1A; --muted:#6F6F6F; --muted-2:#7C7C7C;
   --line:#E0DDD3; --line-soft:#EDEBE4; --white:#fff;
-
-  /* severity — shape + label + colour (redundant coded) */
   --sev-emg:#A32015; --sev-emg-tint:#FBECEA;
   --sev-maj:#C4511E; --sev-maj-tint:#FAF0EB;
-  --sev-min:#9A7010; --sev-min-tint:#FBF4E4;
+  --sev-min:#8A6410; --sev-min-tint:#FBF4E4;
   --sev-inf:#41637F; --sev-inf-tint:#ECF1F5;
-
-  /* timer states */
   --t-ok:#3F7A83; --t-ok-bg:#E8F0F2;
-  --t-warn:#9A7010; --t-warn-bg:#FBF4E4;
+  --t-warn:#8A6410; --t-warn-bg:#FBF4E4;
   --t-late:#A32015; --t-late-bg:#FBECEA;
 }
 *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans','Noto Sans Devanagari',-apple-system,sans-serif;}
 html[lang=hi] body{line-height:1.55;}
 body{background:linear-gradient(160deg,#E3E0D8 0%,#D2CEC3 100%);color:var(--ink);min-height:100vh;padding:22px 18px 60px;}
+button{font:inherit;}
 
-/* ══════════ SPEC CHROME (outside the device) ══════════ */
-.spec{max-width:1420px;margin:0 auto;}
-.spec-head{margin-bottom:18px;}
+/* ══════════ SPEC CHROME ══════════ */
+.spec{max-width:1400px;margin:0 auto;}
+.spec-head{margin-bottom:16px;}
 .spec-head h1{font-size:19px;font-weight:600;letter-spacing:-.2px;}
 .spec-head h1 b{color:var(--teal-deep);font-weight:600;}
-.spec-head p{font-size:12.5px;color:var(--muted);margin-top:4px;max-width:760px;line-height:1.55;}
+.spec-head p{font-size:12.5px;color:var(--muted);margin-top:5px;max-width:700px;line-height:1.55;}
 
-.controls{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;
-  background:var(--white);border:1px solid var(--line);padding:14px 16px;margin-bottom:22px;}
-.cgroup{display:flex;flex-direction:column;gap:7px;}
+.controls{display:flex;flex-wrap:wrap;gap:8px 26px;align-items:center;
+  background:var(--white);border:1px solid var(--line);padding:12px 16px;margin-bottom:20px;}
+.cgroup{display:flex;align-items:center;gap:9px;}
 .cgroup>label{font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted-2);}
-.seg{display:flex;border:1px solid var(--line);overflow:hidden;flex-wrap:wrap;}
+.seg{display:flex;border:1px solid var(--line);overflow:hidden;}
 .seg button{font-size:11.5px;font-weight:600;padding:7px 13px;border:none;background:var(--white);
   color:var(--muted);cursor:pointer;border-right:1px solid var(--line);transition:.12s;white-space:nowrap;}
 .seg button:last-child{border-right:none;}
 .seg button.sel{background:var(--navy);color:#fff;}
 .seg button:not(.sel):hover{background:var(--navy-tint);color:var(--navy);}
-.seg.sm button{font-size:10.5px;padding:6px 10px;}
+.seg.sm button{font-size:11px;padding:6px 10px;}
+select.ctl{font-size:11.5px;font-weight:600;padding:6px 8px;border:1px solid var(--line);
+  background:var(--white);color:var(--navy);cursor:pointer;}
 
-/* ══════════ STAGE ══════════ */
-.stage{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;}
+.stage{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;}
 
-/* device frames */
-.frame-mobile{width:375px;height:812px;flex-shrink:0;background:var(--paper);
-  border-radius:38px;border:6px solid #B8B4A8;box-shadow:0 26px 70px rgba(26,26,26,.32);
+.frame-mobile{width:375px;height:790px;flex-shrink:0;background:var(--paper);
+  border-radius:38px;border:6px solid #B8B4A8;box-shadow:0 24px 64px rgba(26,26,26,.3);
   overflow:hidden;display:flex;flex-direction:column;position:relative;}
-.frame-desktop{flex:1 1 880px;min-width:0;height:812px;background:var(--paper);border:1px solid #B8B4A8;
-  border-radius:8px;box-shadow:0 26px 70px rgba(26,26,26,.28);overflow:hidden;display:flex;flex-direction:column;}
-.frame-desktop .browserbar{height:34px;background:#DEDAD0;border-bottom:1px solid #C9C4B8;
+.frame-desktop{flex:1 1 860px;min-width:0;height:790px;background:var(--paper);border:1px solid #B8B4A8;
+  border-radius:8px;box-shadow:0 24px 64px rgba(26,26,26,.26);overflow:hidden;
+  display:flex;flex-direction:column;position:relative;}
+.browserbar{height:32px;background:#DEDAD0;border-bottom:1px solid #C9C4B8;
   display:flex;align-items:center;gap:7px;padding:0 13px;flex-shrink:0;}
-.frame-desktop .browserbar i{width:10px;height:10px;border-radius:50%;background:#BDB8AC;}
-.frame-desktop .browserbar .url{margin-left:12px;font-size:10.5px;color:var(--muted);
-  background:var(--white);padding:3px 12px;border-radius:3px;font-family:'IBM Plex Mono',monospace;}
+.browserbar i{width:9px;height:9px;border-radius:50%;background:#BDB8AC;}
+.browserbar .url{margin-left:12px;font-size:10.5px;color:var(--muted);background:var(--white);padding:3px 12px;border-radius:3px;}
 
 /* ══════════ APP CHROME ══════════ */
-.statusbar{height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+.statusbar{height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
   padding:0 22px;font-size:12.5px;font-weight:600;background:var(--navy);color:#fff;}
-.statusbar .ic{font-size:10px;letter-spacing:2px;}
-
-.appbar{flex-shrink:0;background:var(--navy);color:#fff;padding:0 14px;height:50px;
+.appbar{flex-shrink:0;background:var(--navy);color:#fff;padding:0 14px;height:52px;
   display:flex;align-items:center;gap:10px;}
-.appbar .plant{font-size:14px;font-weight:600;white-space:nowrap;flex-shrink:0;max-width:132px;
-  overflow:hidden;text-overflow:ellipsis;}
-.appbar .plant small{display:block;font-size:9.5px;font-weight:500;color:var(--teal-light);letter-spacing:.3px;}
-.appbar .search{flex:1;min-width:0;display:flex;align-items:center;gap:6px;
-  background:rgba(255,255,255,.13);border-bottom:1px solid rgba(255,255,255,.34);
-  padding:6px 9px;font-size:12px;color:rgba(255,255,255,.62);cursor:text;overflow:hidden;}
-.appbar .search span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.appbar .kebab{flex-shrink:0;font-size:17px;line-height:1;cursor:pointer;padding:4px 3px;opacity:.9;}
-.appbar .plantswitch{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
-  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);padding:5px 9px;cursor:pointer;flex-shrink:0;}
-.appbar .plantswitch em{font-style:normal;font-size:8.5px;opacity:.75;}
+.appbar .plant{font-size:14.5px;font-weight:600;white-space:nowrap;}
+.appbar .plant small{display:block;font-size:10px;font-weight:500;color:var(--teal-light);margin-top:1px;}
+.appbar .sp{margin-left:auto;}
+.appbar .ib{flex-shrink:0;background:none;border:none;color:#fff;font-size:16px;cursor:pointer;
+  padding:7px;opacity:.92;line-height:1;border-radius:3px;}
+.appbar .ib:hover{background:rgba(255,255,255,.14);}
+.appbar .plantsel{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+  color:#fff;font-size:11.5px;font-weight:600;padding:6px 8px;cursor:pointer;}
+.appbar .plantsel option{color:var(--ink);}
 
-/* filter chips */
-.filterbar{flex-shrink:0;background:var(--white);border-bottom:1px solid var(--line);
-  padding:9px 0 9px 14px;display:flex;align-items:center;gap:7px;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none;}
-.filterbar::-webkit-scrollbar{height:0;}
-.chip{flex-shrink:0;font-size:11px;font-weight:600;padding:6px 11px;border:1px solid var(--line);
-  background:var(--white);color:var(--muted);cursor:pointer;white-space:nowrap;transition:.12s;border-radius:2px;}
-.chip:hover{border-color:var(--teal);color:var(--teal-deep);}
-.chip[aria-pressed=true]{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff;}
-.chip.sup{border-style:dashed;}
-.chip.sup[aria-pressed=true]{border-style:solid;}
-.chip.clear{color:var(--rust);border-color:var(--rust-tint);background:var(--rust-tint);}
-.chip.cust{border-color:var(--navy-tint);background:var(--navy-tint);color:var(--navy);}
+/* quick filters — single-select (Hick's law) */
+.qbar{flex-shrink:0;background:var(--white);border-bottom:1px solid var(--line);
+  padding:10px 14px;display:flex;align-items:center;gap:7px;}
+.q{font-size:11.5px;font-weight:600;padding:7px 12px;border:1px solid var(--line);
+  background:var(--white);color:var(--muted);cursor:pointer;white-space:nowrap;transition:.12s;}
+.q:hover{border-color:var(--teal);color:var(--teal-deep);}
+.q[aria-pressed=true]{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff;}
+.q .ct{font-variant-numeric:tabular-nums;opacity:.75;margin-left:3px;}
+.fbtn{margin-left:auto;flex-shrink:0;font-size:11.5px;font-weight:600;padding:7px 11px;
+  border:1px solid var(--navy-tint);background:var(--navy-tint);color:var(--navy);cursor:pointer;
+  display:flex;align-items:center;gap:5px;}
+.fbtn:hover{background:#DCE1EC;}
+.fbtn .dot{background:var(--navy);color:#fff;font-size:9.5px;font-weight:700;
+  min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
 
-.scopebar{flex-shrink:0;background:var(--navy-tint);border-bottom:1px solid var(--line);
-  padding:6px 14px;font-size:10.5px;color:var(--navy);display:flex;align-items:center;gap:6px;font-weight:500;}
-.scopebar b{font-weight:700;}
-.scopebar .ro{background:var(--navy);color:#fff;font-size:8.5px;font-weight:700;
-  letter-spacing:.7px;padding:2px 6px;border-radius:2px;}
+.appliedbar{flex-shrink:0;background:var(--teal-tint);border-bottom:1px solid var(--line);
+  padding:7px 14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.appliedbar .al{font-size:10.5px;color:var(--teal-deep);font-weight:600;}
+.appliedbar .clr{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--rust);
+  background:none;border:none;cursor:pointer;text-decoration:underline;}
 
-/* list body */
-.body{flex:1;overflow-y:auto;background:var(--teal-tint);min-height:0;-webkit-overflow-scrolling:touch;}
+/* ══════════ LIST ══════════ */
+.body{flex:1;overflow-y:auto;background:#EFEEE9;min-height:0;-webkit-overflow-scrolling:touch;}
 .body::-webkit-scrollbar{width:0;}
-.list{padding:12px 12px 26px;}
+.list{padding:6px 12px 26px;}
 
-.sechead{display:flex;align-items:center;gap:8px;padding:14px 3px 8px;}
-.sechead:first-child{padding-top:2px;}
+.sechead{display:flex;align-items:baseline;gap:8px;padding:16px 3px 7px;}
 .sechead h2{font-size:11px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);}
-.sechead .n{font-size:11px;font-weight:700;color:var(--navy);background:var(--white);
-  border:1px solid var(--line);padding:1px 7px;font-variant-numeric:tabular-nums;}
-.sechead .hint{margin-left:auto;font-size:9.5px;color:var(--muted-2);font-style:italic;}
+.sechead .n{font-size:11px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;}
 
-/* ── the list-item card ── */
+/* card — proximity: title block, then one meta line, then one status line */
+/* container, not a button — so action buttons can live inside it legally */
 .card{background:var(--white);border:1px solid var(--line-soft);border-left:3px solid var(--line);
-  padding:11px 12px;margin-bottom:8px;cursor:pointer;text-align:left;width:100%;display:block;
-  transition:.12s;position:relative;}
-.card:hover{border-color:var(--teal-light);box-shadow:0 3px 12px rgba(9,36,84,.09);}
-.card:focus-visible{outline:2px solid var(--teal-deep);outline-offset:1px;}
+  margin-bottom:7px;display:flex;align-items:stretch;transition:.12s;}
+.card:hover{border-color:var(--teal-light);box-shadow:0 3px 12px rgba(9,36,84,.08);}
+.card .open{flex:1;min-width:0;background:none;border:none;text-align:left;
+  padding:11px 12px;cursor:pointer;color:inherit;}
+.card .open:focus-visible{outline:2px solid var(--teal-deep);outline-offset:-2px;}
+.card .side{flex-shrink:0;display:flex;align-items:center;padding:0 6px 0 0;}
 .card.emergency{border-left-color:var(--sev-emg);}
 .card.major{border-left-color:var(--sev-maj);}
 .card.minor{border-left-color:var(--sev-min);}
 .card.info{border-left-color:var(--sev-inf);}
-.card.dim{opacity:.58;}
-.card.dim:hover{opacity:.8;}
 
-.r1{display:flex;align-items:flex-start;gap:8px;}
+.r1{display:flex;align-items:center;gap:8px;}
 .sev{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;
-  letter-spacing:.7px;padding:3px 6px;border-radius:2px;line-height:1;white-space:nowrap;}
-.sev i{font-style:normal;font-size:8.5px;line-height:1;}
+  letter-spacing:.7px;padding:3px 6px;line-height:1;white-space:nowrap;}
+.sev i{font-style:normal;font-size:8.5px;}
 .sev.emergency{background:var(--sev-emg-tint);color:var(--sev-emg);}
 .sev.major{background:var(--sev-maj-tint);color:var(--sev-maj);}
 .sev.minor{background:var(--sev-min-tint);color:var(--sev-min);}
 .sev.info{background:var(--sev-inf-tint);color:var(--sev-inf);}
-
-.title{flex:1;min-width:0;font-size:15px;font-weight:600;line-height:1.3;letter-spacing:-.1px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-top:1px;}
-.due{flex-shrink:0;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;
-  padding:3px 7px;border-radius:2px;white-space:nowrap;line-height:1.25;}
+.due{flex-shrink:0;margin-left:auto;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;
+  padding:3px 7px;white-space:nowrap;}
 .due.ok{background:var(--t-ok-bg);color:var(--t-ok);}
 .due.warn{background:var(--t-warn-bg);color:var(--t-warn);}
 .due.late{background:var(--t-late-bg);color:var(--t-late);}
 
-.meta{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.4;
+.title{font-size:15px;font-weight:600;line-height:1.3;letter-spacing:-.1px;margin-top:7px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.meta{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .meta b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+.r3{display:flex;align-items:center;gap:7px;margin-top:9px;}
+.r3:empty{display:none;}
 
-.r3{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
-.tag{font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 6px;border-radius:2px;line-height:1;white-space:nowrap;}
+.tag{font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 6px;line-height:1;white-space:nowrap;}
 .tag.approval{background:#EDE7F6;color:#4A3480;}
 .tag.waiting{background:var(--t-warn-bg);color:var(--t-warn);}
 .tag.chronic{background:#E9E4DC;color:#5C4F3C;}
-.tag.auto{background:var(--sage-tint);color:var(--sage-forest);}
 .tag.recov{background:var(--sage-tint);color:var(--sage-forest);}
-.tag.reass{background:var(--navy-tint);color:var(--navy);}
 .who{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:500;white-space:nowrap;
-  display:flex;align-items:center;gap:4px;}
-.who.unassigned{color:var(--teal-deep);font-weight:700;}
-.who .av{width:16px;height:16px;border-radius:50%;background:var(--navy-tint);color:var(--navy);
-  font-size:7.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.ovf{flex-shrink:0;font-size:14px;color:var(--muted-2);padding:0 2px 0 4px;line-height:1;
-  opacity:.45;transition:.12s;}
+  overflow:hidden;text-overflow:ellipsis;}
+.ovf{flex-shrink:0;background:none;border:none;font-size:15px;color:var(--muted-2);
+  padding:0 2px;cursor:pointer;line-height:1;opacity:.5;}
 .card:hover .ovf{opacity:1;color:var(--navy);}
-.who{max-width:100%;overflow:hidden;text-overflow:ellipsis;}
 
-/* chronic collapsed row */
-.chronicrow{background:#F2EEE7;border:1px solid var(--line);border-left:3px solid #8C7B62;
-  padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;margin-bottom:8px;width:100%;text-align:left;}
+.chronicrow{background:#F2EEE7;border:1px solid var(--line);padding:13px 12px;
+  display:flex;align-items:center;gap:9px;cursor:pointer;width:100%;text-align:left;margin-top:14px;}
 .chronicrow:hover{background:#EDE8DF;}
 .chronicrow .lbl{font-size:13px;font-weight:600;color:#5C4F3C;}
 .chronicrow .sub{font-size:10.5px;color:var(--muted);margin-top:2px;}
 .chronicrow .arw{margin-left:auto;font-size:15px;color:#8C7B62;}
 
-/* empty */
-.empty{padding:64px 26px;text-align:center;}
-.empty .gl{font-size:30px;opacity:.28;}
+.empty{padding:70px 26px;text-align:center;}
+.empty .gl{font-size:28px;opacity:.25;}
 .empty h3{font-size:15px;font-weight:600;margin-top:14px;color:var(--muted);}
 .empty p{font-size:12px;color:var(--muted-2);margin-top:6px;line-height:1.5;}
 
-/* bottom nav */
-.bnav{flex-shrink:0;height:58px;background:var(--white);border-top:1px solid var(--line);
-  display:flex;align-items:stretch;}
+.bnav{flex-shrink:0;height:56px;background:var(--white);border-top:1px solid var(--line);display:flex;}
 .bnav button{flex:1;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--muted-2);}
-.bnav button .i{font-size:16px;line-height:1;}
+.bnav button .i{font-size:15px;line-height:1;}
 .bnav button.on{color:var(--navy);box-shadow:inset 0 2px 0 var(--teal-deep);}
 
-/* ══════════ DESKTOP LAYOUT ══════════ */
+/* ══════════ DESKTOP ══════════ */
 .dtop{display:flex;flex:1;min-height:0;}
-.snav{width:196px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;padding:14px 0;}
+.snav{width:186px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;padding:14px 0;}
 .snav .brand{padding:0 16px 16px;color:#fff;font-size:13.5px;font-weight:600;}
 .snav .brand small{display:block;font-size:9px;color:var(--teal-light);font-weight:500;letter-spacing:.4px;margin-top:2px;}
 .snav a{display:flex;align-items:center;gap:9px;padding:9px 16px;color:rgba(255,255,255,.66);
-  font-size:12.5px;font-weight:500;text-decoration:none;cursor:pointer;}
+  font-size:12.5px;font-weight:500;cursor:pointer;}
 .snav a:hover{background:var(--navy-mid);color:#fff;}
 .snav a.on{background:var(--navy-mid);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--teal);}
 .snav a .i{font-size:14px;width:16px;}
 .snav a .badge{margin-left:auto;font-size:9.5px;font-weight:700;background:var(--sev-emg);color:#fff;padding:1px 5px;border-radius:8px;}
 .snav .sep{height:1px;background:rgba(255,255,255,.13);margin:12px 16px;}
-.snav .me{margin-top:auto;padding:12px 16px 0;border-top:1px solid rgba(255,255,255,.13);
-  color:#fff;font-size:11.5px;font-weight:600;}
+.snav .me{margin-top:auto;padding:12px 16px 0;border-top:1px solid rgba(255,255,255,.13);color:#fff;font-size:11.5px;font-weight:600;}
 .snav .me small{display:block;font-size:9.5px;color:var(--teal-light);font-weight:500;margin-top:2px;}
 
 .dmain{flex:1;min-width:0;display:flex;flex-direction:column;}
 .dbar{flex-shrink:0;background:var(--white);border-bottom:1px solid var(--line);
-  padding:13px 22px;display:flex;align-items:center;gap:14px;}
+  padding:13px 22px;display:flex;align-items:center;gap:12px;}
 .dbar h1{font-size:17px;font-weight:600;letter-spacing:-.2px;}
 .dbar h1 small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;}
 .dbar .dsearch{margin-left:auto;display:flex;align-items:center;gap:7px;border:1px solid var(--line);
-  padding:7px 11px;font-size:12px;color:var(--muted-2);width:230px;background:var(--paper);cursor:text;}
-.dbar .btn{font-size:11.5px;font-weight:600;padding:8px 13px;border:1px solid var(--line);
-  background:var(--white);color:var(--navy);cursor:pointer;white-space:nowrap;}
-.dbar .btn:hover{background:var(--navy-tint);}
-.dbar .btn.pri{background:var(--navy);border-color:var(--navy);color:#fff;}
+  padding:8px 11px;font-size:12px;color:var(--muted-2);width:210px;background:var(--paper);cursor:text;}
 
-/* desktop KPI strip */
+/* summary before detail — 3 tiles max (law of focus) */
 .kpis{flex-shrink:0;display:flex;background:var(--white);border-bottom:1px solid var(--line);}
-.kpi{flex:1;padding:11px 20px;border-right:1px solid var(--line-soft);}
-.kpi:last-child{border-right:none;}
+.kpi{padding:11px 22px;border-right:1px solid var(--line-soft);min-width:132px;}
 .kpi .v{font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.4px;}
 .kpi .k{font-size:9.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted-2);margin-top:3px;}
 .kpi.late .v{color:var(--sev-emg);}
 .kpi.warn .v{color:var(--sev-min);}
-.kpi.good .v{color:var(--teal-deep);}
 
-/* desktop row-card */
-.dbody{flex:1;overflow-y:auto;background:var(--teal-tint);min-height:0;}
-.dlist{padding:14px 22px 34px;max-width:1120px;}
-.card.row{padding:0;}
-.card.row .inner{display:flex;align-items:center;gap:14px;padding:11px 14px;}
-.card.row .sev{width:104px;justify-content:flex-start;}
-.card.row .mid{flex:1;min-width:0;}
-.card.row .title{white-space:nowrap;padding-top:0;}
-.card.row .meta{margin-top:3px;}
-.card.row .chipwrap{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;max-width:230px;justify-content:flex-end;}
-.card.row .who{margin-left:0;width:124px;justify-content:flex-start;flex-shrink:0;}
-.card.row .due{width:104px;text-align:center;flex-shrink:0;}
-.card.row .acts{display:flex;gap:5px;flex-shrink:0;width:150px;justify-content:flex-end;}
-.card.row .abtn{font-size:10.5px;font-weight:600;padding:5px 9px;border:1px solid var(--line);
+.dbody{flex:1;overflow-y:auto;background:#EFEEE9;min-height:0;}
+.dlist{padding:8px 22px 34px;}
+.card.row .open{display:flex;align-items:center;gap:16px;padding:12px 14px;}
+.card.row .cell{min-width:0;}
+.card.row .issue{flex:1;min-width:0;}
+.card.row .issue .title{margin-top:5px;}
+.card.row .st{width:150px;flex-shrink:0;}
+.card.row .who{margin-left:0;width:112px;flex-shrink:0;}
+.card.row .due{margin-left:0;width:100px;text-align:center;flex-shrink:0;}
+.card.row .acts{width:118px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;
+  gap:2px;padding-right:8px;}
+.abtn{font-size:11px;font-weight:600;padding:6px 11px;border:1px solid var(--line);
   background:var(--white);color:var(--navy);cursor:pointer;white-space:nowrap;}
-.card.row .abtn:hover{background:var(--navy-tint);}
-.card.row .abtn.pri{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff;}
-.card.row .abtn.ok{background:var(--sage-forest);border-color:var(--sage-forest);color:#fff;}
-.dcolhead{display:flex;align-items:center;gap:14px;padding:0 14px 7px;font-size:9px;font-weight:700;
-  letter-spacing:.9px;text-transform:uppercase;color:var(--muted-2);}
-.dcolhead .a{width:104px;} .dcolhead .b{flex:1;} .dcolhead .c{width:230px;text-align:right;}
-.dcolhead .d{width:124px;} .dcolhead .e{width:104px;text-align:center;} .dcolhead .f{width:150px;text-align:right;}
+.abtn:hover{background:var(--navy-tint);}
+.abtn.pri{background:var(--navy);border-color:var(--navy);color:#fff;}
+.abtn.ok{background:var(--sage-forest);border-color:var(--sage-forest);color:#fff;}
 
-/* ══════════ SHEETS / OVERLAY ══════════ */
+/* ══════════ SHEETS ══════════ */
 .scrim{position:absolute;inset:0;background:rgba(9,36,84,.42);display:none;z-index:40;}
 .scrim.on{display:block;}
 .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--white);z-index:50;
-  display:none;flex-direction:column;max-height:82%;box-shadow:0 -8px 40px rgba(9,36,84,.28);}
+  display:none;flex-direction:column;max-height:86%;box-shadow:0 -8px 40px rgba(9,36,84,.28);}
 .sheet.on{display:flex;}
-.sheet .sh{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;}
-.sheet .sh h3{font-size:14px;font-weight:600;}
-.sheet .sh .x{margin-left:auto;font-size:19px;color:var(--muted);cursor:pointer;line-height:1;}
-.sheet .sb{padding:14px 16px;overflow-y:auto;}
+.frame-desktop .sheet{left:auto;right:0;top:0;bottom:0;width:352px;max-height:none;box-shadow:-8px 0 40px rgba(9,36,84,.24);}
+.sheet .sh{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;}
+.sheet .sh h3{font-size:14.5px;font-weight:600;}
+.sheet .sh .x{margin-left:auto;font-size:19px;color:var(--muted);cursor:pointer;
+  background:none;border:none;line-height:1;padding:2px 4px;}
+.sheet .sb{padding:16px;overflow-y:auto;flex:1;}
 .sheet .sf{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:9px;}
-.sheet .sf button{flex:1;font-size:12.5px;font-weight:600;padding:11px;border:1px solid var(--navy);
+.sheet .sf button{flex:1;font-size:12.5px;font-weight:600;padding:12px;border:1px solid var(--navy);
   background:var(--white);color:var(--navy);cursor:pointer;}
 .sheet .sf button.pri{background:var(--navy);color:#fff;}
-.fgroup{margin-bottom:16px;}
-.fgroup>label{font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
-  color:var(--muted-2);display:block;margin-bottom:7px;}
-.fgroup .opts{display:flex;flex-wrap:wrap;gap:6px;}
-.fgroup input[type=text],.fgroup input[type=date],.fgroup select{width:100%;font-size:12.5px;padding:9px 10px;
-  border:none;border-bottom:1px solid var(--muted-2);background:var(--paper);color:var(--ink);}
-.fgroup .dr{display:flex;gap:8px;align-items:center;}
-.fgroup .dr span{font-size:11px;color:var(--muted);}
-.actlist button{width:100%;text-align:left;font-size:13.5px;font-weight:500;padding:14px 4px;
+
+/* familiar native controls — Jakob's law */
+.fg{margin-bottom:17px;}
+.fg label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted-2);display:block;margin-bottom:6px;}
+.fg select,.fg input{width:100%;font-size:13px;padding:10px;border:1px solid var(--line);
+  background:var(--white);color:var(--ink);}
+.fg select:focus,.fg input:focus{outline:2px solid var(--teal-deep);outline-offset:-1px;}
+
+.actlist button{width:100%;text-align:left;font-size:13.5px;font-weight:500;padding:15px 4px;
   border:none;border-bottom:1px solid var(--line-soft);background:none;cursor:pointer;color:var(--ink);
-  display:flex;align-items:center;gap:11px;}
+  display:flex;align-items:center;gap:12px;}
 .actlist button:hover{background:var(--paper);}
 .actlist button .i{font-size:15px;width:20px;}
 .actlist button small{display:block;font-size:10.5px;color:var(--muted);font-weight:400;margin-top:2px;}
 .actlist button.danger{color:var(--rust);}
-.actlist .lockednote{font-size:10.5px;color:var(--muted-2);padding:10px 4px 0;line-height:1.5;font-style:italic;}
 
-/* ══════════ RATIONALE PANEL ══════════ */
-.rat{flex:1 1 300px;min-width:280px;max-width:400px;background:var(--white);border:1px solid var(--line);padding:18px;}
-.rat h3{font-size:13px;font-weight:700;letter-spacing:.2px;}
-.rat h3 span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
-  color:var(--teal-deep);margin-bottom:4px;}
-.rat .roles{font-size:11px;color:var(--muted);margin:8px 0 14px;line-height:1.5;padding-bottom:12px;border-bottom:1px solid var(--line-soft);}
-.rat dl{font-size:11.5px;line-height:1.55;}
-.rat dt{font-weight:700;color:var(--navy);margin-top:11px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;}
-.rat dd{color:var(--muted);margin-top:3px;}
-.rat dd b{color:var(--ink);font-weight:600;}
-.rat .exc{margin-top:16px;padding:11px;background:var(--rust-tint);border-left:3px solid var(--rust);}
-.rat .exc strong{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--rust);display:block;margin-bottom:5px;}
-.rat .exc p{font-size:11px;color:#7A3313;line-height:1.5;margin-bottom:6px;}
-.rat .exc p:last-child{margin-bottom:0;}
-
-/* legend */
-.legend{max-width:1420px;margin:26px auto 0;background:var(--white);border:1px solid var(--line);padding:16px 18px;}
-.legend h4{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted-2);margin-bottom:11px;}
-.legend .row{display:flex;flex-wrap:wrap;gap:22px;}
-.legend .col{font-size:11.5px;color:var(--muted);line-height:1.9;}
-.legend .col b{color:var(--ink);display:block;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;margin-bottom:4px;}
-.legend .sw{display:inline-flex;align-items:center;gap:5px;margin-right:12px;}
+/* ══════════ RATIONALE — 3 axes only ══════════ */
+.rat{flex:1 1 290px;min-width:280px;max-width:380px;background:var(--white);border:1px solid var(--line);padding:18px;}
+.rat .eye{font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--teal-deep);}
+.rat h3{font-size:15px;font-weight:700;margin-top:4px;}
+.rat .who2{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.5;
+  padding-bottom:14px;border-bottom:1px solid var(--line-soft);}
+.rat .ax{display:flex;gap:10px;padding:13px 0;border-bottom:1px solid var(--line-soft);}
+.rat .ax .num{flex-shrink:0;width:19px;height:19px;background:var(--navy-tint);color:var(--navy);
+  font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.rat .ax dt{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--navy);}
+.rat .ax dd{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:3px;}
+.rat .ax dd b{color:var(--ink);font-weight:600;}
+.rat .fixed{margin-top:15px;padding:11px;background:var(--teal-tint);border-left:3px solid var(--teal-deep);}
+.rat .fixed strong{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--teal-deep);display:block;margin-bottom:5px;}
+.rat .fixed p{font-size:11px;color:#2C5A61;line-height:1.5;}
 </style>
 </head>
 <body>
 
 <div class="spec">
   <div class="spec-head">
-    <h1>Screen 13 · Issues List — <b>role-adaptive</b></h1>
-    <p>Eight roles collapse into <b>four genuinely distinct list experiences</b>. Finer role differences (L3 vs L4, Regular vs Senior Non-op, People vs Technical vs Full-Site vs Global Admin) change <em>scope and available powers</em>, not layout — switch the sub-role to see them applied. Free pick-up model: everyone sees all site issues; the difference is powers, not visibility.</p>
+    <h1>Screen 13 · Issues List — <b>four roles, one structure</b></h1>
+    <p>Issues are <b>assigned</b>, not claimed. Every role reads the same three sections in the same order, so there is one list to learn. Roles differ on only three things: <b>scope</b>, <b>powers</b>, and whether they manage <b>chronic</b> issues.</p>
   </div>
 
   <div class="controls">
     <div class="cgroup">
-      <label>Screen / persona</label>
+      <label>Role</label>
       <div class="seg" id="segPersona"></div>
+      <select class="ctl" id="selRole" aria-label="Sub-role"></select>
     </div>
     <div class="cgroup">
-      <label>Sub-role</label>
-      <div class="seg sm" id="segRole"></div>
-    </div>
-    <div class="cgroup">
-      <label>Viewport</label>
+      <label>View</label>
       <div class="seg sm" id="segView">
-        <button data-v="mobile" class="sel">Mobile 375</button>
+        <button data-v="mobile" class="sel">Mobile</button>
         <button data-v="desktop">Desktop</button>
       </div>
     </div>
@@ -341,670 +303,433 @@ body{background:linear-gradient(160deg,#E3E0D8 0%,#D2CEC3 100%);color:var(--ink)
     <div id="device"></div>
     <div class="rat" id="rat"></div>
   </div>
-
-  <div class="legend">
-    <h4>Locked tokens on this screen</h4>
-    <div class="row">
-      <div class="col">
-        <b>Severity — shape + label + colour</b>
-        <span class="sw"><span class="sev emergency"><i>⬤</i>EMERGENCY</span></span>
-        <span class="sw"><span class="sev major"><i>▲</i>MAJOR</span></span>
-        <span class="sw"><span class="sev minor"><i>◆</i>MINOR</span></span>
-        <span class="sw"><span class="sev info"><i>•</i>INFO</span></span>
-      </div>
-      <div class="col">
-        <b>Timer states (tabular numerals)</b>
-        <span class="sw"><span class="due ok">Due 3h 10m</span></span>
-        <span class="sw"><span class="due warn">Due 24m</span></span>
-        <span class="sw"><span class="due late">+22m overdue</span></span>
-      </div>
-      <div class="col">
-        <b>Dynamic chips</b>
-        <span class="sw"><span class="tag approval">PENDING APPROVAL</span></span>
-        <span class="sw"><span class="tag waiting">WAITING — RC</span></span>
-        <span class="sw"><span class="tag chronic">CHRONIC</span></span>
-        <span class="sw"><span class="tag auto">AUTO-RECOVERED</span></span>
-        <span class="sw"><span class="tag reass">REASSIGNED</span></span>
-      </div>
-      <div class="col">
-        <b>Font floors</b>
-        title 15 · meta 13 · chips 10<br>due 12 · section header 11<br>Hindi uplift +1–2px, lh 1.55
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
-/* ════════════════════════════════════════════════════════════
-   i18n
-   ════════════════════════════════════════════════════════════ */
-const S = {
-  en:{
-    overdue:'Overdue', inprogress:'In Progress', notpicked:'Not Picked', chronic:'Chronic',
-    fAll:'All', fMine:'My Issues', fEmg:'Emergency', fMaj:'Major', fWait:'Waiting',
-    fApprove:'Need Approval', fUnassigned:'Unassigned', fOperator:'Operator', fZone:'Equipment / Zone',
-    fChronic:'Chronic', fCustom:'⚙ Custom', clear:'Clear all',
-    due:'Due', over:'overdue', unassigned:'Unassigned', findIssue:'Find Issue',
-    chronicRow:n=>`${n} Chronic issues`, chronicSub:'Recurring — outside the main counter',
-    emptyH:'No open issues', emptyP:'All issues at this plant are closed. New ones will appear here.',
-    noresH:'No issues match these filters', noresP:'Clear a filter to widen the set.',
-    step:(a,b)=>`Step ${a} of ${b}`, allPlants:'All plants',
-    kOverdue:'Overdue', kUnclaimed:'Unclaimed', kApproval:'Awaiting you', kOpen:'Open total', kChronic:'Chronic',
-    aStart:'Start Working', aApprove:'Approve', aReject:'Reject', aReassign:'Reassign', aView:'View',
-    hintRouting:'routing gap — act first', hintWaiting:'WAITING floats to top — you are the blocker',
-    hintDim:'pending approval — you can’t act yet',
-    readonly:'READ ONLY', sectionsIn:'Sections still order within results'
-  },
-  hi:{
-    overdue:'अतिदेय', inprogress:'चालू', notpicked:'नहीं लिया', chronic:'पुरानी',
-    fAll:'सभी', fMine:'मेरी समस्याएँ', fEmg:'आपातकाल', fMaj:'बड़ी', fWait:'प्रतीक्षारत',
-    fApprove:'मंज़ूरी चाहिए', fUnassigned:'बिना सौंपी', fOperator:'ऑपरेटर', fZone:'उपकरण / क्षेत्र',
-    fChronic:'पुरानी', fCustom:'⚙ कस्टम', clear:'सभी हटाएँ',
-    due:'देय', over:'अतिदेय', unassigned:'बिना सौंपी', findIssue:'समस्या खोजें',
-    chronicRow:n=>`${n} पुरानी समस्याएँ`, chronicSub:'बार-बार — मुख्य गिनती से अलग',
-    emptyH:'कोई खुली समस्या नहीं', emptyP:'इस प्लांट की सभी समस्याएँ बंद हैं।',
-    noresH:'इन फ़िल्टरों से कोई मेल नहीं', noresP:'सेट बढ़ाने के लिए फ़िल्टर हटाएँ।',
-    step:(a,b)=>`चरण ${a}/${b}`, allPlants:'सभी प्लांट',
-    kOverdue:'अतिदेय', kUnclaimed:'बिना सौंपी', kApproval:'आपकी मंज़ूरी', kOpen:'कुल खुली', kChronic:'पुरानी',
-    aStart:'काम शुरू करें', aApprove:'मंज़ूरी', aReject:'अस्वीकार', aReassign:'फिर सौंपें', aView:'देखें',
-    hintRouting:'रूटिंग गैप — पहले कार्रवाई करें', hintWaiting:'प्रतीक्षारत ऊपर — आप ही रोक हैं',
-    hintDim:'मंज़ूरी बाकी — अभी कार्रवाई नहीं',
-    readonly:'केवल पढ़ें', sectionsIn:'फ़िल्टर के अंदर भी क्रम वही'
-  }
+/* ═════════════ i18n ═════════════ */
+const S={
+ en:{overdue:'Overdue',inprogress:'In Progress',notstarted:'Not Started',chronic:'Chronic',
+   qAll:'All',qEmg:'Emergency',qApprove:'Needs approval',filters:'Filters',
+   due:'Due',over:'overdue',find:'Search issues',step:(a,b)=>`Step ${a}/${b}`,
+   chronicRow:n=>`${n} chronic issues`,chronicSub:'Recurring — counted separately',
+   emptyH:'No open issues',emptyP:'Nothing needs attention right now.',
+   noresH:'Nothing matches',noresP:'Try clearing the filters.',
+   kOverdue:'Overdue',kApproval:'Needs you',kOpen:'Open',
+   open:'Open',approve:'Approve',start:'Start',allPlants:'All plants',
+   fSeverity:'Severity',fStatus:'Status',fZone:'Equipment / zone',fOperator:'Operator',fText:'Search',
+   any:'Any',apply:'Apply',reset:'Reset',active:n=>`${n} filter${n>1?'s':''} applied`,clear:'Clear',
+   readonly:'View only'},
+ hi:{overdue:'अतिदेय',inprogress:'चालू',notstarted:'शुरू नहीं',chronic:'पुरानी',
+   qAll:'सभी',qEmg:'आपातकाल',qApprove:'मंज़ूरी चाहिए',filters:'फ़िल्टर',
+   due:'देय',over:'अतिदेय',find:'समस्या खोजें',step:(a,b)=>`चरण ${a}/${b}`,
+   chronicRow:n=>`${n} पुरानी समस्याएँ`,chronicSub:'बार-बार — अलग गिनती',
+   emptyH:'कोई खुली समस्या नहीं',emptyP:'अभी कुछ ध्यान देने योग्य नहीं।',
+   noresH:'कोई मेल नहीं',noresP:'फ़िल्टर हटाकर देखें।',
+   kOverdue:'अतिदेय',kApproval:'आपके पास',kOpen:'खुली',
+   open:'खोलें',approve:'मंज़ूरी',start:'शुरू करें',allPlants:'सभी प्लांट',
+   fSeverity:'गंभीरता',fStatus:'स्थिति',fZone:'उपकरण / क्षेत्र',fOperator:'ऑपरेटर',fText:'खोज',
+   any:'कोई भी',apply:'लागू करें',reset:'रीसेट',active:n=>`${n} फ़िल्टर लागू`,clear:'हटाएँ',
+   readonly:'केवल देखें'}
 };
 
-/* ════════════════════════════════════════════════════════════
-   DATA — issues across 3 plants
-   ════════════════════════════════════════════════════════════ */
-const SEV_SHAPE = {emergency:'⬤', major:'▲', minor:'◆', info:'•'};
-const SEV_RANK  = {emergency:0, major:1, minor:2, info:3};
-const SEV_LABEL = {en:{emergency:'EMERGENCY',major:'MAJOR',minor:'MINOR',info:'INFO'},
-                   hi:{emergency:'आपातकाल',major:'बड़ी',minor:'छोटी',info:'सूचना'}};
-const ME = 'Ramesh K.';
+const SHAPE={emergency:'⬤',major:'▲',minor:'◆',info:'•'};
+const RANK={emergency:0,major:1,minor:2,info:3};
+const SEVL={en:{emergency:'EMERGENCY',major:'MAJOR',minor:'MINOR',info:'INFO'},
+            hi:{emergency:'आपातकाल',major:'बड़ी',minor:'छोटी',info:'सूचना'}};
+const ME='Ramesh K.';
+const PLANTS={p1:'Sector 14 STP',p2:'Manesar ETP',p3:'Bawal CETP'};
 
-// due: minutes remaining (negative = overdue by |due|)
-const ISSUES = [
-  {id:'I-4471', plant:'p1', sev:'emergency', title:'High Turbidity — Inlet Filter', val:'8.4', unit:'NTU',
-   loc:'Primary Filtration', stage:'Diagnose', step:4, of:9, status:'overdue', due:-22,
-   assignee:ME, chips:['approval'], age:184},
-  {id:'I-4468', plant:'p1', sev:'major', title:'Low DO — Aeration Tank', val:'1.2', unit:'mg/L',
-   loc:'Aeration Zone B', stage:'Remedy', step:6, of:8, status:'overdue', due:-51,
-   assignee:'Sunita D.', chips:['waiting-rc'], age:243},
-  {id:'I-4463', plant:'p1', sev:'major', title:'MLSS Drift — Bioreactor 2', val:'4 820', unit:'mg/L',
-   loc:'Bioreactor 2', stage:'Verify', step:8, of:8, status:'overdue', due:-6,
-   assignee:'Ramesh K.', chips:['recov-photo'], age:97},
-  {id:'I-4459', plant:'p1', sev:'emergency', title:'Blower Trip — Aeration Header', val:'0', unit:'kPa',
-   loc:'Blower Room', stage:'Diagnose', step:2, of:7, status:'inprogress', due:18,
-   assignee:'Sunita D.', chips:['waiting-verify'], age:38},
-  {id:'I-4455', plant:'p1', sev:'minor', title:'pH Excursion — Equalisation', val:'6.1', unit:'pH',
-   loc:'Equalisation Tank', stage:'Remedy', step:3, of:6, status:'inprogress', due:74,
-   assignee:ME, chips:[], age:66},
-  {id:'I-4452', plant:'p1', sev:'major', title:'Filter Press Cake Wet — Sludge', val:'71', unit:'% moist',
-   loc:'Sludge Handling', stage:'Remedy', step:5, of:9, status:'inprogress', due:41,
-   assignee:'Imran S.', chips:['approval','reassigned'], age:120},
-  {id:'I-4450', plant:'p1', sev:'info', title:'Flow Meter Reading Gap — Outlet', val:'—', unit:'',
-   loc:'Outlet Chamber', stage:'Diagnose', step:1, of:4, status:'inprogress', due:196,
-   assignee:'Imran S.', chips:['auto'], age:14},
-  {id:'I-4448', plant:'p1', sev:'emergency', title:'Chlorine Residual Low — Contact Tank', val:'0.15', unit:'mg/L',
-   loc:'Disinfection', stage:'—', step:0, of:6, status:'notpicked', due:12,
-   assignee:null, chips:[], age:9},
-  {id:'I-4446', plant:'p1', sev:'major', title:'Pump Vibration High — Transfer P-02', val:'7.9', unit:'mm/s',
-   loc:'Pump House', stage:'—', step:0, of:5, status:'notpicked', due:58,
-   assignee:null, chips:['chronic'], age:21},
-  {id:'I-4443', plant:'p1', sev:'minor', title:'Skimmer Belt Slip — Clarifier 1', val:'—', unit:'',
-   loc:'Clarifier 1', stage:'—', step:0, of:4, status:'notpicked', due:168,
-   assignee:null, chips:[], age:33},
-  {id:'I-4440', plant:'p1', sev:'minor', title:'Recurring Foam — Aeration Tank', val:'—', unit:'',
-   loc:'Aeration Zone A', stage:'—', step:0, of:5, status:'chronic', due:420,
-   assignee:'Sunita D.', chips:['chronic'], age:2880},
-  {id:'I-4431', plant:'p1', sev:'info', title:'Level Sensor Noise — Sump 3', val:'±', unit:'cm',
-   loc:'Sump 3', stage:'—', step:0, of:3, status:'chronic', due:640,
-   assignee:null, chips:['chronic','auto'], age:4310},
-  {id:'I-4418', plant:'p1', sev:'major', title:'Backwash Cycle Overrun — Filter Bank', val:'22', unit:'min',
-   loc:'Filter Bank', stage:'—', step:0, of:6, status:'chronic', due:900,
-   assignee:'Imran S.', chips:['chronic'], age:6120},
-  // plant 2
-  {id:'M-2210', plant:'p2', sev:'emergency', title:'COD Breach — Final Outlet', val:'268', unit:'mg/L',
-   loc:'Final Outlet', stage:'Diagnose', step:3, of:8, status:'overdue', due:-96,
-   assignee:'Vikas T.', chips:['approval','chronic'], age:410},
-  {id:'M-2204', plant:'p2', sev:'major', title:'RO Pressure Drop — Skid 1', val:'9.1', unit:'bar',
-   loc:'RO Skid 1', stage:'Remedy', step:4, of:7, status:'inprogress', due:33,
-   assignee:'Vikas T.', chips:['waiting-photo'], age:88},
-  {id:'M-2199', plant:'p2', sev:'minor', title:'Dosing Pump Stroke Low — Alum', val:'42', unit:'%',
-   loc:'Chemical House', stage:'—', step:0, of:4, status:'notpicked', due:110,
-   assignee:null, chips:[], age:27},
-  // plant 3
-  {id:'B-0912', plant:'p3', sev:'major', title:'Sludge Blanket High — Clarifier 2', val:'2.1', unit:'m',
-   loc:'Clarifier 2', stage:'Verify', step:7, of:7, status:'overdue', due:-14,
-   assignee:'Neha R.', chips:['recov-photo'], age:132},
-  {id:'B-0908', plant:'p3', sev:'info', title:'Daily Log Gap — Shift C', val:'—', unit:'',
-   loc:'Control Room', stage:'—', step:0, of:2, status:'notpicked', due:240,
-   assignee:null, chips:[], age:16}
+/* ═════════════ DATA — every issue is assigned ═════════════
+   status: overdue | inprogress | notstarted | chronic
+   flag:   null | approval | waiting | recov            (one only)  */
+const ISSUES=[
+ {id:'I-4471',plant:'p1',sev:'emergency',title:'High Turbidity — Inlet Filter',val:'8.4 NTU',
+  zone:'Primary Filtration',step:4,of:9,status:'overdue',due:-22,who:ME,flag:'approval',age:184},
+ {id:'I-4468',plant:'p1',sev:'major',title:'Low DO — Aeration Tank',val:'1.2 mg/L',
+  zone:'Aeration',step:6,of:8,status:'overdue',due:-51,who:'Sunita D.',flag:'waiting',age:243},
+ {id:'I-4463',plant:'p1',sev:'major',title:'MLSS Drift — Bioreactor 2',val:'4 820 mg/L',
+  zone:'Bioreactor',step:8,of:8,status:'overdue',due:-6,who:ME,flag:'recov',age:97},
+ {id:'I-4459',plant:'p1',sev:'emergency',title:'Blower Trip — Aeration Header',val:'0 kPa',
+  zone:'Blower Room',step:2,of:7,status:'inprogress',due:18,who:'Sunita D.',flag:'waiting',age:38},
+ {id:'I-4455',plant:'p1',sev:'minor',title:'pH Excursion — Equalisation',val:'6.1 pH',
+  zone:'Equalisation',step:3,of:6,status:'inprogress',due:74,who:ME,flag:null,age:66},
+ {id:'I-4452',plant:'p1',sev:'major',title:'Filter Press Cake Wet — Sludge',val:'71 % moist',
+  zone:'Sludge',step:5,of:9,status:'inprogress',due:41,who:'Imran S.',flag:'approval',age:120},
+ {id:'I-4448',plant:'p1',sev:'emergency',title:'Chlorine Residual Low — Contact Tank',val:'0.15 mg/L',
+  zone:'Disinfection',step:0,of:6,status:'notstarted',due:12,who:ME,flag:null,age:9},
+ {id:'I-4446',plant:'p1',sev:'major',title:'Pump Vibration High — Transfer P-02',val:'7.9 mm/s',
+  zone:'Pump House',step:0,of:5,status:'notstarted',due:58,who:'Imran S.',flag:null,age:21},
+ {id:'I-4443',plant:'p1',sev:'minor',title:'Skimmer Belt Slip — Clarifier 1',val:'',
+  zone:'Clarifier',step:0,of:4,status:'notstarted',due:168,who:ME,flag:null,age:33},
+ {id:'I-4440',plant:'p1',sev:'minor',title:'Recurring Foam — Aeration Tank',val:'',
+  zone:'Aeration',step:0,of:5,status:'chronic',due:420,who:'Sunita D.',flag:null,age:2880},
+ {id:'I-4431',plant:'p1',sev:'info',title:'Level Sensor Noise — Sump 3',val:'',
+  zone:'Pump House',step:0,of:3,status:'chronic',due:640,who:'Imran S.',flag:null,age:4310},
+ {id:'I-4418',plant:'p1',sev:'major',title:'Backwash Overrun — Filter Bank',val:'22 min',
+  zone:'Primary Filtration',step:0,of:6,status:'chronic',due:900,who:'Imran S.',flag:null,age:6120},
+ {id:'M-2210',plant:'p2',sev:'emergency',title:'COD Breach — Final Outlet',val:'268 mg/L',
+  zone:'Final Outlet',step:3,of:8,status:'overdue',due:-96,who:'Vikas T.',flag:'approval',age:410},
+ {id:'M-2204',plant:'p2',sev:'major',title:'RO Pressure Drop — Skid 1',val:'9.1 bar',
+  zone:'RO Skid',step:4,of:7,status:'inprogress',due:33,who:'Vikas T.',flag:'waiting',age:88},
+ {id:'M-2199',plant:'p2',sev:'minor',title:'Dosing Pump Stroke Low — Alum',val:'42 %',
+  zone:'Chemical House',step:0,of:4,status:'notstarted',due:110,who:'Vikas T.',flag:null,age:27},
+ {id:'B-0912',plant:'p3',sev:'major',title:'Sludge Blanket High — Clarifier 2',val:'2.1 m',
+  zone:'Clarifier',step:7,of:7,status:'overdue',due:-14,who:'Neha R.',flag:'recov',age:132},
+ {id:'B-0908',plant:'p3',sev:'info',title:'Daily Log Gap — Shift C',val:'',
+  zone:'Control Room',step:0,of:2,status:'notstarted',due:240,who:'Neha R.',flag:null,age:16}
 ];
+/* Dropdown options come from what is actually in scope — never offer a
+   choice that leads to an empty list. */
+const uniq=(l,k)=>[...new Set(l.map(i=>i[k]))].sort();
 
-const PLANTS = {p1:'Sector 14 STP', p2:'Manesar ETP', p3:'Bawal CETP'};
+/* ═════════════ ROLES — differ on scope, powers, chronic ═════════════ */
+const PERSONAS={
+ operator:{name:'Operator',
+  roles:{l1:{label:'L1 Operator',plants:['p1'],mine:true}},
+  quick:['all','emg'], chronic:false, readonly:false,
+  axes:[['Scope','<b>Only issues assigned to them.</b> Nothing else is shown, so the assignee name is removed from every card — on this screen it is always the same person.'],
+        ['Powers','Work the issue: <b>Start</b>, run steps, request approval. No approving, no reassigning.'],
+        ['Chronic','Hidden. Chronic issues are a supervisor’s problem, not a shift task.']],
+  fixed:'Because the list is already theirs, there is no “My Issues” filter and no assignee column — two controls removed rather than explained.'},
 
-/* ════════════════════════════════════════════════════════════
-   PERSONAS — 4 screens
-   ════════════════════════════════════════════════════════════ */
-const PERSONAS = {
-  operator:{
-    name:'Operator', short:'Operator',
-    roles:{
-      l1:{label:'L1 Operator', scope:['p1'], canApprove:false, canChronic:false,
-          note:'Base role — own shift, single plant.'}
-    },
-    sections:['overdue','inprogress','notpicked'],
-    chronic:false, readonly:false, canClaim:true,
-    filters:['all','mine','emg','maj','wait','zone','custom'],
-    overflow:[
-      {i:'👥', t:'Reassign', s:'Hand over to another operator on shift'},
-      {i:'🔗', t:'Report linked issue', s:'This issue is caused by another'},
-      {i:'📷', t:'Add photo evidence', s:'Attach to the current step'}
-    ],
-    lockedNote:'Approve / reject, chronic management and the Need-Approval filter are supervisor powers — not shown here.',
-    rat:{
-      roles:'L1 Operator',
-      dl:[
-        ['Scope','<b>All site issues</b> — free pick-up, no auto-assignment. <b>My Issues</b> is a filter, never the default scope.'],
-        ['Section order','Overdue → In Progress → <b>Not Picked</b>. Not-Picked sits last because the operator finishes what they hold before claiming more.'],
-        ['Pending approval','De-emphasised (58% opacity) — the operator cannot act, so it must not compete for attention.'],
-        ['Claim','A card showing <b>Unassigned</b> opens to Issue Landing with <b>Start Working = claim</b>.'],
-        ['Assignee','Always by name — <b>including their own</b>. No “Me”, no self-highlight.']
-      ],
-      exc:['<b>Never “assigned, not started.”</b> Not-Picked means <em>unclaimed</em> — the free-pick-up model has no auto-assignment, so assignment notifications A1/A3/A4 change meaning.',
-           'Card is <b>header-independent</b> — it reuses locked severity/timer tokens but is not the collapsible C01 header.']
-    }
-  },
+ lead:{name:'Lead',
+  roles:{l3:{label:'L3 Lead',plants:['p1'],approve:true,chronic:true},
+         l4:{label:'L4 Senior Lead',plants:['p1','p2'],approve:true,chronic:true,close:true}},
+  quick:['all','approve','emg'], chronic:true, readonly:false,
+  axes:[['Scope','<b>Every issue at their plant(s)</b>, whoever holds it. Assignee shows on each card — that is the column they scan.'],
+        ['Powers','<b>Approve or reject</b> a blocked step, and reassign. Approvals are the one thing only they can clear, so that is the first filter.'],
+        ['Chronic','A single row at the bottom with its own count. L4 can close one; L3 can only flag it.']],
+  fixed:'“Needs approval” sits in the filter bar because it is the only work that stops if they do nothing.'},
 
-  lead:{
-    name:'Lead / Senior Lead', short:'Lead',
-    roles:{
-      l3:{label:'L3 Lead', scope:['p1'], canApprove:true, canChronic:true,
-          note:'Operator + Supervisor. Approves within own plant. Cannot close chronic — flags only.'},
-      l4:{label:'L4 Senior Lead', scope:['p1','p2'], canApprove:true, canChronic:true, canClose:true,
-          note:'Service Engineer / Manager / Head. Multi-plant, full chronic authority incl. manual close.'}
-    },
-    sections:['overdue','notpicked','inprogress'],
-    chronic:true, readonly:false, canClaim:true,
-    filters:['all','approve','unassigned','emg','operator','mine','chronic','custom'],
-    overflow:[
-      {i:'✔', t:'Approve', s:'Release the operator’s blocked step'},
-      {i:'✕', t:'Reject with reason', s:'Reason is mandatory — returns to operator', danger:true},
-      {i:'👥', t:'Reassign', s:'Route to any operator on shift'},
-      {i:'🔗', t:'Report linked issue', s:'Group a root cause'},
-      {i:'🏷', t:'Flag as irrelevant', s:'Closes as “Ongoing condition — accepted”; SME notified'}
-    ],
-    rat:{
-      roles:'L3 Lead (Operator + Supervisor) · L4 Senior Lead (Service Engineer / Manager / Head)',
-      dl:[
-        ['Section order','Overdue → <b>Not Picked</b> → In Progress → Chronic. Not-Picked is promoted to #2: an unclaimed issue is a <b>routing gap</b>, and the supervisor is the one who resolves it.'],
-        ['WAITING floats','Inside In Progress, WAITING items rise to the top — <b>the supervisor is the blocker</b>. The inverse of the operator’s de-emphasis rule.'],
-        ['Extra filters','<b>Need Approval</b> (items pending <em>their</em> decision), <b>Unassigned</b>, and <b>per-operator</b> — dashed chips are supervisor-only.'],
-        ['Chronic','Collapsed row with a <b>separate count, outside the main counter</b>. Expand → Flag as irrelevant (reason required) · Manual close.'],
-        ['L3 vs L4','Same layout. L4 gains the <b>plant switcher</b> and manual-close authority; L3 can flag but not close.']
-      ],
-      exc:['Supervisors keep <b>the same visibility</b> as operators — the persona difference is <em>powers</em>, not scope. Do not gate the list.',
-           'Chronic count must <b>never</b> be folded into the section counters or the nav badge.']
-    }
-  },
+ nonop:{name:'Non-op',
+  roles:{reg:{label:'Regular Non-op',plants:['p1']},
+         sr:{label:'Senior Non-op',plants:['p1','p2','p3'],export:true}},
+  quick:['all','emg'], chronic:true, readonly:true,
+  axes:[['Scope','Their plant, or the whole portfolio for a Senior. They read the list as a <b>health signal</b>, not a queue.'],
+        ['Powers','<b>None.</b> Every action is removed, not greyed out — a disabled button still invites a click.'],
+        ['Chronic','Visible for context, with no actions on it.']],
+  fixed:'The only interaction is opening an issue to read it. That is why this role has the shortest filter bar.'},
 
-  nonop:{
-    name:'Non-Operational', short:'Non-op',
-    roles:{
-      reg:{label:'Regular Non-op', scope:['p1'], insights:false,
-           note:'Assigned plant only. Read-only. No operator names beyond assignment fact.'},
-      sr:{label:'Senior Non-op', scope:['p1','p2','p3'], insights:true,
-          note:'All plants in portfolio. Read-only + export & compliance roll-up.'}
-    },
-    sections:['overdue','inprogress','notpicked'],
-    chronic:true, readonly:true, canClaim:false,
-    filters:['all','emg','maj','chronic','zone','custom'],
-    overflow:[
-      {i:'📤', t:'Export this view', s:'CSV — respects the active filters'},
-      {i:'🔔', t:'Watch this issue', s:'Get notified on status change'}
-    ],
-    lockedNote:'Read-only by design: no claim, no approve, no reassign, no close. Actions are absent — never present-and-disabled.',
-    rat:{
-      roles:'Regular Non-op · Senior Non-op',
-      dl:[
-        ['Framing','<b>Oversight, not operation.</b> A READ ONLY badge sits in the scope bar and every action affordance is <em>removed</em>, not disabled — a greyed button still reads as “I might be allowed”.'],
-        ['No My Issues','Nothing is ever assigned to them, so the <b>My Issues</b> chip is omitted entirely rather than shown empty.'],
-        ['Order','Keeps the operator order (Overdue → In Progress → Not Picked) because they read the list as a <b>health signal</b>, not a work queue.'],
-        ['Chronic visible','Chronic is expandable for context but carries <b>no</b> flag/close actions.'],
-        ['Regular vs Senior','Senior gains the <b>portfolio switcher</b> (All plants roll-up), a KPI strip on desktop, and export.']
-      ],
-      exc:['Tapping a card opens the <b>read-only Issue Context</b> — never the step runner. There is no “Start Working” CTA anywhere in this persona.',
-           'Assignee still shows by name — the accountability trail is the point of the view.']
-    }
-  },
-
-  admin:{
-    name:'Admin', short:'Admin',
-    roles:{
-      people:{label:'People Admin', scope:['p1','p2','p3'], canApprove:false, canChronic:false, config:'people',
-              note:'Operates on people, not issues. Sees the list to audit routing & load — reassign only.'},
-      tech:{label:'Technical Admin', scope:['p1','p2','p3'], canApprove:true, canChronic:true, config:'tech',
-            note:'Owns thresholds, SOPs, diagnostic trees. Can jump card → the config that raised it.'},
-      full:{label:'Full Site Admin', scope:['p1','p2','p3'], canApprove:true, canChronic:true, canClose:true, config:'tech',
-            note:'People + Technical on top of every assigned plant.'},
-      global:{label:'Global Admin', scope:['p1','p2','p3'], canApprove:true, canChronic:true, canClose:true, config:'tech', global:true,
-              note:'All plants globally, cross-plant patterns, org-wide overrides.'}
-    },
-    sections:['overdue','notpicked','inprogress'],
-    chronic:true, readonly:false, canClaim:false,
-    filters:['all','approve','unassigned','emg','operator','chronic','custom'],
-    overflow:[
-      {i:'👥', t:'Reassign / rebalance', s:'Across plants and shifts'},
-      {i:'⚙', t:'Open the rule that raised this', s:'Jump to the threshold / SOP in Config'},
-      {i:'🚫', t:'Override & close', s:'Audit-logged; reason mandatory', danger:true},
-      {i:'📤', t:'Export audit trail', s:'Full event history for this issue'}
-    ],
-    rat:{
-      roles:'People Admin · Technical Admin · Full Site Admin · Global Admin',
-      dl:[
-        ['Scope','<b>Cross-plant by default.</b> The plant switcher is a first-class control in the app bar, with an <b>All plants</b> roll-up. Cards carry a plant tag when the scope spans more than one.'],
-        ['Order','Supervisor order (Overdue → Not Picked → In Progress → Chronic) — admins read for <b>routing failure</b> first.'],
-        ['Not a work queue','Admins never claim. There is no My Issues chip and no Start Working; the primary actions are <b>reassign</b>, <b>override</b>, and <b>jump-to-config</b>.'],
-        ['Card → Config','Technical / Full / Global get <b>“Open the rule that raised this”</b> — the shortest path from a bad issue to the threshold that created it.'],
-        ['People Admin','Deliberately narrower: reassign and load-audit only. No approve, no close, no config jump — they administer <em>people</em>.']
-      ],
-      exc:['<b>Override & close</b> is audit-logged with a mandatory reason and is withheld from People Admin and Technical Admin — only Full Site and Global.',
-           'Global Admin’s All-plants roll-up must show the <b>plant tag on every card</b>; without it a cross-plant list is unreadable.']
-    }
-  }
+ admin:{name:'Admin',
+  roles:{people:{label:'People Admin',plants:['p1','p2','p3'],reassign:true},
+         tech:{label:'Technical Admin',plants:['p1','p2','p3'],approve:true,chronic:true,config:true},
+         full:{label:'Full Site Admin',plants:['p1','p2','p3'],approve:true,chronic:true,close:true,config:true},
+         global:{label:'Global Admin',plants:['p1','p2','p3'],approve:true,chronic:true,close:true,config:true}},
+  quick:['all','approve','emg'], chronic:true, readonly:false,
+  axes:[['Scope','<b>Every plant</b>, with a plant switcher in the header. Cards show the plant instead of the zone when more than one is in view.'],
+        ['Powers','They fix <b>causes</b>, not issues: reassign, and jump to the rule that raised it. Never “Start”.'],
+        ['Chronic','Their main signal — a repeat issue usually means a bad threshold.']],
+  fixed:'People Admin is deliberately narrower: reassign only. No approving, no closing, no config.'}
 };
 
-/* ════════════════════════════════════════════════════════════
-   STATE
-   ════════════════════════════════════════════════════════════ */
-let st = {persona:'operator', role:'l1', view:'mobile', lang:'en',
-          filters:new Set(['all']), plant:'p1', chronicOpen:false, sheet:null};
+/* ═════════════ STATE ═════════════ */
+let st={persona:'operator',role:'l1',view:'mobile',lang:'en',
+        quick:'all',plant:'p1',sheet:null,chronicOpen:false,
+        f:{sev:'',status:'',zone:'',op:'',q:''}};
+const t=()=>S[st.lang], P=()=>PERSONAS[st.persona], R=()=>P().roles[st.role];
+const plantsOf=()=>R().plants;
+const inView=()=>plantsOf().length>1&&st.plant==='all'?plantsOf():[st.plant];
+const crossPlant=()=>inView().length>1;
+const nFilters=()=>Object.values(st.f).filter(Boolean).length;
 
-const t = () => S[st.lang];
-const P = () => PERSONAS[st.persona];
-const R = () => P().roles[st.role];
-
-/* ── filter chip definitions ── */
-const FILTERS = {
-  all:{k:'fAll'}, mine:{k:'fMine'}, emg:{k:'fEmg'}, maj:{k:'fMaj'}, wait:{k:'fWait'},
-  approve:{k:'fApprove',sup:1}, unassigned:{k:'fUnassigned',sup:1}, operator:{k:'fOperator',sup:1,drop:1},
-  zone:{k:'fZone',drop:1}, chronic:{k:'fChronic'}, custom:{k:'fCustom',cust:1}
-};
-
-/* ════════════════════════════════════════════════════════════
-   HELPERS
-   ════════════════════════════════════════════════════════════ */
-function fmtMins(m){
-  const a=Math.abs(m), h=Math.floor(a/60), mm=a%60;
-  return h ? (mm?`${h}h ${mm}m`:`${h}h`) : `${mm}m`;
+/* ═════════════ QUERY ═════════════ */
+function base(){
+  let l=ISSUES.filter(i=>inView().includes(i.plant));
+  if(R().mine) l=l.filter(i=>i.who===ME);
+  return l;
 }
-function dueHtml(iss){
-  if(iss.due<0) return `<span class="due late" aria-live="polite">+${fmtMins(iss.due)} ${t().over}</span>`;
-  const cls = iss.due<=30 ? 'warn' : 'ok';
-  return `<span class="due ${cls}">${t().due} ${fmtMins(iss.due)}</span>`;
-}
-const CHIPTXT = {
-  approval:{en:'PENDING APPROVAL',hi:'मंज़ूरी बाकी',c:'approval'},
-  'waiting-rc':{en:'WAITING — RC',hi:'प्रतीक्षा — RC',c:'waiting'},
-  'waiting-step':{en:'WAITING — STEP',hi:'प्रतीक्षा — चरण',c:'waiting'},
-  'waiting-photo':{en:'WAITING — PHOTO',hi:'प्रतीक्षा — फ़ोटो',c:'waiting'},
-  'waiting-verify':{en:'WAITING — VERIFY',hi:'प्रतीक्षा — जाँच',c:'waiting'},
-  chronic:{en:'CHRONIC',hi:'पुरानी',c:'chronic'},
-  auto:{en:'AUTO-RECOVERED',hi:'स्वतः ठीक',c:'auto'},
-  'recov-photo':{en:'RECOVERED — PHOTO NEEDED',hi:'ठीक — फ़ोटो चाहिए',c:'recov'},
-  reassigned:{en:'REASSIGNED',hi:'फिर सौंपी',c:'reass'}
-};
-const chipHtml = c => { const d=CHIPTXT[c]; return d?`<span class="tag ${d.c}">${d[st.lang]}</span>`:''; };
-const isWaiting = i => i.chips.some(c=>c.startsWith('waiting'));
-const initials  = n => n.split(' ').map(x=>x[0]).join('').slice(0,2);
-
-function scopedPlants(){ const r=R(); return r.scope || ['p1']; }
-function activePlants(){
-  if(scopedPlants().length===1) return scopedPlants();
-  return st.plant==='all' ? scopedPlants() : [st.plant];
-}
-
-/* ── filtering ── */
 function visible(){
-  const plants = activePlants();
-  let out = ISSUES.filter(i=>plants.includes(i.plant));
-  const f = st.filters;
-  if(!f.has('all')){
-    out = out.filter(i=>{
-      let ok = true;
-      if(f.has('mine'))       ok = ok && i.assignee===ME;
-      if(f.has('unassigned')) ok = ok && i.assignee===null;
-      if(f.has('approve'))    ok = ok && i.chips.includes('approval');
-      if(f.has('wait'))       ok = ok && isWaiting(i);
-      if(f.has('chronic'))    ok = ok && i.chips.includes('chronic');
-      const sev=[]; if(f.has('emg'))sev.push('emergency'); if(f.has('maj'))sev.push('major');
-      if(sev.length) ok = ok && sev.includes(i.sev);
-      return ok;
-    });
-  }
+  let l=base();
+  if(st.quick==='emg')     l=l.filter(i=>i.sev==='emergency');
+  if(st.quick==='wait')    l=l.filter(i=>i.flag==='waiting');
+  if(st.quick==='approve') l=l.filter(i=>i.flag==='approval');
+  const f=st.f;
+  if(f.sev)    l=l.filter(i=>i.sev===f.sev);
+  if(f.status) l=l.filter(i=>i.status===f.status);
+  if(f.zone)   l=l.filter(i=>i.zone===f.zone);
+  if(f.op)     l=l.filter(i=>i.who===f.op);
+  if(f.q)      l=l.filter(i=>i.title.toLowerCase().includes(f.q.toLowerCase()));
+  return l;
+}
+const SECTIONS=['overdue','inprogress','notstarted'];   // one order, every role
+function bucket(l,s){
+  const out=l.filter(i=>i.status===s);
+  out.sort((a,b)=>RANK[a.sev]-RANK[b.sev]||(s==='overdue'?b.age-a.age:a.due-b.due));
   return out;
 }
-function bucket(list, sec){
-  let out = list.filter(i => sec==='chronic' ? i.status==='chronic' : (i.status===sec && i.status!=='chronic'));
-  if(sec==='overdue')      out.sort((a,b)=>SEV_RANK[a.sev]-SEV_RANK[b.sev] || b.age-a.age);
-  else                     out.sort((a,b)=>SEV_RANK[a.sev]-SEV_RANK[b.sev] || a.due-b.due);
-  // supervisor/admin: WAITING floats to the top of In Progress
-  if(sec==='inprogress' && (st.persona==='lead'||st.persona==='admin'))
-    out.sort((a,b)=>(isWaiting(b)?1:0)-(isWaiting(a)?1:0));
-  return out;
+const qCount=k=>{
+  let l=base();
+  if(k==='emg')     l=l.filter(i=>i.sev==='emergency');
+  if(k==='wait')    l=l.filter(i=>i.flag==='waiting');
+  if(k==='approve') l=l.filter(i=>i.flag==='approval');
+  return l.filter(i=>i.status!=='chronic').length;
+};
+
+/* ═════════════ PIECES ═════════════ */
+const mins=m=>{const a=Math.abs(m),h=Math.floor(a/60),x=a%60;return h?(x?`${h}h ${x}m`:`${h}h`):`${x}m`;};
+function due(i){
+  if(i.due<0) return `<span class="due late">+${mins(i.due)} ${t().over}</span>`;
+  return `<span class="due ${i.due<=30?'warn':'ok'}">${t().due} ${mins(i.due)}</span>`;
+}
+const FLAG={approval:{en:'PENDING APPROVAL',hi:'मंज़ूरी बाकी',c:'approval'},
+            waiting:{en:'WAITING',hi:'प्रतीक्षारत',c:'waiting'},
+            recov:{en:'PHOTO NEEDED',hi:'फ़ोटो चाहिए',c:'recov'}};
+const flagHtml=i=>i.flag?`<span class="tag ${FLAG[i.flag].c}">${FLAG[i.flag][st.lang]}</span>`:'';
+const sevHtml=i=>`<span class="sev ${i.sev}"><i aria-hidden="true">${SHAPE[i.sev]}</i>${SEVL[st.lang][i.sev]}</span>`;
+function metaHtml(i){
+  const b=[];
+  if(i.val) b.push(`<b>${i.val}</b>`);
+  b.push(crossPlant()?PLANTS[i.plant]:i.zone);
+  if(i.step) b.push(t().step(i.step,i.of));
+  return `<div class="meta">${b.join(' · ')}</div>`;
+}
+const showWho=()=>!R().mine;
+
+function primaryAction(i){
+  const r=R();
+  const b=(cls,label)=>`<button class="abtn ${cls}" data-id="${i.id}">${label}</button>`;
+  if(P().readonly) return b('',t().open);
+  if(i.flag==='approval'&&r.approve) return b('ok',t().approve);
+  if(i.status==='notstarted'&&!r.reassign&&!r.config) return b('pri',t().start);
+  return b('',t().open);
+}
+const ovfBtn=i=>P().readonly?'':
+  `<button class="ovf" data-ovf="${i.id}" aria-label="More actions for ${i.title}">⋮</button>`;
+
+function cardM(i){
+  return `<div class="card ${i.sev}">
+   <button class="open" data-id="${i.id}">
+     <div class="r1">${sevHtml(i)}${due(i)}</div>
+     <div class="title">${i.title}</div>
+     ${metaHtml(i)}
+     <div class="r3">${flagHtml(i)}${showWho()?`<span class="who">${i.who}</span>`:''}</div>
+   </button>
+   <div class="side">${ovfBtn(i)}</div>
+  </div>`;
+}
+function cardD(i){
+  return `<div class="card row ${i.sev}">
+   <button class="open" data-id="${i.id}">
+     <div class="cell issue">${sevHtml(i)}<div class="title">${i.title}</div>${metaHtml(i)}</div>
+     <div class="cell st">${flagHtml(i)}</div>
+     ${showWho()?`<span class="who">${i.who}</span>`:''}
+     ${due(i)}
+   </button>
+   <div class="acts">${primaryAction(i)}${ovfBtn(i)}</div>
+  </div>`;
 }
 
-/* ════════════════════════════════════════════════════════════
-   CARD RENDERERS
-   ════════════════════════════════════════════════════════════ */
-function sevHtml(iss){
-  return `<span class="sev ${iss.sev}"><i aria-hidden="true">${SEV_SHAPE[iss.sev]}</i>${SEV_LABEL[st.lang][iss.sev]}</span>`;
-}
-function whoHtml(iss){
-  if(!iss.assignee) return `<span class="who unassigned">${t().unassigned}</span>`;
-  return `<span class="who"><span class="av">${initials(iss.assignee)}</span>${iss.assignee}</span>`;
-}
-function metaHtml(iss, withPlant){
-  const bits=[];
-  if(iss.val!=='—') bits.push(`<b>${iss.val}${iss.unit?' '+iss.unit:''}</b>`);
-  if(withPlant) bits.push(PLANTS[iss.plant]);
-  bits.push(iss.loc);
-  if(iss.stage!=='—') bits.push(iss.stage);
-  if(iss.step) bits.push(t().step(iss.step,iss.of));
-  return `<div class="meta">${bits.join(' · ')}</div>`;
-}
-function dimmed(iss){ return st.persona==='operator' && iss.chips.includes('approval'); }
-
-function cardMobile(iss, withPlant){
-  const chips = iss.chips.map(chipHtml).join('');
-  return `<button class="card ${iss.sev}${dimmed(iss)?' dim':''}" data-id="${iss.id}">
-    <div class="r1">${sevHtml(iss)}<div class="title">${iss.title}</div>${dueHtml(iss)}</div>
-    ${metaHtml(iss,withPlant)}
-    <div class="r3">${chips}${whoHtml(iss)}<span class="ovf" data-ovf="${iss.id}">⋮</span></div>
-  </button>`;
-}
-function actionsFor(iss){
-  const p=P(), r=R(), a=[];
-  if(p.readonly) return `<span class="abtn">${t().aView}</span>`;
-  if(iss.chips.includes('approval') && r.canApprove){
-    a.push(`<span class="abtn ok">${t().aApprove}</span>`,`<span class="abtn">${t().aReject}</span>`);
-  } else if(!iss.assignee){
-    if(p.canClaim) a.push(`<span class="abtn pri">${t().aStart}</span>`);
-    a.push(`<span class="abtn">${t().aReassign}</span>`);
-  } else {
-    a.push(`<span class="abtn">${t().aReassign}</span>`);
-  }
-  return a.join('');
-}
-function cardDesktop(iss, withPlant){
-  const chips = iss.chips.map(chipHtml).join('');
-  return `<button class="card row ${iss.sev}${dimmed(iss)?' dim':''}" data-id="${iss.id}"><div class="inner">
-    ${sevHtml(iss)}
-    <div class="mid"><div class="title">${iss.title}</div>${metaHtml(iss,withPlant)}</div>
-    <div class="chipwrap">${chips}</div>
-    ${whoHtml(iss)}
-    ${dueHtml(iss)}
-    <div class="acts">${actionsFor(iss)}</div>
-  </div></button>`;
-}
-
-/* ── sections ── */
-function sectionsHtml(list, desktop){
-  const p=P(), withPlant = activePlants().length>1;
-  let html='', total=0;
-  p.sections.forEach(sec=>{
-    const items = bucket(list, sec);
-    if(!items.length) return;
-    total += items.length;
-    let hint='';
-    if(sec==='notpicked' && (st.persona==='lead'||st.persona==='admin')) hint=t().hintRouting;
-    if(sec==='inprogress' && (st.persona==='lead'||st.persona==='admin') && items.some(isWaiting)) hint=t().hintWaiting;
-    if(sec==='inprogress' && st.persona==='operator' && items.some(i=>i.chips.includes('approval'))) hint=t().hintDim;
-    html += `<div class="sechead"><h2>${t()[sec]}</h2><span class="n">${items.length}</span>${hint?`<span class="hint">${hint}</span>`:''}</div>`;
-    if(desktop) html += `<div class="dcolhead"><span class="a">Severity</span><span class="b">Issue</span>
-      <span class="c">Status</span><span class="d">Assignee</span><span class="e">Timer</span><span class="f">Action</span></div>`;
-    html += items.map(i=>desktop?cardDesktop(i,withPlant):cardMobile(i,withPlant)).join('');
+function listHtml(desktop){
+  const l=visible(); let h='',n=0;
+  SECTIONS.forEach(s=>{
+    const it=bucket(l,s); if(!it.length) return; n+=it.length;
+    h+=`<div class="sechead"><h2>${t()[s]}</h2><span class="n">${it.length}</span></div>`;
+    h+=it.map(desktop?cardD:cardM).join('');
   });
-
-  // chronic — separate count, outside the main counter
-  if(p.chronic){
-    const ch = bucket(list,'chronic');
-    if(ch.length){
-      if(!st.chronicOpen){
-        html += `<button class="chronicrow" data-chronic="1">
-          <div><div class="lbl">${t().chronicRow(ch.length)} →</div><div class="sub">${t().chronicSub}</div></div>
-          <span class="arw">›</span></button>`;
-      } else {
-        html += `<div class="sechead"><h2>${t().chronic}</h2><span class="n">${ch.length}</span>
-          <span class="hint" data-chronic="1" style="cursor:pointer;text-decoration:underline;">collapse</span></div>`;
-        html += ch.map(i=>desktop?cardDesktop(i,withPlant):cardMobile(i,withPlant)).join('');
+  if(P().chronic&&R().chronic!==false){
+    const c=bucket(l,'chronic');
+    if(c.length){
+      n+=c.length;   // chronic is a result too — must not fall through to the empty state
+      if(st.chronicOpen){
+        h+=`<div class="sechead"><h2>${t().chronic}</h2><span class="n">${c.length}</span></div>`;
+        h+=c.map(desktop?cardD:cardM).join('');
+      }else{
+        h+=`<button class="chronicrow" data-chronic="1"><div>
+          <div class="lbl">${t().chronicRow(c.length)}</div>
+          <div class="sub">${t().chronicSub}</div></div><span class="arw">›</span></button>`;
       }
     }
   }
-
-  if(!total){
-    const any = ISSUES.filter(i=>activePlants().includes(i.plant)).length;
-    const filtered = !st.filters.has('all');
-    html = `<div class="empty"><div class="gl">${filtered?'⌕':'◇'}</div>
-      <h3>${filtered||any?t().noresH:t().emptyH}</h3>
-      <p>${filtered||any?t().noresP:t().emptyP}</p></div>`;
+  if(!n){
+    const filtered=st.quick!=='all'||nFilters();
+    h=`<div class="empty"><div class="gl">${filtered?'⌕':'◇'}</div>
+      <h3>${filtered?t().noresH:t().emptyH}</h3><p>${filtered?t().noresP:t().emptyP}</p></div>`;
   }
-  return html;
+  return h;
 }
 
-/* ── filter bar ── */
-function filterBar(){
-  const p=P();
-  let html = p.filters.map(k=>{
-    const f=FILTERS[k], on=st.filters.has(k);
-    const cls = ['chip', f.sup?'sup':'', f.cust?'cust':''].filter(Boolean).join(' ');
-    return `<button class="${cls}" aria-pressed="${on}" data-f="${k}">${t()[f.k]}${f.drop?' ▾':''}</button>`;
+const QL={all:'qAll',emg:'qEmg',approve:'qApprove'};
+function qbar(){
+  const chips=P().quick.map(k=>{
+    const c=k==='all'?'':`<span class="ct">${qCount(k)}</span>`;
+    return `<button class="q" aria-pressed="${st.quick===k}" data-q="${k}">${t()[QL[k]]}${c}</button>`;
   }).join('');
-  if(!st.filters.has('all')) html += `<button class="chip clear" data-f="__clear">✕ ${t().clear}</button>`;
-  return `<div class="filterbar" role="group">${html}<span style="flex-shrink:0;width:14px;"></span></div>`;
+  const n=nFilters();
+  return `<div class="qbar">${chips}
+    <button class="fbtn" data-sheet="filters">☰ ${t().filters}${n?`<span class="dot">${n}</span>`:''}</button></div>`;
+}
+function appliedBar(){
+  if(!nFilters()) return '';
+  return `<div class="appliedbar"><span class="al">${t().active(nFilters())}</span>
+    <button class="clr" data-clearf="1">${t().clear}</button></div>`;
 }
 
-/* ── scope bar ── */
-function scopeBar(){
-  const p=P(), r=R();
-  // main counter EXCLUDES chronic — chronic always carries its own separate count
-  const n = visible().filter(i=>i.status!=='chronic').length;
-  const nc = p.chronic ? visible().filter(i=>i.status==='chronic').length : 0;
-  const plants = activePlants().length>1 ? t().allPlants : PLANTS[activePlants()[0]];
-  return `<div class="scopebar">${p.readonly?`<span class="ro">${t().readonly}</span>`:''}
-    <span><b>${r.label}</b> · ${plants} · <b>${n}</b> ${t().kOpen.toLowerCase()}${nc?` · <b>${nc}</b> ${t().chronic.toLowerCase()} (separate)`:''}</span></div>`;
+/* ═════════════ FRAMES ═════════════ */
+function plantSel(){
+  if(plantsOf().length<2) return '';
+  const o=[`<option value="all"${st.plant==='all'?' selected':''}>${t().allPlants}</option>`]
+    .concat(plantsOf().map(p=>`<option value="${p}"${st.plant===p?' selected':''}>${PLANTS[p]}</option>`));
+  return `<select class="plantsel" data-plantsel="1" aria-label="Plant">${o.join('')}</select>`;
 }
-
-/* ════════════════════════════════════════════════════════════
-   FRAMES
-   ════════════════════════════════════════════════════════════ */
-function plantSwitch(){
-  if(scopedPlants().length<2) return '';
-  const lbl = st.plant==='all' ? t().allPlants : PLANTS[st.plant];
-  return `<button class="plantswitch" data-plantsw="1">${lbl}<em>▾</em></button>`;
-}
-function mobileFrame(){
-  const list=visible();
-  const single = scopedPlants().length===1;
+function mobile(){
+  const single=plantsOf().length<2;
   return `<div class="frame-mobile">
-    <div class="statusbar"><span>9:41</span><span class="ic">▮▮▮ ⚡</span></div>
-    <div class="appbar">
-      ${single ? `<div class="plant">${PLANTS[activePlants()[0]]}<small>${R().label}</small></div>`
-               : plantSwitch()}
-      <div class="search">🔍<span>${t().findIssue}</span></div>
-      <span class="kebab" data-ovf="__screen">⋮</span>
-    </div>
-    ${filterBar()}
-    ${scopeBar()}
-    <div class="body"><div class="list">${sectionsHtml(list,false)}</div></div>
-    <div class="bnav">
-      <button><span class="i">🏭</span>Home</button>
-      <button class="on"><span class="i">⚠</span>Issues</button>
-      <button><span class="i">📋</span>Tasks</button>
-      <button><span class="i">📷</span>Report</button>
-    </div>
-    <div class="scrim" data-close="1"></div>
-    ${sheetHtml()}
-  </div>`;
+   <div class="statusbar"><span>9:41</span><span>▮▮▮ ⚡</span></div>
+   <div class="appbar">
+     ${single?`<div class="plant">${PLANTS[inView()[0]]}<small>${R().label}${P().readonly?' · '+t().readonly:''}</small></div>`:plantSel()}
+     <span class="sp"></span>
+     <button class="ib" data-sheet="search" aria-label="${t().find}">🔍</button>
+     <button class="ib" data-ovf="__screen" aria-label="More">⋮</button>
+   </div>
+   ${qbar()}${appliedBar()}
+   <div class="body"><div class="list">${listHtml(false)}</div></div>
+   <div class="bnav">
+     <button><span class="i">🏭</span>Home</button>
+     <button class="on"><span class="i">⚠</span>Issues</button>
+     <button><span class="i">📋</span>Tasks</button>
+     <button><span class="i">📷</span>Report</button>
+   </div>
+   <div class="scrim${st.sheet?' on':''}" data-close="1"></div>${sheet()}</div>`;
 }
-
-function kpiStrip(){
-  const list=visible(), p=P();
-  const k=[];
-  k.push({c:'late', v:list.filter(i=>i.due<0).length, l:t().kOverdue});
-  k.push({c:'warn', v:list.filter(i=>!i.assignee).length, l:t().kUnclaimed});
-  if(R().canApprove) k.push({c:'warn', v:list.filter(i=>i.chips.includes('approval')).length, l:t().kApproval});
-  k.push({c:'good', v:list.filter(i=>i.status!=='chronic').length, l:t().kOpen});
-  if(p.chronic) k.push({c:'', v:list.filter(i=>i.status==='chronic').length, l:t().kChronic});
+function kpis(){
+  const l=visible().filter(i=>i.status!=='chronic');
+  const k=[{c:'late',v:l.filter(i=>i.due<0).length,l:t().kOverdue}];
+  if(R().approve) k.push({c:'warn',v:l.filter(i=>i.flag==='approval').length,l:t().kApproval});
+  k.push({c:'',v:l.length,l:t().kOpen});
   return `<div class="kpis">${k.map(x=>`<div class="kpi ${x.c}"><div class="v">${x.v}</div><div class="k">${x.l}</div></div>`).join('')}</div>`;
 }
-function desktopFrame(){
-  const list=visible(), p=P(), r=R();
-  const overdue = list.filter(i=>i.due<0).length;
+function desktop(){
+  const r=R(),od=visible().filter(i=>i.due<0).length;
   return `<div class="frame-desktop">
-    <div class="browserbar"><i></i><i></i><i></i>
-      <span class="url">app.digitalpaani.com/issues</span></div>
-    <div class="dtop">
-      <div class="snav">
-        <div class="brand">Digital Paani<small>${r.label.toUpperCase()}</small></div>
-        <a><span class="i">🏭</span>Home</a>
-        <a class="on"><span class="i">⚠</span>Issues${overdue?`<span class="badge">${overdue}</span>`:''}</a>
-        <a><span class="i">📋</span>Tasks</a>
-        <a><span class="i">📷</span>Report</a>
-        ${p.readonly||R().insights?`<a><span class="i">📈</span>Insights</a>`:''}
-        ${r.config?`<div class="sep"></div><a><span class="i">⚙</span>Configuration</a>`:''}
-        ${r.config==='people'||st.persona==='admin'?`<a><span class="i">👥</span>People &amp; Roles</a>`:''}
-        <div class="me">${ME}<small>${r.label}</small></div>
-      </div>
-      <div class="dmain">
-        <div class="dbar">
-          <h1>Issues<small>${activePlants().length>1?t().allPlants:PLANTS[activePlants()[0]]}</small></h1>
-          ${scopedPlants().length>1?plantSwitch():''}
-          <div class="dsearch">🔍 ${t().findIssue}</div>
-          <button class="btn" data-f="custom">${t().fCustom}</button>
-          ${p.readonly?`<button class="btn">📤 Export</button>`:`<button class="btn pri">📷 Report issue</button>`}
-        </div>
-        ${filterBar()}
-        ${kpiStrip()}
-        <div class="dbody"><div class="dlist">${sectionsHtml(list,true)}</div></div>
-      </div>
+   <div class="browserbar"><i></i><i></i><i></i><span class="url">app.digitalpaani.com/issues</span></div>
+   <div class="dtop">
+    <div class="snav">
+      <div class="brand">Digital Paani<small>${r.label.toUpperCase()}</small></div>
+      <a><span class="i">🏭</span>Home</a>
+      <a class="on"><span class="i">⚠</span>Issues${od?`<span class="badge">${od}</span>`:''}</a>
+      <a><span class="i">📋</span>Tasks</a>
+      <a><span class="i">📷</span>Report</a>
+      ${r.config?`<div class="sep"></div><a><span class="i">⚙</span>Configuration</a>`:''}
+      ${r.reassign?`<div class="sep"></div><a><span class="i">👥</span>People</a>`:''}
+      <div class="me">${ME}<small>${r.label}${P().readonly?' · '+t().readonly:''}</small></div>
     </div>
-    <div class="scrim" data-close="1"></div>
-    ${sheetHtml()}
-  </div>`;
+    <div class="dmain">
+      <div class="dbar"><h1>Issues<small>${crossPlant()?t().allPlants:PLANTS[inView()[0]]}</small></h1>
+        ${plantSel()}<div class="dsearch">🔍 ${t().find}</div></div>
+      ${qbar()}${appliedBar()}${kpis()}
+      <div class="dbody"><div class="dlist">${listHtml(true)}</div></div>
+    </div>
+   </div>
+   <div class="scrim${st.sheet?' on':''}" data-close="1"></div>${sheet()}</div>`;
 }
 
-/* ════════════════════════════════════════════════════════════
-   SHEETS
-   ════════════════════════════════════════════════════════════ */
-function opt(label,on){return `<button class="chip" aria-pressed="${on?'true':'false'}">${label}</button>`;}
-function sheetHtml(){
+/* ═════════════ SHEETS — real, working controls ═════════════ */
+function sel(name,label,opts,val){
+  return `<div class="fg"><label for="f_${name}">${label}</label>
+   <select id="f_${name}" data-fs="${name}">
+     <option value="">${t().any}</option>
+     ${opts.map(o=>`<option value="${o[0]}"${val===o[0]?' selected':''}>${o[1]}</option>`).join('')}
+   </select></div>`;
+}
+function sheet(){
   if(!st.sheet) return '';
-  if(st.sheet==='custom'){
-    const p=P();
-    return `<div class="sheet on"><div class="sh"><h3>${t().fCustom.replace('⚙ ','')} filter</h3><span class="x" data-close="1">✕</span></div>
-      <div class="sb">
-        <div class="fgroup"><label>Date range</label>
-          <div class="dr"><input type="date" value="2026-07-01"><span>→</span><input type="date" value="2026-07-27"></div></div>
-        <div class="fgroup"><label>Severity</label><div class="opts">
-          ${opt(SEV_LABEL[st.lang].emergency,1)}${opt(SEV_LABEL[st.lang].major,0)}${opt(SEV_LABEL[st.lang].minor,0)}${opt(SEV_LABEL[st.lang].info,0)}</div></div>
-        <div class="fgroup"><label>Equipment / zone — multi-select</label>
-          <input type="text" placeholder="🔍 Search equipment or zone…">
-          <div class="opts" style="margin-top:8px;">${opt('Aeration',0)}${opt('Clarifier 1',0)}${opt('Filter Bank',0)}${opt('Pump House',0)}${opt('Sludge',0)}</div></div>
-        <div class="fgroup"><label>Status</label><div class="opts">
-          ${opt(t().overdue,0)}${opt(t().inprogress,0)}${opt(t().notpicked,0)}${opt(t().fWait,0)}${opt(t().chronic,0)}</div></div>
-        ${p.filters.includes('operator')?`<div class="fgroup"><label>${t().fOperator}</label>
-          <select><option>Any operator</option><option>Ramesh K.</option><option>Sunita D.</option><option>Imran S.</option></select></div>`:''}
-        <div class="fgroup"><label>Free text</label><input type="text" placeholder="Title, ID or note…"></div>
-      </div>
-      <div class="sf"><button data-close="1">Reset</button><button class="pri" data-close="1">Apply filters</button></div></div>`;
+  const wrap=(title,body,foot='')=>`<div class="sheet on" role="dialog" aria-modal="true">
+    <div class="sh"><h3>${title}</h3><button class="x" data-close="1" aria-label="Close">✕</button></div>
+    <div class="sb">${body}</div>${foot}</div>`;
+
+  if(st.sheet==='filters'){
+    const scope=base();
+    const sevs=Object.keys(SHAPE).filter(k=>scope.some(i=>i.sev===k));
+    const stats=SECTIONS.concat(P().chronic?['chronic']:[]).filter(k=>scope.some(i=>i.status===k));
+    return wrap(t().filters,
+      sel('sev',t().fSeverity,sevs.map(k=>[k,SEVL[st.lang][k]]),st.f.sev)+
+      sel('status',t().fStatus,stats.map(k=>[k,t()[k]]),st.f.status)+
+      sel('zone',t().fZone,uniq(scope,'zone').map(z=>[z,z]),st.f.zone)+
+      (R().mine?'':sel('op',t().fOperator,uniq(scope,'who').map(o=>[o,o]),st.f.op))+
+      `<div class="fg"><label for="f_q">${t().fText}</label>
+        <input id="f_q" type="text" data-fs="q" value="${st.f.q}" placeholder="${t().find}"></div>`,
+      `<div class="sf"><button data-resetf="1">${t().reset}</button>
+        <button class="pri" data-close="1">${t().apply}</button></div>`);
   }
-  if(st.sheet==='plant'){
-    const ps=scopedPlants();
-    return `<div class="sheet on"><div class="sh"><h3>Plant scope</h3><span class="x" data-close="1">✕</span></div>
-      <div class="sb actlist">
-        ${R().global||ps.length>1?`<button data-plant="all"><span class="i">🌐</span><div>${t().allPlants}<small>Roll-up · plant tag shown on every card</small></div></button>`:''}
-        ${ps.map(p=>`<button data-plant="${p}"><span class="i">🏭</span><div>${PLANTS[p]}<small>${ISSUES.filter(i=>i.plant===p).length} issues</small></div></button>`).join('')}
-      </div></div>`;
+  if(st.sheet==='search'){
+    return wrap(t().find,
+      `<div class="fg"><label for="f_q2">${t().fText}</label>
+        <input id="f_q2" type="text" data-fs="q" value="${st.f.q}" placeholder="${t().find}" autofocus></div>`,
+      `<div class="sf"><button class="pri" data-close="1">${t().apply}</button></div>`);
   }
-  // overflow
-  const p=P();
-  const r=R();
-  let acts = p.overflow.filter(a=>{
-    if(a.t==='Approve'||a.t==='Reject with reason') return r.canApprove;
-    if(a.t==='Flag as irrelevant') return r.canChronic;
-    if(a.t==='Override & close') return !!r.canClose;
-    if(a.t==='Open the rule that raised this') return r.config==='tech';
-    return true;
-  });
-  return `<div class="sheet on"><div class="sh"><h3>${st.sheet==='__screen'?'List actions':'Issue '+st.sheet}</h3><span class="x" data-close="1">✕</span></div>
-    <div class="sb actlist">
-      ${acts.map(a=>`<button class="${a.danger?'danger':''}" data-close="1"><span class="i">${a.i}</span><div>${a.t}<small>${a.s}</small></div></button>`).join('')}
-      ${p.lockedNote?`<div class="lockednote">${p.lockedNote}</div>`:''}
-    </div></div>`;
+  const r=R(),a=[];
+  if(r.approve)  a.push({i:'✔',t:'Approve',s:'Release the blocked step'},
+                        {i:'✕',t:'Reject',s:'Reason required',d:1});
+  if(!P().readonly&&!R().mine) a.push({i:'👥',t:'Reassign',s:'Move to another operator'});
+  if(r.config)   a.push({i:'⚙',t:'Open the rule behind this',s:'Jump to its threshold'});
+  if(r.chronic)  a.push({i:'🏷',t:'Flag as chronic',s:'Accept as an ongoing condition'});
+  if(r.close)    a.push({i:'🚫',t:'Close with reason',s:'Audit-logged',d:1});
+  if(R().mine)   a.push({i:'🔗',t:'Report a linked issue',s:'This one has another cause'});
+  return wrap(st.sheet==='__screen'?'Actions':`Issue ${st.sheet}`,
+    `<div class="actlist">${a.map(x=>`<button class="${x.d?'danger':''}" data-close="1">
+      <span class="i">${x.i}</span><div>${x.t}<small>${x.s}</small></div></button>`).join('')}</div>`);
 }
 
-/* ════════════════════════════════════════════════════════════
-   RATIONALE PANEL
-   ════════════════════════════════════════════════════════════ */
-function ratHtml(){
-  const p=P(), r=R();
-  return `<h3><span>Screen ${Object.keys(PERSONAS).indexOf(st.persona)+1} of 4</span>${p.name}</h3>
-    <div class="roles">${p.rat.roles}<br><br><b style="color:var(--ink)">${r.label}:</b> ${r.note}</div>
-    <dl>${p.rat.dl.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
-    <div class="exc"><strong>Exceptions to the rules</strong>${p.rat.exc.map(e=>`<p>${e}</p>`).join('')}</div>`;
+/* ═════════════ RATIONALE ═════════════ */
+function rat(){
+  const p=P(),r=R();
+  const names=Object.values(p.roles).map(x=>x.label).join(' · ');
+  return `<div class="eye">Role ${Object.keys(PERSONAS).indexOf(st.persona)+1} of 4</div>
+   <h3>${p.name}</h3>
+   <div class="who2">${names}</div>
+   ${p.axes.map(([k,v],n)=>`<div class="ax"><span class="num">${n+1}</span>
+     <div><dt>${k}</dt><dd>${v}</dd></div></div>`).join('')}
+   <div class="fixed"><strong>Why it’s simpler</strong><p>${p.fixed}</p></div>`;
 }
 
-/* ════════════════════════════════════════════════════════════
-   RENDER + EVENTS
-   ════════════════════════════════════════════════════════════ */
-function segs(){
-  document.getElementById('segPersona').innerHTML = Object.entries(PERSONAS)
-    .map(([k,v])=>`<button data-p="${k}" class="${st.persona===k?'sel':''}">${v.name}</button>`).join('');
-  document.getElementById('segRole').innerHTML = Object.entries(P().roles)
-    .map(([k,v])=>`<button data-r="${k}" class="${st.role===k?'sel':''}">${v.label}</button>`).join('');
-}
+/* ═════════════ RENDER ═════════════ */
 function render(){
-  document.documentElement.lang = st.lang;
-  segs();
-  document.getElementById('device').innerHTML = st.view==='mobile'?mobileFrame():desktopFrame();
-  document.getElementById('rat').innerHTML = ratHtml();
+  document.documentElement.lang=st.lang;
+  document.getElementById('segPersona').innerHTML=Object.entries(PERSONAS)
+    .map(([k,v])=>`<button data-p="${k}" class="${st.persona===k?'sel':''}">${v.name}</button>`).join('');
+  const rs=Object.entries(P().roles);
+  const sr=document.getElementById('selRole');
+  sr.innerHTML=rs.map(([k,v])=>`<option value="${k}"${st.role===k?' selected':''}>${v.label}</option>`).join('');
+  sr.style.display=rs.length>1?'':'none';
+  document.getElementById('device').innerHTML=st.view==='mobile'?mobile():desktop();
+  document.getElementById('rat').innerHTML=rat();
+}
+function resetRole(){
+  st.role=Object.keys(P().roles)[0];
+  st.plant=plantsOf().length>1?'all':plantsOf()[0];
+  st.quick='all'; st.f={sev:'',status:'',zone:'',op:'',q:''};
+  st.sheet=null; st.chronicOpen=false;
 }
 
-document.addEventListener('click', e=>{
-  const g = s => e.target.closest(s);
-  let hit;
-
-  if(hit=g('[data-p]')){ st.persona=hit.dataset.p; st.role=Object.keys(P().roles)[0];
-    st.filters=new Set(['all']); st.plant=scopedPlants().length>1?'all':scopedPlants()[0];
-    st.chronicOpen=false; st.sheet=null; return render(); }
-  if(hit=g('[data-r]')){ st.role=hit.dataset.r;
-    st.plant=scopedPlants().length>1?'all':scopedPlants()[0]; st.sheet=null; return render(); }
-  if(hit=g('#segView button')){ st.view=hit.dataset.v; st.sheet=null;
-    document.querySelectorAll('#segView button').forEach(b=>b.classList.toggle('sel',b===hit)); return render(); }
-  if(hit=g('#segLang button')){ st.lang=hit.dataset.l;
-    document.querySelectorAll('#segLang button').forEach(b=>b.classList.toggle('sel',b===hit)); return render(); }
-
-  if(hit=g('[data-f]')){
-    const k=hit.dataset.f;
-    if(k==='__clear'){ st.filters=new Set(['all']); }
-    else if(k==='custom'){ st.sheet='custom'; }
-    else if(k==='all'){ st.filters=new Set(['all']); }
-    else { st.filters.delete('all');
-      st.filters.has(k)?st.filters.delete(k):st.filters.add(k);
-      if(!st.filters.size) st.filters.add('all'); }
-    return render();
-  }
+document.addEventListener('click',e=>{
+  const g=s=>e.target.closest(s); let h;
+  if(h=g('[data-p]')){ st.persona=h.dataset.p; resetRole(); return render(); }
+  if(h=g('#segView button')){ st.view=h.dataset.v; st.sheet=null;
+    document.querySelectorAll('#segView button').forEach(b=>b.classList.toggle('sel',b===h)); return render(); }
+  if(h=g('#segLang button')){ st.lang=h.dataset.l;
+    document.querySelectorAll('#segLang button').forEach(b=>b.classList.toggle('sel',b===h)); return render(); }
+  if(h=g('[data-q]')){ st.quick=h.dataset.q; return render(); }
+  if(h=g('[data-sheet]')){ st.sheet=h.dataset.sheet; return render(); }
+  if(h=g('[data-ovf]')){ e.stopPropagation(); st.sheet=h.dataset.ovf; return render(); }
   if(g('[data-chronic]')){ st.chronicOpen=!st.chronicOpen; return render(); }
-  if(g('[data-plantsw]')){ st.sheet='plant'; return render(); }
-  if(hit=g('[data-plant]')){ st.plant=hit.dataset.plant; st.sheet=null; return render(); }
-  if(hit=g('[data-ovf]')){ e.stopPropagation(); st.sheet=hit.dataset.ovf; return render(); }
+  if(g('[data-clearf]')){ st.f={sev:'',status:'',zone:'',op:'',q:''}; return render(); }
+  if(g('[data-resetf]')){ st.f={sev:'',status:'',zone:'',op:'',q:''}; return render(); }
   if(g('[data-close]')){ st.sheet=null; return render(); }
-  if(g('.card')){ /* → Issue Landing (00) / current step */ }
+});
+/* dropdowns: commit on change, keep the sheet open so several can be set */
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='selRole'){ st.role=el.value;
+    st.plant=plantsOf().length>1?'all':plantsOf()[0]; st.sheet=null; return render(); }
+  if(el.dataset.plantsel!==undefined){ st.plant=el.value; return render(); }
+  if(el.dataset.fs){ st.f[el.dataset.fs]=el.value; return render(); }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&st.sheet){ st.sheet=null; render(); }
+  if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.fs){ st.f[e.target.dataset.fs]=e.target.value; st.sheet=null; render(); }
 });
 
-render();
+resetRole(); render();
 </script>
 </body>
 </html>
