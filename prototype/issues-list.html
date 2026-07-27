@@ -196,7 +196,13 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
 .sechead{display:flex;align-items:center;gap:var(--s1);
   padding:var(--s3) var(--s-half) var(--s1h);}
 .sechead:first-child{padding-top:var(--s2);}
-.sechead h3{font-size:13px;font-weight:600;letter-spacing:-.1px;color:var(--ink);}
+.sechead h3,.sechead .h{font-size:13px;font-weight:600;letter-spacing:-.1px;color:var(--ink);}
+/* expanded chronic: the header doubles as the collapse control */
+.chrontoggle{width:100%;background:none;border:none;cursor:pointer;text-align:left;}
+.chrontoggle:hover .hide{color:var(--navy);}
+.sechead .hide{margin-left:auto;display:flex;align-items:center;gap:var(--s-half);
+  font-size:12.5px;font-weight:600;color:var(--teal);}
+.sechead .hide .cv{font-size:11px;}
 .sechead .n{font-size:12px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums;}
 .sechead .dot{width:6px;height:6px;border-radius:var(--r-pill);flex-shrink:0;}
 .sechead .dot.overdue{background:var(--emg-fg);}
@@ -317,7 +323,9 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
 .dbar h1 small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:400;margin-top:2px;}
 .dsearch{margin-left:auto;display:flex;align-items:center;gap:var(--s1);
   border:1px solid var(--border);border-radius:var(--r-md);padding:var(--s1) var(--s1h);
-  font-size:13px;color:var(--ink-3);width:240px;background:var(--surface);cursor:text;}
+  font-size:13px;color:var(--ink-3);width:240px;background:var(--surface);cursor:text;
+  text-align:left;}
+.dsearch:hover{border-color:var(--teal);color:var(--teal);}
 
 .kpis{flex-shrink:0;display:flex;gap:var(--s2);padding:var(--s2) var(--s3) var(--s1);}
 .kpi{flex:1;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--e1);
@@ -514,7 +522,8 @@ const S={
   searchZone:'Search zones',searchOp:'Search people',clear:'Clear',clearAll:'Clear all',
   reset:'Reset',show:n=>n===1?'Show 1 issue':`Show ${n} issues`,showNone:'No matches',
   plusChronic:n=>` · ${n} chronic`,showChronic:n=>`Show ${n} chronic`,
-  noOpts:'Nothing to show',actions:'Actions',issue:'Issue',
+  noOpts:'Nothing to show',actions:'Actions',issue:'Issue',hide:'Hide',
+  searchHint:'Searches issue titles and IDs. Combines with any filters you have set.',
   dimHint:'Dimmed options have no matches alongside your current choices.',
   noMatch:'0 matches with your current filters — clear one to enable this'},
  hi:{overdue:'अतिदेय',inprogress:'चालू',notstarted:'शुरू नहीं',chronic:'पुरानी',
@@ -530,7 +539,8 @@ const S={
   searchZone:'क्षेत्र खोजें',searchOp:'व्यक्ति खोजें',clear:'हटाएँ',clearAll:'सभी हटाएँ',
   reset:'रीसेट',show:n=>`${n} दिखाएँ`,showNone:'कोई मेल नहीं',
   plusChronic:n=>` · ${n} पुरानी`,showChronic:n=>`${n} पुरानी दिखाएँ`,
-  noOpts:'कुछ नहीं',actions:'कार्रवाई',issue:'समस्या',
+  noOpts:'कुछ नहीं',actions:'कार्रवाई',issue:'समस्या',hide:'छिपाएँ',
+  searchHint:'शीर्षक और आईडी में खोजता है। आपके फ़िल्टरों के साथ जुड़ता है।',
   dimHint:'धुँधले विकल्पों का आपकी वर्तमान पसंद के साथ कोई मेल नहीं है।',
   noMatch:'वर्तमान फ़िल्टरों के साथ 0 मेल — सक्षम करने के लिए एक हटाएँ'}
 };
@@ -620,13 +630,13 @@ const PERSONAS={
 /* ═════════════ STATE ═════════════ */
 let st={persona:'operator',role:'l1',view:'mobile',lang:'en',
         vw:'all',plant:'p1',panel:null,chronicOpen:false,
-        f:{sev:[],status:[],zone:[],op:[]},srch:{zone:'',op:''}};
+        f:{sev:[],status:[],zone:[],op:[]},q:'',srch:{zone:'',op:''}};
 const t=()=>S[st.lang], P=()=>PERSONAS[st.persona], R=()=>P().roles[st.role];
 const plantsOf=()=>R().plants;
 const inView=()=>plantsOf().length>1&&st.plant==='all'?plantsOf():[st.plant];
 const crossPlant=()=>inView().length>1;
 const SECTIONS=['overdue','inprogress','notstarted'];
-const nActive=()=>Object.values(st.f).reduce((a,v)=>a+v.length,0);
+const nActive=()=>Object.values(st.f).reduce((a,v)=>a+v.length,0)+(st.q?1:0);
 
 /* scope, then saved view, then drawer filters */
 function scope(){
@@ -644,6 +654,12 @@ function applyF(l,except){
   for(const g of Object.keys(st.f)){
     if(g===except||!st.f[g].length) continue;
     l=l.filter(i=>st.f[g].includes(i[FIELD[g]]));
+  }
+  /* the search term always applies, including while computing facet
+     counts — it narrows the world every other option is counted against */
+  if(st.q){
+    const q=st.q.toLowerCase();
+    l=l.filter(i=>i.title.toLowerCase().includes(q)||i.id.toLowerCase().includes(q));
   }
   return l;
 }
@@ -742,10 +758,16 @@ function listHtml(d){
     if(c.length){
       n+=c.length;
       if(st.chronicOpen){
-        h+=`<div class="sechead"><span class="dot chronic"></span><h3>${t().chronic}</h3><span class="n">${c.length}</span></div>`;
+        /* the expanded header IS the way back — expanding used to be a
+           one-way trip. A span, not an h3: a button may only contain
+           phrasing content. */
+        h+=`<button class="sechead chrontoggle" data-chronic="1" aria-expanded="true">
+          <span class="dot chronic"></span><span class="h">${t().chronic}</span>
+          <span class="n">${c.length}</span>
+          <span class="hide">${t().hide}<span class="cv" aria-hidden="true">⌃</span></span></button>`;
         h+=c.map(d?cardD:cardM).join('');
       }else{
-        h+=`<button class="chronicrow" data-chronic="1"><span class="ic">↻</span>
+        h+=`<button class="chronicrow" data-chronic="1" aria-expanded="false"><span class="ic">↻</span>
           <span><span class="lbl">${t().chronicRow(c.length)}</span>
           <span class="sub">${t().chronicSub}</span></span><span class="arw">›</span></button>`;
       }
@@ -774,6 +796,8 @@ const labelOf=(g,v)=>g==='sev'?SEVL[st.lang][v]:g==='status'?t()[v]:v;
 function appliedBar(){
   if(!nActive()) return '';
   let c='';
+  if(st.q) c+=`<span class="fchip">⌕ “${st.q}”
+    <button class="x" data-rmq="1" aria-label="Clear search">✕</button></span>`;
   for(const g of Object.keys(st.f))
     for(const v of st.f[g])
       c+=`<span class="fchip">${labelOf(g,v)}
@@ -797,7 +821,7 @@ function mobile(){
         <div class="sub">${R().label}${P().readonly?` <span class="ro-pill">${t().readonly}</span>`:''}</div></div>`
       :`<div class="plant">${plantSel()}</div>`}
      <span class="sp"></span>
-     <button class="iconbtn" aria-label="${t().find}">⌕</button>
+     <button class="iconbtn" data-panel="search" aria-label="${t().find}">⌕</button>
      <button class="iconbtn" data-ovf="__screen" aria-label="${t().actions}">⋯</button>
    </div>
    ${viewbar()}${appliedBar()}
@@ -840,7 +864,7 @@ function desktop(){
     <div class="dmain">
       <div class="dbar"><h1>Issues<small>${crossPlant()?t().allPlants:PLANTS[inView()[0]]}
         ${P().readonly?` · ${t().readonly}`:''}</small></h1>
-        ${plantSel()}<div class="dsearch">⌕ ${t().find}</div></div>
+        ${plantSel()}<button class="dsearch" data-panel="search">⌕ ${t().find}</button></div>
       ${viewbar()}${appliedBar()}${kpis()}
       <div class="dbody scrollarea"><div class="dlist">${listHtml(true)}</div></div>
     </div>
@@ -926,6 +950,21 @@ function panel(){
       `<div class="pfoot">
         <button class="reset" data-clear="1" ${nActive()?'':'disabled'}>${t().reset}</button>
         <button class="apply${n?'':' none'}" data-close="1">${applyLbl}</button>
+      </div>`);
+  }
+  if(st.panel==='search'){
+    const all=visible(), nMain=all.filter(i=>i.status!=='chronic').length;
+    const nChr=P().chronic?all.length-nMain:0, tot=nMain+nChr;
+    return shell(t().find,
+      `<div class="searchbox"><span aria-hidden="true">⌕</span>
+        <input type="text" data-srchq value="${st.q.replace(/"/g,'&quot;')}"
+          placeholder="${t().find}" aria-label="${t().find}"></div>
+       <p class="dimhint" style="margin-top:12px;">${t().searchHint}</p>`,
+      `<div class="pfoot">
+        <button class="reset" data-rmq="1" ${st.q?'':'disabled'}>${t().clear}</button>
+        <button class="apply${tot?'':' none'}" data-close="1">${
+          !tot?t().showNone:!nMain?t().showChronic(nChr)
+            :t().show(nMain)+(nChr?t().plusChronic(nChr):'')}</button>
       </div>`);
   }
   const r=R(),a=[];
@@ -1027,7 +1066,7 @@ function render(){
 function resetRole(){
   st.role=Object.keys(P().roles)[0];
   st.plant=plantsOf().length>1?'all':plantsOf()[0];
-  st.vw='all';st.f={sev:[],status:[],zone:[],op:[]};st.srch={zone:'',op:''};
+  st.vw='all';st.f={sev:[],status:[],zone:[],op:[]};st.q='';st.srch={zone:'',op:''};
   st.panel=null;st.chronicOpen=false;
 }
 const toggle=(g,v)=>{const a=st.f[g],i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);};
@@ -1044,8 +1083,9 @@ document.addEventListener('click',e=>{
   if(h=q('[data-ovf]')){e.stopPropagation();st.panel=h.dataset.ovf;return render();}
   if(h=q('[data-tog]')){const[g,v]=h.dataset.tog.split('|');toggle(g,v);return render();}
   if(h=q('[data-rm]')){const[g,v]=h.dataset.rm.split('|');toggle(g,v);return render();}
+  if(q('[data-rmq]')){st.q='';return render();}
   if(h=q('[data-gclear]')){st.f[h.dataset.gclear]=[];return render();}
-  if(q('[data-clear]')){st.f={sev:[],status:[],zone:[],op:[]};return render();}
+  if(q('[data-clear]')){st.f={sev:[],status:[],zone:[],op:[]};st.q='';return render();}
   if(q('[data-more]')){
     const sc=document.querySelector('.scrollarea');
     /* page down by one screen, not to the end: the list is priority
@@ -1064,6 +1104,13 @@ document.addEventListener('input',e=>{
     const g=el.dataset.srch,pos=el.selectionStart;
     render();
     const again=document.querySelector(`[data-srch="${g}"]`);
+    if(again){again.focus();again.setSelectionRange(pos,pos);}
+  }
+  if(el.dataset.srchq!==undefined){
+    st.q=el.value;
+    const pos=el.selectionStart;
+    render();
+    const again=document.querySelector('[data-srchq]');
     if(again){again.focus();again.setSelectionRange(pos,pos);}
   }
 });
