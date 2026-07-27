@@ -60,6 +60,36 @@ button{font:inherit;color:inherit;}
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-thumb{background:#D3D8E0;border-radius:var(--r-pill);}
 
+/* ══════════ EVIDENT SCROLLING ══════════
+   Overlay scrollbars fade out when idle, so for users who don't scroll
+   they may as well not exist. Inside the list the bar is persistent,
+   wider, and has a visible track, so the thumb's SIZE communicates how
+   much list remains — a proportion no label can convey as fast.
+   A deliberate deviation from the platform norm on touch: discoverability
+   for this audience outranks native convention.                        */
+.scrollarea{scrollbar-gutter:stable;scrollbar-width:auto;scrollbar-color:#AEB6C4 #E7EAF0;}
+.scrollarea::-webkit-scrollbar{width:10px;}
+.scrollarea::-webkit-scrollbar-track{background:#E7EAF0;border-radius:var(--r-pill);
+  margin:var(--s-half) 0;}
+.scrollarea::-webkit-scrollbar-thumb{background:#AEB6C4;border-radius:var(--r-pill);
+  border:2px solid #E7EAF0;min-height:36px;}
+.scrollarea::-webkit-scrollbar-thumb:hover{background:#8A93A5;}
+
+/* “N more below” — the actionable half of the cue. Pages down by one
+   screen rather than jumping to the end: in a priority-ordered queue,
+   skipping to the bottom would skip the most urgent unseen work. */
+.morebtn{position:absolute;z-index:30;display:none;align-items:center;gap:var(--s1);
+  font-size:13px;font-weight:600;padding:var(--s1) var(--s2);border:none;
+  border-radius:var(--r-pill);background:var(--navy);color:#fff;cursor:pointer;
+  box-shadow:0 4px 14px rgba(9,20,45,.28);transition:background .15s,transform .15s;}
+.morebtn.on{display:flex;}
+.morebtn:hover{background:var(--navy-soft);}
+.morebtn:active{transform:scale(.97);}
+.morebtn .ar{font-size:14px;line-height:1;}
+.frame-mobile .morebtn{bottom:76px;left:50%;transform:translateX(-50%);}
+.frame-mobile .morebtn:active{transform:translateX(-50%) scale(.97);}
+.frame-desktop .morebtn{bottom:var(--s3);right:var(--s5);}
+
 /* ══════════════ SPEC CHROME ══════════════ */
 .spec{max-width:1400px;margin:0 auto;}
 .spec-head{margin-bottom:var(--s2);}
@@ -213,8 +243,11 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
 .cfoot{display:flex;align-items:center;gap:var(--s1);margin-top:var(--s1h);
   padding-top:var(--s1h);border-top:1px solid var(--hairline);}
 .cfoot:empty{display:none;}
-.who{margin-left:auto;display:flex;align-items:center;gap:var(--s1);
-  font-size:12.5px;color:var(--ink-2);font-weight:500;white-space:nowrap;overflow:hidden;}
+/* the name never loses the space race — a truncated person is an
+   accountability gap, while a status is carried elsewhere too */
+.who{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:var(--s1);
+  font-size:12.5px;color:var(--ink-2);font-weight:500;white-space:nowrap;}
+.cfoot .chip{min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .av{width:24px;height:24px;border-radius:var(--r-pill);flex-shrink:0;color:#fff;
   font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;letter-spacing:.2px;}
 .ovf{width:var(--s4);height:var(--s4);border:none;background:none;border-radius:var(--r-sm);
@@ -467,6 +500,7 @@ const S={
   noresH:'No issues match',noresP:'Try removing a filter to widen the search.',
   kOverdue:'Overdue',kApproval:'Needs you',kOpen:'Open total',
   open:'Open',approve:'Approve',start:'Start',allPlants:'All plants',readonly:'View only',
+  moreBelow:n=>`${n} more below`,
   gSeverity:'Severity',gStatus:'Status',gZone:'Equipment / zone',gOperator:'Operator',
   searchZone:'Search zones',searchOp:'Search people',clear:'Clear',clearAll:'Clear all',
   reset:'Reset',show:n=>n===1?'Show 1 issue':`Show ${n} issues`,showNone:'No matches',
@@ -480,6 +514,7 @@ const S={
   noresH:'कोई मेल नहीं',noresP:'कोई फ़िल्टर हटाकर देखें।',
   kOverdue:'अतिदेय',kApproval:'आपके पास',kOpen:'कुल खुली',
   open:'खोलें',approve:'मंज़ूरी',start:'शुरू करें',allPlants:'सभी प्लांट',readonly:'केवल देखें',
+  moreBelow:n=>`${n} और नीचे`,
   gSeverity:'गंभीरता',gStatus:'स्थिति',gZone:'उपकरण / क्षेत्र',gOperator:'ऑपरेटर',
   searchZone:'क्षेत्र खोजें',searchOp:'व्यक्ति खोजें',clear:'हटाएँ',clearAll:'सभी हटाएँ',
   reset:'रीसेट',show:n=>`${n} दिखाएँ`,showNone:'कोई मेल नहीं',
@@ -620,17 +655,23 @@ const mins=m=>{const a=Math.abs(m),h=Math.floor(a/60),x=a%60;return h?(x?`${h}h 
 const due=i=>i.due<0
   ? `<span class="due late">↑ ${mins(i.due)} ${t().over}</span>`
   : `<span class="due ${i.due<=30?'warn':'ok'}">${t().due} ${mins(i.due)}</span>`;
-const FLAG={approval:{en:'Pending approval',hi:'मंज़ूरी बाकी',c:'approval'},
+const FLAG={approval:{en:'Approval',hi:'मंज़ूरी बाकी',c:'approval'},
             waiting:{en:'Waiting',hi:'प्रतीक्षारत',c:'waiting'},
             recov:{en:'Photo needed',hi:'फ़ोटो चाहिए',c:'recov'}};
 const flagChip=i=>i.flag?`<span class="chip ${FLAG[i.flag].c}">${FLAG[i.flag][st.lang]}</span>`:'';
 const sevChip=i=>`<span class="chip ${i.sev}"><i aria-hidden="true">${SHAPE[i.sev]}</i>${SEVL[st.lang][i.sev]}</span>`;
-const zoneChip=i=>`<span class="chip zone">${crossPlant()?PLANTS[i.plant]:i.zone}</span>`;
+const locLabel=i=>crossPlant()?PLANTS[i.plant]:i.zone;
+const zoneChip=i=>`<span class="chip zone">${locLabel(i)}</span>`;
 const initials=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
 const avatar=n=>`<span class="av" style="background:${avColor(n)}" aria-hidden="true">${initials(n)}</span>`;
-function metaLine(i){
+/* withLoc: mobile carries the location in the meta line instead of as a
+   chip. Three chips in the top row overflow a 390px card, and the two
+   that must never shrink are severity (the colour-blind-safe signal) and
+   the timer. Desktop has the width to keep it as a chip. */
+function metaLine(i,withLoc){
   const b=[];
   if(i.val) b.push(`<b>${i.val}</b>`);
+  if(withLoc) b.push(locLabel(i));
   if(i.step) b.push(t().step(i.step,i.of));
   return b.length?`<div class="cmeta">${b.join(' · ')}</div>`:'';
 }
@@ -655,9 +696,9 @@ function primary(i){
 function cardM(i){
   return `<div class="card">
    <button class="open" data-id="${i.id}">
-     <div class="crow1">${sevChip(i)}${zoneChip(i)}${due(i)}</div>
+     <div class="crow1">${sevChip(i)}${due(i)}</div>
      <div class="ctitle">${i.title}</div>
-     ${metaLine(i)}
+     ${metaLine(i,true)}
      <div class="cfoot">${flagChip(i)}${i.pct?ringHtml(i.pct):''}
        ${showWho()?`<span class="who">${avatar(i.who)}${i.who}</span>`:''}</div>
    </button>
@@ -668,7 +709,7 @@ function cardD(i){
    <button class="open" data-id="${i.id}">
      <div class="cell issue">
        <div class="crow1">${sevChip(i)}${zoneChip(i)}</div>
-       <div class="ctitle">${i.title}</div>${metaLine(i)}</div>
+       <div class="ctitle">${i.title}</div>${metaLine(i,false)}</div>
      <div class="cell stcell">${flagChip(i)||(i.pct?ringHtml(i.pct):'')}</div>
      ${showWho()?`<span class="who">${avatar(i.who)}${i.who}</span>`:''}
      ${due(i)}
@@ -748,6 +789,7 @@ function mobile(){
    </div>
    ${viewbar()}${appliedBar()}
    <div class="body scrollarea"><div class="list">${listHtml(false)}</div></div>
+   <button class="morebtn" data-more="1"></button>
    <div class="bnav">
      <button><span class="i">⌂</span>Home</button>
      <button class="on"><span class="i">⚠</span>Issues</button>
@@ -790,6 +832,7 @@ function desktop(){
       <div class="dbody scrollarea"><div class="dlist">${listHtml(true)}</div></div>
     </div>
    </div>
+   <button class="morebtn" data-more="1"></button>
    <div class="scrim${st.panel?' on':''}" data-close="1"></div>${panel()}</div>`;
 }
 
@@ -925,6 +968,15 @@ function setEdge(sc){
   const more=sc.scrollHeight>sc.clientHeight+1
     && sc.scrollTop+sc.clientHeight < sc.scrollHeight-2;
   sc.classList.toggle('more',more);
+  const btn=document.querySelector('.morebtn');
+  if(!btn) return;
+  if(!more){ btn.classList.remove('on'); return; }
+  const foldY=sc.getBoundingClientRect().bottom;
+  const n=[...sc.querySelectorAll('.card,.chronicrow')]
+    .filter(r=>r.getBoundingClientRect().top>=foldY-4).length;
+  if(!n){ btn.classList.remove('on'); return; }   // only a sliver left: no claim to make
+  btn.innerHTML=`${t().moreBelow(n)}<span class="ar" aria-hidden="true">↓</span>`;
+  btn.classList.add('on');
 }
 
 /* ═════════════ RENDER ═════════════ */
@@ -962,6 +1014,14 @@ document.addEventListener('click',e=>{
   if(h=q('[data-rm]')){const[g,v]=h.dataset.rm.split('|');toggle(g,v);return render();}
   if(h=q('[data-gclear]')){st.f[h.dataset.gclear]=[];return render();}
   if(q('[data-clear]')){st.f={sev:[],status:[],zone:[],op:[]};return render();}
+  if(q('[data-more]')){
+    const sc=document.querySelector('.scrollarea');
+    /* page down by one screen, not to the end: the list is priority
+       ordered, so jumping to the bottom would skip the most urgent
+       unseen work. Leave a card's overlap so nothing is stepped over. */
+    sc.scrollBy({top:sc.clientHeight-72,behavior:'smooth'});
+    return;
+  }
   if(q('[data-chronic]')){st.chronicOpen=!st.chronicOpen;return render();}
   if(q('[data-close]')){st.panel=null;return render();}
 });
