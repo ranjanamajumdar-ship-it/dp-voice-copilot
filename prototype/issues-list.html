@@ -89,6 +89,68 @@ button{font:inherit;color:inherit;}
 .frame-mobile .morebtn{bottom:76px;left:50%;transform:translateX(-50%);}
 .frame-mobile .morebtn:active{transform:translateX(-50%) scale(.97);}
 .frame-desktop .morebtn{bottom:var(--s3);right:var(--s5);}
+/* the pool strip occupies the bottom edge, so the pager steps above it */
+.frame-mobile.haspool .morebtn{bottom:132px;}
+.frame-desktop.haspool .morebtn{bottom:80px;}
+
+/* ══════════ POOL STRIP ══════════
+   A flex sibling, not an overlay: it is permanently visible without
+   scrolling (operators don't), yet sits at the bottom so it never
+   competes with their own assigned work at the top. Auto-assignment is
+   the primary route; this is the overflow valve.                       */
+.poolstrip{flex-shrink:0;display:flex;align-items:center;gap:var(--s1h);
+  padding:var(--s1h) var(--s2);background:var(--surface);
+  border-top:1px solid var(--hairline);cursor:pointer;text-align:left;
+  width:100%;border-left:none;border-right:none;border-bottom:none;transition:.15s;}
+.popen{flex:1;min-width:0;display:flex;align-items:center;gap:var(--s1h);
+  background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;}
+.poolstrip .popen:hover .pl{color:var(--teal);}
+.poolstrip.quiet .popen{cursor:default;}
+.poolstrip .pic{width:var(--s4);height:var(--s4);border-radius:var(--r-md);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  background:var(--teal-tint);color:var(--teal);}
+.poolstrip .ptxt{min-width:0;flex:1;}
+.poolstrip .pl{font-size:13px;font-weight:600;color:var(--ink);}
+.poolstrip .ps{font-size:11.5px;color:var(--ink-3);margin-top:1px;}
+.poolstrip .pgo{flex-shrink:0;font-size:12.5px;font-weight:600;color:var(--teal);
+  display:flex;align-items:center;gap:var(--s-half);}
+.poolstrip .ackbtn{flex-shrink:0;font-size:12px;font-weight:600;padding:var(--s1) var(--s1h);
+  border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);
+  color:var(--navy);cursor:pointer;}
+.poolstrip .ackbtn:hover{background:var(--navy-tint);}
+/* attention state: un-acknowledged routing gap */
+.poolstrip.attn{background:#FFFBF2;border-top-color:#F3E3C4;}
+.poolstrip.attn .pic{background:var(--min-bg);color:var(--min-fg);}
+.poolstrip.attn .pl{color:#6B4E08;}
+/* escalated: aged past the routing threshold */
+.poolstrip.esc{background:var(--emg-bg);border-top-color:#F6D5D1;}
+.poolstrip.esc .pic{background:#FBDBD7;color:var(--emg-fg);}
+.poolstrip.esc .pl{color:var(--emg-fg);}
+/* quiet: acknowledged, or read-only viewers */
+.poolstrip.quiet{cursor:default;}
+.poolstrip.quiet .pic{background:var(--canvas);color:var(--ink-3);}
+
+/* pool rows inside the sheet */
+.poolrow{display:flex;align-items:center;gap:var(--s1h);padding:var(--s1h) 0;
+  border-bottom:1px solid var(--hairline);}
+.poolrow:last-child{border-bottom:none;}
+.poolrow .pbody2{flex:1;min-width:0;}
+.poolrow .pt{font-size:14px;font-weight:600;margin-top:var(--s-half);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.poolrow .pm{font-size:12.5px;color:var(--ink-3);margin-top:2px;}
+.poolrow .pact{flex-shrink:0;}
+
+/* ══════════ TOAST ══════════ optimistic action + a way back */
+.toast{position:absolute;left:var(--s2);right:var(--s2);z-index:60;
+  display:flex;align-items:center;gap:var(--s1h);
+  background:var(--ink);color:#fff;border-radius:var(--r-lg);
+  padding:var(--s1h) var(--s2);box-shadow:0 8px 24px rgba(9,20,45,.34);
+  font-size:13px;font-weight:500;}
+.frame-mobile .toast{bottom:132px;}
+.frame-desktop .toast{bottom:var(--s3);left:auto;right:var(--s5);min-width:320px;}
+.toast .undo{margin-left:auto;flex-shrink:0;background:none;border:none;
+  color:var(--teal-mid);font-size:13px;font-weight:700;cursor:pointer;
+  text-decoration:underline;padding:0;}
 
 /* ══════════════ SPEC CHROME ══════════════ */
 .spec{max-width:1400px;margin:0 auto;}
@@ -479,6 +541,7 @@ select.plantsel{font-size:13px;font-weight:600;padding:var(--s1) var(--s1h);bord
     <h1>Screen 13 · Issues List — <b>Soft UI on a Carbon grid</b></h1>
     <p>Surfaces follow the reference style: floating white cards on a tinted canvas, 12px radii, soft elevation, tonal chips. Structure stays Carbon: 8px / 2x spacing grid, IBM Plex Sans, 16px gutters. Filters now live in a <b>bottom sheet on mobile</b> and a <b>right-side drawer on desktop</b> — one component, two containers.</p>
     <p style="margin-top:8px;"><b>The fold:</b> because operators don’t scroll, the viewport edge is tuned so it always cuts <em>through</em> a card — never flush with one, never in the gap between two — and content visibly passes under a shadowed edge. Both cues appear only when there is genuinely more below; a list that fits shows neither.</p>
+    <p style="margin-top:8px;"><b>Pick-up:</b> issues are auto-assigned first; whatever could not be routed waits in a <b>pool strip</b> pinned to the bottom edge. Unclaimed issues never appear in the sections — the sections mean assigned work, the pool means needs routing. Operators claim with <b>Start working</b>; supervisors can assign or <b>acknowledge</b>.</p>
   </div>
 
   <div class="controls">
@@ -524,6 +587,16 @@ const S={
   plusChronic:n=>` · ${n} chronic`,showChronic:n=>`Show ${n} chronic`,
   noOpts:'Nothing to show',actions:'Actions',issue:'Issue',hide:'Hide',
   searchHint:'Searches issue titles and IDs. Combines with any filters you have set.',
+  poolAvail:n=>`${n} available to pick up`,poolUnclaimed:n=>`${n} unclaimed`,
+  poolOldest:a=>`oldest ${a}`,poolPickUp:'Pick up',poolTitleOp:'Available to pick up',
+  poolTitleSup:'Unclaimed issues',poolWaiting:a=>`Waiting ${a}`,
+  poolWhyOp:'Not routed automatically — claim one and it opens at step 1.',
+  poolWhySup:'These could not be auto-assigned. Claim, assign, or acknowledge.',
+  poolLoad:n=>`You have ${n} active`,poolEmpty:'Nothing waiting to be picked up',
+  ack:'Acknowledge',acked:'Acknowledged',ackedBy:'Acknowledged by you',
+  reArmed:'New since you acknowledged',escalated:'Past routing threshold',
+  assign:'Assign',startWorking:'Start working',
+  tPicked:'Picked up — opening step 1',tAssigned:n=>`Assigned to ${n}`,undo:'Undo',
   dimHint:'Dimmed options have no matches alongside your current choices.',
   noMatch:'0 matches with your current filters — clear one to enable this'},
  hi:{overdue:'अतिदेय',inprogress:'चालू',notstarted:'शुरू नहीं',chronic:'पुरानी',
@@ -541,6 +614,16 @@ const S={
   plusChronic:n=>` · ${n} पुरानी`,showChronic:n=>`${n} पुरानी दिखाएँ`,
   noOpts:'कुछ नहीं',actions:'कार्रवाई',issue:'समस्या',hide:'छिपाएँ',
   searchHint:'शीर्षक और आईडी में खोजता है। आपके फ़िल्टरों के साथ जुड़ता है।',
+  poolAvail:n=>`${n} लेने के लिए उपलब्ध`,poolUnclaimed:n=>`${n} बिना सौंपी`,
+  poolOldest:a=>`सबसे पुरानी ${a}`,poolPickUp:'लें',poolTitleOp:'लेने के लिए उपलब्ध',
+  poolTitleSup:'बिना सौंपी समस्याएँ',poolWaiting:a=>`${a} से प्रतीक्षा`,
+  poolWhyOp:'स्वतः नहीं सौंपी गई — लेने पर चरण 1 खुलेगा।',
+  poolWhySup:'स्वतः नहीं सौंपी जा सकीं। लें, सौंपें, या स्वीकारें।',
+  poolLoad:n=>`आपके पास ${n} चालू`,poolEmpty:'लेने के लिए कुछ नहीं',
+  ack:'स्वीकारें',acked:'स्वीकृत',ackedBy:'आपने स्वीकारा',
+  reArmed:'स्वीकारने के बाद नई',escalated:'रूटिंग सीमा पार',
+  assign:'सौंपें',startWorking:'काम शुरू करें',
+  tPicked:'ले लिया — चरण 1 खुल रहा है',tAssigned:n=>`${n} को सौंपी`,undo:'पूर्ववत',
   dimHint:'धुँधले विकल्पों का आपकी वर्तमान पसंद के साथ कोई मेल नहीं है।',
   noMatch:'वर्तमान फ़िल्टरों के साथ 0 मेल — सक्षम करने के लिए एक हटाएँ'}
 };
@@ -587,7 +670,15 @@ const ISSUES=[
  {id:'B-0912',plant:'p3',sev:'major',title:'Sludge Blanket High — Clarifier 2',val:'2.1 m',
   zone:'Clarifier',step:7,of:7,pct:100,status:'overdue',due:-14,who:'Neha R.',flag:'recov',age:132},
  {id:'B-0908',plant:'p3',sev:'info',title:'Daily Log Gap — Shift C',val:'',
-  zone:'Control Room',step:0,of:2,pct:0,status:'notstarted',due:240,who:'Neha R.',flag:null,age:16}
+  zone:'Control Room',step:0,of:2,pct:0,status:'notstarted',due:240,who:'Neha R.',flag:null,age:16},
+ /* who:null = the pool. Auto-assignment is primary; these are what it
+    could not route (no qualified operator on shift, or zone unmanned). */
+ {id:'I-4477',plant:'p1',sev:'emergency',title:'Chlorine Dosing Failure — Contact Tank',val:'0.05 mg/L',
+  zone:'Disinfection',step:0,of:6,pct:0,status:'notstarted',due:8,who:null,flag:null,age:22},
+ {id:'I-4475',plant:'p1',sev:'minor',title:'Sump Pump Cycling — Sump 2',val:'',
+  zone:'Pump House',step:0,of:4,pct:0,status:'notstarted',due:145,who:null,flag:null,age:64},
+ {id:'M-2215',plant:'p2',sev:'major',title:'Sand Filter Headloss — Filter 3',val:'1.8 m',
+  zone:'Primary Filtration',step:0,of:5,pct:0,status:'notstarted',due:52,who:null,flag:null,age:37}
 ];
 
 /* ═════════════ ROLES ═════════════ */
@@ -598,7 +689,8 @@ const PERSONAS={
   axes:[['Scope','<b>Only issues assigned to them.</b> The assignee is removed from every card — on this screen it is always the same person.'],
         ['Powers','Work the issue: <b>Start</b>, run steps, request approval. No approving, no reassigning.'],
         ['Chronic','Hidden. A recurring condition is a supervisor’s problem, not a shift task.']],
-  note:'Their filter drawer drops the Operator group entirely — filtering by person is meaningless when every row is yours.'},
+  note:'Their filter drawer drops the Operator group entirely — filtering by person is meaningless when every row is yours.',
+  pool:'Auto-assignment is the primary route, so the pool sits quietly at the bottom rather than competing with their own work. <b>Start working claims it and opens step 1</b> — there is no claimed-but-not-started state.'},
  lead:{name:'Lead',
   roles:{l3:{label:'L3 Lead',plants:['p1'],approve:1,chronic:1},
          l4:{label:'L4 Senior Lead',plants:['p1','p2'],approve:1,chronic:1,close:1}},
@@ -606,7 +698,8 @@ const PERSONAS={
   axes:[['Scope','<b>Every issue at their plant(s)</b>, whoever holds it. The assignee column is what they scan.'],
         ['Powers','<b>Approve or reject</b> a blocked step, and reassign. Approvals are the only work that stalls without them.'],
         ['Chronic','One row at the bottom with its own count. L4 can close; L3 can only flag.']],
-  note:'“Needs approval” is a saved view, not a filter — it is the one queue they own, so it sits permanently in the bar.'},
+  note:'“Needs approval” is a saved view, not a filter — it is the one queue they own, so it sits permanently in the bar.',
+  pool:'The strip reads as <b>routing risk</b>, not a to-do. <b>Acknowledge</b> records who saw what and quiets it — then re-arms if the pool grows or anything ages past 90 minutes. Shrinking does not re-arm it.'},
  nonop:{name:'Non-op',
   roles:{reg:{label:'Regular Non-op',plants:['p1']},
          sr:{label:'Senior Non-op',plants:['p1','p2','p3'],export:1}},
@@ -614,7 +707,8 @@ const PERSONAS={
   axes:[['Scope','Their plant, or the whole portfolio for a Senior. They read this as a <b>health signal</b>, not a queue.'],
         ['Powers','<b>None.</b> Every action is removed, not greyed out — a disabled button still invites a click.'],
         ['Chronic','Visible for context, with no actions on it.']],
-  note:'The only interaction is opening an issue to read it, so the card carries no overflow menu at all.'},
+  note:'The only interaction is opening an issue to read it, so the card carries no overflow menu at all.',
+  pool:'A count only. No claim, no assign, no acknowledge — they are not accountable for routing, so the strip carries no controls.'},
  admin:{name:'Admin',
   roles:{people:{label:'People Admin',plants:['p1','p2','p3'],reassign:1},
          tech:{label:'Technical Admin',plants:['p1','p2','p3'],approve:1,chronic:1,config:1},
@@ -624,13 +718,15 @@ const PERSONAS={
   axes:[['Scope','<b>Every plant</b>, with a switcher in the header. Cards show the plant instead of the zone when more than one is in view.'],
         ['Powers','They fix <b>causes</b>, not issues: reassign, and jump to the rule that raised it. Never “Start”.'],
         ['Chronic','Their main signal — a repeat issue usually means a bad threshold.']],
-  note:'People Admin is deliberately narrower: reassign only. No approving, no closing, no config.'}
+  note:'People Admin is deliberately narrower: reassign only. No approving, no closing, no config.',
+  pool:'Same as a Lead, but across every plant. <b>Assign</b> routes to whoever currently holds the least, so the override is one tap rather than a picker.'}
 };
 
 /* ═════════════ STATE ═════════════ */
 let st={persona:'operator',role:'l1',view:'mobile',lang:'en',
         vw:'all',plant:'p1',panel:null,chronicOpen:false,
-        f:{sev:[],status:[],zone:[],op:[]},q:'',srch:{zone:'',op:''}};
+        f:{sev:[],status:[],zone:[],op:[]},q:'',srch:{zone:'',op:''},
+        ack:false,ackCount:0,toast:null};
 const t=()=>S[st.lang], P=()=>PERSONAS[st.persona], R=()=>P().roles[st.role];
 const plantsOf=()=>R().plants;
 const inView=()=>plantsOf().length>1&&st.plant==='all'?plantsOf():[st.plant];
@@ -640,10 +736,26 @@ const nActive=()=>Object.values(st.f).reduce((a,v)=>a+v.length,0)+(st.q?1:0);
 
 /* scope, then saved view, then drawer filters */
 function scope(){
-  let l=ISSUES.filter(i=>inView().includes(i.plant));
+  /* Unclaimed issues are excluded from the sections for EVERY role. The
+     sections mean "assigned work"; the pool means "needs routing". Keeping
+     them apart is what stops pick-up from reintroducing per-role orders. */
+  let l=ISSUES.filter(i=>inView().includes(i.plant)&&i.who);
   if(R().mine) l=l.filter(i=>i.who===ME);
   return l;
 }
+/* Pool ignores the "mine" scope: an operator may claim anything at their
+   plant, not only what was already theirs. */
+const POOL_ESCALATE=90;                       // minutes before it escalates
+function pool(){
+  return ISSUES.filter(i=>inView().includes(i.plant)&&!i.who)
+    .sort((a,b)=>RANK[a.sev]-RANK[b.sev]||b.age-a.age);
+}
+const poolOldest=()=>pool().reduce((m,i)=>Math.max(m,i.age),0);
+const poolEscalated=()=>poolOldest()>POOL_ESCALATE;
+/* Acknowledgement re-arms when the pool GROWS or something ages past the
+   threshold — not when it merely shrinks, which is the good direction. */
+const poolAcked=()=>st.ack&&pool().length<=st.ackCount&&!poolEscalated();
+const myActive=()=>ISSUES.filter(i=>i.who===ME&&i.status!=='chronic').length;
 function afterView(l){
   if(st.vw==='emg')     return l.filter(i=>i.sev==='emergency');
   if(st.vw==='approve') return l.filter(i=>i.flag==='approval');
@@ -805,6 +917,42 @@ function appliedBar(){
   return `<div class="applied">${c}<button class="clearall" data-clear="1">${t().clearAll}</button></div>`;
 }
 
+/* ═════════════ POOL STRIP + TOAST ═════════════ */
+function poolStrip(){
+  const pl=pool(); if(!pl.length) return '';
+  const ro=P().readonly, mine=R().mine;
+  const oldest=mins(poolOldest()), esc=poolEscalated(), acked=poolAcked();
+  /* Operators get an invitation; everyone else gets a routing-risk
+     reading of the same fact. Read-only roles get no action at all. */
+  if(mine) return `<div class="poolstrip">
+    <button class="popen" data-panel="pool">
+      <span class="pic">◇</span><span class="ptxt">
+        <span class="pl">${t().poolAvail(pl.length)}</span>
+        <span class="ps">${t().poolOldest(oldest)}</span></span>
+      <span class="pgo">${t().poolPickUp}<span aria-hidden="true">›</span></span>
+    </button></div>`;
+
+  const cls=ro?'quiet':esc?'esc':acked?'quiet':'attn';
+  const sub=esc?t().escalated
+    :acked?`${t().ackedBy}`
+    :(st.ack&&pl.length>st.ackCount)?t().reArmed
+    :t().poolOldest(oldest);
+  const inner=`<span class="pic">${esc?'!':'◇'}</span><span class="ptxt">
+      <span class="pl">${t().poolUnclaimed(pl.length)}</span>
+      <span class="ps">${sub}</span></span>`;
+  return `<div class="poolstrip ${cls}">
+    ${ro?`<div class="popen">${inner}</div>`
+        :`<button class="popen" data-panel="pool">${inner}</button>`}
+    ${ro?'':(acked?`<span class="pgo">${t().acked}</span>`
+      :`<button class="ackbtn" data-ack="1">${t().ack}</button>`)}
+  </div>`;
+}
+function toastHtml(){
+  if(!st.toast) return '';
+  return `<div class="toast" role="status">${st.toast.msg}
+    ${st.toast.undo?`<button class="undo" data-undo="1">${t().undo}</button>`:''}</div>`;
+}
+
 /* ═════════════ FRAMES ═════════════ */
 function plantSel(){
   if(plantsOf().length<2) return '';
@@ -814,7 +962,7 @@ function plantSel(){
 }
 function mobile(){
   const single=plantsOf().length<2;
-  return `<div class="frame-mobile">
+  return `<div class="frame-mobile${pool().length?' haspool':''}">
    <div class="statusbar"><span>9:41</span><span>● ▮▮</span></div>
    <div class="appbar">
      ${single?`<div class="plant"><h2>${PLANTS[inView()[0]]}</h2>
@@ -827,6 +975,7 @@ function mobile(){
    ${viewbar()}${appliedBar()}
    <div class="body scrollarea"><div class="list">${listHtml(false)}</div></div>
    <button class="morebtn" data-more="1"></button>
+   ${poolStrip()}${toastHtml()}
    <div class="bnav">
      <button><span class="i">⌂</span>Home</button>
      <button class="on"><span class="i">⚠</span>Issues</button>
@@ -845,7 +994,7 @@ function kpis(){
 }
 function desktop(){
   const r=R(),od=visible().filter(i=>i.due<0).length;
-  return `<div class="frame-desktop">
+  return `<div class="frame-desktop${pool().length?' haspool':''}">
    <div class="browserbar"><i></i><i></i><i></i><span class="url">app.digitalpaani.com/issues</span></div>
    <div class="dtop">
     <div class="snav">
@@ -867,9 +1016,10 @@ function desktop(){
         ${plantSel()}<button class="dsearch" data-panel="search">⌕ ${t().find}</button></div>
       ${viewbar()}${appliedBar()}${kpis()}
       <div class="dbody scrollarea"><div class="dlist">${listHtml(true)}</div></div>
+      ${poolStrip()}
     </div>
    </div>
-   <button class="morebtn" data-more="1"></button>
+   <button class="morebtn" data-more="1"></button>${toastHtml()}
    <div class="scrim${st.panel?' on':''}" data-close="1"></div>${panel()}</div>`;
 }
 
@@ -952,6 +1102,27 @@ function panel(){
         <button class="apply${n?'':' none'}" data-close="1">${applyLbl}</button>
       </div>`);
   }
+  if(st.panel==='pool'){
+    const pl=pool(), mine=R().mine;
+    const rows=pl.map(i=>`<div class="poolrow">
+      <div class="pbody2">
+        <div class="crow1">${sevChip(i)}${zoneChip(i)}</div>
+        <div class="pt">${i.title}</div>
+        <div class="pm">${i.val?i.val+' · ':''}${t().poolWaiting(mins(i.age))}</div>
+      </div>
+      <div class="pact">${mine
+        ? `<button class="abtn pri" data-claim="${i.id}">${t().startWorking}</button>`
+        : `<button class="abtn" data-assign="${i.id}">${t().assign}</button>`}</div>
+    </div>`).join('')||`<p class="dimhint">${t().poolEmpty}</p>`;
+    return shell(mine?t().poolTitleOp:t().poolTitleSup,
+      `<p class="dimhint">${mine?t().poolWhyOp:t().poolWhySup}</p>
+       ${mine?`<p class="dimhint" style="margin-top:8px;">${t().poolLoad(myActive())}</p>`:''}
+       ${rows}`,
+      `<div class="pfoot">
+        ${mine?'':`<button class="reset" data-ack="1" ${poolAcked()?'disabled':''}>${
+          poolAcked()?t().acked:t().ack}</button>`}
+        <button class="apply" data-close="1">${t().hide}</button></div>`);
+  }
   if(st.panel==='search'){
     const all=visible(), nMain=all.filter(i=>i.status!=='chronic').length;
     const nChr=P().chronic?all.length-nMain:0, tot=nMain+nChr;
@@ -988,7 +1159,8 @@ function rat(){
    <div class="who2">${Object.values(p.roles).map(x=>x.label).join(' · ')}</div>
    ${p.axes.map(([k,v],n)=>`<div class="ax"><span class="num">${n+1}</span>
      <div><dt>${k}</dt><dd>${v}</dd></div></div>`).join('')}
-   <div class="note"><strong>Filter behaviour</strong><p>${p.note}</p></div>`;
+   <div class="note"><strong>Filter behaviour</strong><p>${p.note}</p></div>
+   <div class="note" style="margin-top:12px;"><strong>Pick-up</strong><p>${p.pool}</p></div>`;
 }
 
 /* ═════════════ THE FOLD ═════════════
@@ -1035,10 +1207,23 @@ function tuneFold(sc){
   if(best) sc.style.marginBottom=best+'px';
   setEdge(sc);
 }
+/* The pool strip's height varies by role (an attention strip carries a
+   second line and a button), so anything floating above it is measured
+   rather than offset by a guessed constant. */
+function liftAboveStrip(sc){
+  const frame=sc.closest('.frame-mobile,.frame-desktop'); if(!frame) return;
+  const strip=frame.querySelector('.poolstrip');
+  const gap=12, fb=frame.getBoundingClientRect().bottom;
+  const base=strip?fb-strip.getBoundingClientRect().top+gap:null;
+  frame.querySelectorAll('.morebtn,.toast').forEach(el=>{
+    el.style.bottom=base!==null?base+'px':'';
+  });
+}
 function setEdge(sc){
   const more=sc.scrollHeight>sc.clientHeight+1
     && sc.scrollTop+sc.clientHeight < sc.scrollHeight-2;
   sc.classList.toggle('more',more);
+  liftAboveStrip(sc);
   const btn=document.querySelector('.morebtn');
   if(!btn) return;
   if(!more){ btn.classList.remove('on'); return; }
@@ -1061,15 +1246,22 @@ function render(){
   document.getElementById('device').innerHTML=st.view==='mobile'?mobile():desktop();
   document.getElementById('rat').innerHTML=rat();
   const sc=document.querySelector('.scrollarea');
-  if(sc){ tuneFold(sc); sc.addEventListener('scroll',()=>setEdge(sc),{passive:true}); }
+  if(sc){ tuneFold(sc); liftAboveStrip(sc);
+    sc.addEventListener('scroll',()=>setEdge(sc),{passive:true}); }
 }
 function resetRole(){
   st.role=Object.keys(P().roles)[0];
   st.plant=plantsOf().length>1?'all':plantsOf()[0];
   st.vw='all';st.f={sev:[],status:[],zone:[],op:[]};st.q='';st.srch={zone:'',op:''};
-  st.panel=null;st.chronicOpen=false;
+  st.panel=null;st.chronicOpen=false;st.ack=false;st.ackCount=0;st.toast=null;
 }
 const toggle=(g,v)=>{const a=st.f[g],i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);};
+let lastAction=null, toastTimer=null;
+function showToast(msg,undo){
+  st.toast={msg,undo};
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{st.toast=null;lastAction=null;render();},5000);
+}
 
 document.addEventListener('click',e=>{
   const q=s=>e.target.closest(s);let h;
@@ -1079,6 +1271,7 @@ document.addEventListener('click',e=>{
   if(h=q('#segLang button')){st.lang=h.dataset.l;
     document.querySelectorAll('#segLang button').forEach(b=>b.classList.toggle('sel',b===h));return render();}
   if(h=q('[data-vw]')){st.vw=h.dataset.vw;return render();}
+  if(q('[data-ack]')){st.ack=true;st.ackCount=pool().length;return render();}
   if(h=q('[data-panel]')){st.panel=h.dataset.panel;return render();}
   if(h=q('[data-ovf]')){e.stopPropagation();st.panel=h.dataset.ovf;return render();}
   if(h=q('[data-tog]')){const[g,v]=h.dataset.tog.split('|');toggle(g,v);return render();}
@@ -1093,6 +1286,32 @@ document.addEventListener('click',e=>{
        unseen work. Leave a card's overlap so nothing is stepped over. */
     sc.scrollBy({top:sc.clientHeight-72,behavior:'smooth'});
     return;
+  }
+  if(h=q('[data-claim]')){
+    const i=ISSUES.find(x=>x.id===h.dataset.claim); if(!i) return;
+    /* Start Working = claim, per the spec: it claims AND opens step 1, so
+       there is no intermediate "claimed but not started" state. */
+    lastAction={id:i.id,who:i.who,status:i.status,step:i.step,pct:i.pct};
+    i.who=ME; i.status='inprogress'; i.step=1; i.pct=Math.round(100/i.of);
+    st.panel=null; showToast(t().tPicked,true); return render();
+  }
+  if(h=q('[data-assign]')){
+    const i=ISSUES.find(x=>x.id===h.dataset.assign); if(!i) return;
+    /* route to whoever currently holds the least */
+    const load={}; ISSUES.forEach(x=>{if(x.who)load[x.who]=(load[x.who]||0)+1;});
+    const to=Object.keys(load).sort((a,b)=>load[a]-load[b])[0]||ME;
+    lastAction={id:i.id,who:i.who,status:i.status,step:i.step,pct:i.pct};
+    i.who=to;
+    st.panel=null; showToast(t().tAssigned(to),true); return render();
+  }
+  if(q('[data-undo]')){
+    if(lastAction){
+      const i=ISSUES.find(x=>x.id===lastAction.id);
+      Object.assign(i,{who:lastAction.who,status:lastAction.status,
+        step:lastAction.step,pct:lastAction.pct});
+      lastAction=null;
+    }
+    st.toast=null; return render();
   }
   if(q('[data-chronic]')){st.chronicOpen=!st.chronicOpen;return render();}
   if(q('[data-close]')){st.panel=null;return render();}
