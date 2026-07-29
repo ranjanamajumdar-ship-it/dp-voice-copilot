@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Alert — Storyboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#092454; --navy-mid:#1a2d5d; --navy-tint:#E8EBF2;
+    --teal:#6AA8B0; --teal-tint:#E8F0F2;
+    --sage:#8AB878; --sage-forest:#2E5924; --sage-tint:#F1F8EC;
+    --rust:#C4511E; --rust-tint:#FAF0EB;
+    --paper:#F7F6F2; --white:#FFFFFF; --ink:#1A1A1A; --muted:#6F6F6F; --line:#E0DDD3;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans','Noto Sans Devanagari',-apple-system,sans-serif;}
+  body{background:#DDDAD2;color:var(--ink);}
+
+  .wrap{max-width:760px;margin:0 auto;padding:48px 20px 90px;}
+  .masthead{text-align:center;margin-bottom:44px;}
+  .masthead .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;}
+  .masthead h1{font-size:34px;font-weight:700;color:var(--navy);letter-spacing:-.5px;margin-bottom:10px;}
+  .masthead p{font-size:15px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.6;}
+
+  .panel{
+    background:var(--white);border:1px solid var(--line);margin-bottom:28px;
+    display:grid;grid-template-columns:1fr;overflow:hidden;
+  }
+  .panel-num{
+    display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--navy);color:#fff;
+  }
+  .panel-num .n{
+    width:26px;height:26px;border:1px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;flex-shrink:0;
+  }
+  .panel-num .lbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--teal-tint);opacity:.9;}
+  .panel-illus{
+    background:var(--paper);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .panel-illus svg{width:100%;max-width:460px;height:auto;color:var(--ink);}
+  .panel-text{padding:22px 24px 26px;}
+  .panel-text h2{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:6px;line-height:1.4;}
+  .panel-text .en{font-size:14px;color:var(--muted);line-height:1.55;}
+  .panel-tag{
+    display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+    padding:4px 10px;margin-top:14px;letter-spacing:.3px;
+  }
+  .tag-wa{background:#0E3D2E;color:#25D366;}
+  .tag-app{background:var(--navy-tint);color:var(--navy);}
+  .tag-help{background:var(--teal-tint);color:#3D707A;}
+  .tag-data{background:var(--sage-tint);color:var(--sage-forest);}
+
+  .connector{display:flex;justify-content:center;margin:-8px 0 20px;}
+  .connector svg{width:20px;height:32px;color:var(--line);}
+
+  .footer-cta{
+    text-align:center;margin-top:56px;padding-top:32px;border-top:1px solid var(--line);
+  }
+  .footer-cta p{font-size:13px;color:var(--muted);margin-bottom:14px;}
+  .footer-cta .brand{font-size:13px;font-weight:700;color:var(--navy);letter-spacing:.3px;}
+
+  @media (max-width:600px){
+    .masthead h1{font-size:27px;}
+    .panel-text h2{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="eyebrow">Open Alert · Guided Diagnosis Pilot</div>
+    <h1>अलर्ट से समाधान तक — एक नज़र में</h1>
+    <p>A six-panel walkthrough of the operator's journey — from the WhatsApp alert to a completed, supervisor-notified diagnosis — including what happens when they get stuck.</p>
+  </div>
+
+  <!-- PANEL 1 — WhatsApp trigger -->
+  <div class="panel">
+    <div class="panel-num"><div class="n">1</div><div class="lbl">The Alert</div></div>
+    <div class="panel-illus">
+      <svg viewBox="0 0 320 190" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- pump -->
+        <rect x="14" y="70" width="66" height="48" rx="4"/>
+        <line x1="27" y1="70" x2="27" y2="118"/><line x1="40" y1="70" x2="40" y2="118"/>
+        <line x1="53" y1="70" x2="53" y2="118"/><line x1="66" y1="70" x2="66" y2="118"/>
+        <rect x="84" y="85" width="18" height="18"/>
+        <circle cx="130" cy="94" r="30"/><circle cx="130" cy="94" r="6" fill="currentColor" stroke="none"/>
+        <path d="M100 118 q4 9 0 16" stroke-dasharray="2 4" stroke="#C4511E"/>
+        <circle cx="100" cy="139" r="3" fill="#C4511E" stroke="none"/>
+        <!-- phone -->
+        <rect x="230" y="30" width="70" height="130" rx="10"/>
+        <line x1="245" y1="40" x2="285" y2="40"/>
+        <path d="M255 62 l10 10 20 -24" stroke="#C4511E"/>
+        <circle cx="265" cy="62" r="20" stroke="#C4511E"/>
+        <line x1="245" y1="105" x2="285" y2="105"/><line x1="245" y1="118" x2="275" y2="118"/>
+        <!-- alert arc -->
+        <path d="M160 60 q30 -20 60 -5" stroke-dasharray="3 5"/>
+      </svg>
+    </div>
+    <div class="panel-text">
+      <h2>Filter Feed Pump में रिसाव — WhatsApp पर तुरंत अलर्ट आता है।</h2>
+      <p class="en">A leak is detected. The operator gets a WhatsApp message immediately, in Hindi, with a simple "reply 1 to start" prompt.</p>
+      <span class="panel-tag tag-wa">💬 WhatsApp</span>
+    </div>
+  </div>
+  <div class="connector"><svg viewBox="0 0 20 32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 0 v26 M2 20 l8 8 8-8"/></svg></div>
+
+  <!-- PANEL 2 — Deeplink into app -->
+  <div class="panel">
+    <div class="panel-num"><div class="n">2</div><div class="lbl">Into the App</div></div>
+    <div class="panel-illus">
+      <svg viewBox="0 0 320 190" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="20" y="30" width="70" height="130" rx="10"/>
+        <line x1="35" y1="40" x2="75" y2="40"/>
+        <rect x="35" y="55" width="40" height="12" rx="6" fill="var(--sage-tint)" stroke="#2E5924"/>
+        <path d="M30 92 h55" stroke-dasharray="0"/>
+        <!-- tap ripple -->
+        <circle cx="55" cy="61" r="18" stroke-dasharray="3 4" opacity=".6"/>
+        <!-- arrow -->
+        <path d="M110 95 h70" stroke-dasharray="4 6"/>
+        <path d="M170 85 l14 10 -14 10"/>
+        <!-- app screen -->
+        <rect x="210" y="20" width="95" height="150" rx="10"/>
+        <rect x="210" y="20" width="95" height="26" rx="10" fill="var(--navy-tint)" stroke="none"/>
+        <rect x="222" y="60" width="71" height="10"/>
+        <rect x="222" y="78" width="50" height="7" opacity=".5"/>
+        <rect x="222" y="105" width="71" height="22"/>
+        <rect x="222" y="132" width="71" height="22"/>
+      </svg>
+    </div>
+    <div class="panel-text">
+      <h2>1 लिखते ही एक लिंक आता है — टैप करते ही गाइडेड जाँच ऐप में खुलती है।</h2>
+      <p class="en">WhatsApp is just the doorbell. The real diagnostic flow — questions, checks, remedies — all happens inside the app via a single tap.</p>
+      <span class="panel-tag tag-app">🔗 Deeplink → App</span>
+    </div>
+  </div>
+  <div class="connector"><svg viewBox="0 0 20 32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 0 v26 M2 20 l8 8 8-8"/></svg></div>
+
+  <!-- PANEL 3 — Step by step -->
+  <div class="panel">
+    <div class="panel-num"><div class="n">3</div><div class="lbl">One Question at a Time</div></div>
+    <div class="panel-illus">
+      <svg viewBox="0 0 320 190" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- valve -->
+        <rect x="16" y="95" width="46" height="18"/><rect x="108" y="95" width="46" height="18"/>
+        <rect x="62" y="86" width="46" height="36"/>
+        <line x1="85" y1="86" x2="85" y2="64"/><circle cx="85" cy="58" r="11"/>
+        <line x1="74" y1="58" x2="96" y2="58"/><line x1="85" y1="47" x2="85" y2="69"/>
+        <!-- phone with question -->
+        <rect x="200" y="20" width="95" height="150" rx="10"/>
+        <rect x="200" y="20" width="95" height="26" rx="10" fill="var(--navy-tint)" stroke="none"/>
+        <rect x="212" y="58" width="71" height="9"/>
+        <rect x="212" y="74" width="55" height="7" opacity=".5"/>
+        <rect x="212" y="115" width="71" height="24"/>
+        <circle cx="222" cy="127" r="5"/>
+        <rect x="212" y="144" width="71" height="16" opacity=".4"/>
+      </svg>
+    </div>
+    <div class="panel-text">
+      <h2>हर screen पर सिर्फ़ एक सवाल — बड़े, आसान बटन।</h2>
+      <p class="en">The flow is built on three UX principles: one decision per screen, minimal choices, and large thumb-reachable buttons — so the operator never feels overwhelmed mid-diagnosis.</p>
+      <span class="panel-tag tag-app">📱 Guided Steps</span>
+    </div>
+  </div>
+  <div class="connector"><svg viewBox="0 0 20 32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 0 v26 M2 20 l8 8 8-8"/></svg></div>
+
+  <!-- PANEL 4 — Stuck / Need Help -->
+  <div class="panel">
+    <div class="panel-num"><div class="n">4</div><div class="lbl">Getting Stuck? Ask for Help</div></div>
+    <div class="panel-illus">
+      <svg viewBox="0 0 320 190" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- phone -->
+        <rect x="18" y="20" width="95" height="150" rx="10"/>
+        <rect x="18" y="20" width="95" height="26" rx="10" fill="var(--navy-tint)" stroke="none"/>
+        <circle cx="95" cy="33" r="9" stroke="#C4511E"/><text x="95" y="38" font-size="12" text-anchor="middle" fill="#C4511E" stroke="none" font-weight="700">?</text>
+        <rect x="30" y="58" width="71" height="9"/>
+        <rect x="30" y="74" width="50" height="7" opacity=".5"/>
+        <!-- confused face -->
+        <circle cx="66" cy="118" r="20"/>
+        <path d="M58 113 q4 -5 8 0 M74 113 q4 -5 8 0" stroke-width="3"/>
+        <path d="M56 128 q10 8 20 0" stroke-width="3"/>
+        <!-- arrow to chat -->
+        <path d="M125 95 h60" stroke-dasharray="4 6"/><path d="M175 85 l14 10 -14 10"/>
+        <!-- chat sheet -->
+        <rect x="205" y="60" width="100" height="110" rx="6"/>
+        <rect x="205" y="60" width="100" height="26" fill="var(--navy)" stroke="none"/>
+        <text x="255" y="78" font-size="12" text-anchor="middle" fill="#fff" stroke="none" font-weight="700">मदद चाहिए?</text>
+        <rect x="215" y="98" width="80" height="16" rx="2"/>
+        <rect x="215" y="120" width="80" height="16" rx="2"/>
+        <rect x="215" y="142" width="80" height="16" rx="2"/>
+      </svg>
+    </div>
+    <div class="panel-text">
+      <h2>अटक जाएं? "मदद चाहिए" बटन दबाएं — categorised सवाल तुरंत जवाब देते हैं।</h2>
+      <p class="en">A persistent help button opens quick-question categories (about the step, tools, escalation, tech issues) plus a free-text option — so hesitation doesn't turn into a dropout.</p>
+      <span class="panel-tag tag-help">🤖 Need Help</span>
+    </div>
+  </div>
+  <div class="connector"><svg viewBox="0 0 20 32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 0 v26 M2 20 l8 8 8-8"/></svg></div>
+
+  <!-- PANEL 5 — Diagnosis, tool, escalation -->
+  <div class="panel">
+    <div class="panel-num"><div class="n">5</div><div class="lbl">Diagnosis → Tool → Escalation</div></div>
+    <div class="panel-illus">
+      <svg viewBox="0 0 320 190" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- pump -->
+        <circle cx="55" cy="95" r="34"/><circle cx="55" cy="95" r="8" fill="currentColor" stroke="none"/>
+        <!-- wrench -->
+        <path d="M115 70 l30 30 M100 55 a12 12 0 1 0 17 17 l38 38" stroke="#6AA8B0"/>
+        <!-- arrow to person -->
+        <path d="M170 95 h50" stroke-dasharray="4 6"/><path d="M215 85 l14 10 -14 10"/>
+        <!-- supervisor figure -->
+        <circle cx="260" cy="70" r="16"/>
+        <path d="M260 86 v40 M245 105 h30 M260 126 l-14 30 M260 126 l14 30"/>
+        <path d="M280 60 h20 M280 70 h14" stroke="#C4511E"/>
+      </svg>
+    </div>
+    <div class="panel-text">
+      <h2>सही कारण चुना, सही टूल पहचाना, ज़रूरत पड़ने पर supervisor को सीधे सूचना गई।</h2>
+      <p class="en">Three decisions are captured in sequence: the likely root cause, the tool required to fix it, and whether the fault needed escalating — each auto-scored against the SME-staged answer.</p>
+      <span class="panel-tag tag-app">🔧 Tool + 📤 Escalation</span>
+    </div>
+  </div>
+  <div class="connector"><svg viewBox="0 0 20 32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 0 v26 M2 20 l8 8 8-8"/></svg></div>
+
+  <!-- PANEL 6 — Data captured -->
+  <div class="panel">
+    <div class="panel-num"><div class="n">6</div><div class="lbl">Every Metric, Captured Silently</div></div>
+    <div class="panel-illus">
+      <svg viewBox="0 0 320 190" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- checkmark -->
+        <circle cx="60" cy="95" r="38" stroke="#2E5924"/>
+        <path d="M42 96 l14 14 26 -30" stroke="#2E5924"/>
+        <!-- arrow -->
+        <path d="M115 95 h55" stroke-dasharray="4 6"/><path d="M165 85 l14 10 -14 10"/>
+        <!-- dashboard -->
+        <rect x="195" y="35" width="110" height="120" rx="6"/>
+        <rect x="195" y="35" width="110" height="22" fill="var(--navy)" stroke="none"/>
+        <rect x="207" y="68" width="30" height="35"/><rect x="245" y="50" width="30" height="53"/>
+        <rect x="207" y="115" width="86" height="10"/><rect x="207" y="133" width="60" height="10"/>
+      </svg>
+    </div>
+    <div class="panel-text">
+      <h2>Latency, dropout, root-cause accuracy, tool ID, escalation, help-seeking — सब अपने आप दर्ज होता है।</h2>
+      <p class="en">Nothing needs manual logging. Every tap timestamps itself into a per-operator record, ready for the researcher's Results view and Study Summary dashboard.</p>
+      <span class="panel-tag tag-data">📊 Auto-captured</span>
+    </div>
+  </div>
+
+  <div class="footer-cta">
+    <p>This storyboard pitches the concept end-to-end. The working, clickable version lives in the interactive Open Alert prototype.</p>
+    <div class="brand">DigitalPaani · Open Alert Pilot</div>
+  </div>
+</div>
+
+</body>
+</html>
