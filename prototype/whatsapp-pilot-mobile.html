@@ -162,7 +162,13 @@
   .app-back .chev{font-size:26px;}
   .app-back.show{display:flex;}
   .app-back:hover{background:rgba(255,255,255,.18);border-color:#fff;}
-  .app-header .htxt{min-width:0;}
+  .app-header .htxt{min-width:0;flex:1;}
+  .help-btn{
+    width:36px;height:36px;flex-shrink:0;border-radius:50%;border:2px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-weight:800;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .help-btn:hover{background:rgba(255,255,255,.18);border-color:#fff;}
   .app-header .brand{font-size:12px;font-weight:600;letter-spacing:.2px;color:var(--teal-light);}
   .app-header .fault{font-size:15px;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .progress-track{flex-shrink:0;height:5px;background:var(--navy-tint);display:flex;}
@@ -199,6 +205,56 @@
   .toolchip.need{background:var(--rust-tint);color:var(--rust);border-color:var(--rust);}
   .opt.esc{background:var(--navy);color:#fff;border-color:var(--navy);}
   .opt.esc .ic{font-size:20px;flex-shrink:0;}
+
+  /* ---------- Need Help sheet ---------- */
+  #scr-app{position:relative;}
+  .help-sheet{
+    position:absolute;inset:0;background:rgba(9,36,84,.45);z-index:60;
+    display:none;align-items:flex-end;
+  }
+  .help-sheet.open{display:flex;}
+  .help-panel{
+    width:100%;max-height:82%;background:var(--paper);border-top:2px solid var(--navy);
+    display:flex;flex-direction:column;animation:helpUp .22s ease;
+  }
+  @keyframes helpUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .help-head{
+    flex-shrink:0;background:var(--navy);color:#fff;padding:14px 16px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .help-head .t{font-size:16px;font-weight:700;flex:1;}
+  .help-head button{
+    background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;
+    width:32px;height:32px;font-size:15px;cursor:pointer;flex-shrink:0;
+  }
+  .help-body{flex:1;overflow-y:auto;padding:18px 16px;}
+  .help-cat{
+    width:100%;display:flex;align-items:center;gap:12px;background:var(--white);
+    border:1px solid var(--line);padding:15px;margin-bottom:9px;cursor:pointer;
+    text-align:left;font-size:14.5px;font-weight:600;color:var(--ink);
+  }
+  .help-cat .ic{font-size:20px;flex-shrink:0;}
+  .help-cat:hover{border-color:var(--navy);}
+  .help-q{
+    width:100%;background:var(--white);border:1px solid var(--line);
+    padding:13px 14px;margin-bottom:8px;cursor:pointer;text-align:left;
+    font-size:14px;font-weight:600;color:var(--ink);
+  }
+  .help-q:hover{border-color:var(--teal);}
+  .help-answer{
+    background:var(--teal-tint);border-left:4px solid var(--teal);
+    padding:15px;font-size:14.5px;line-height:1.65;margin-bottom:16px;
+  }
+  .help-backrow{
+    display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;
+    cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;background:none;border:none;padding:0;
+  }
+  .help-input-row{display:flex;gap:8px;margin-top:6px;}
+  .help-input-row input{flex:1;}
+  .help-input-row button{
+    background:var(--navy);color:#fff;border:none;padding:0 18px;
+    font-weight:700;cursor:pointer;font-size:13.5px;
+  }
   /* Line-art equipment illustration per step — visual anchor for the check being done */
   .illus{
     background:var(--white);border:1px solid var(--line);padding:10px;
@@ -383,9 +439,17 @@
         <div class="brand">डिजिटलपानी</div>
         <div class="fault" id="appFault">—</div>
       </div>
+      <button class="help-btn" onclick="openHelp()" title="मदद चाहिए?">?</button>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
     <div class="pad" id="appBody"></div>
+
+    <div class="help-sheet" id="helpSheet">
+      <div class="help-panel">
+        <div class="help-head"><div class="t">🤖 मदद चाहिए?</div><button onclick="closeHelp()">✕</button></div>
+        <div class="help-body" id="helpBody"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ SCREEN 4: DONE (operator · Hindi) ============ -->
@@ -577,6 +641,91 @@ const SCRIPTS = {
 const POST_Q = "इस मार्गदर्शन से आपको कितनी मदद मिली? क्या कोई चरण उलझाने वाला लगा?";
 const TIMEOUT_MIN = 10;
 
+/* ================= NEED HELP — in-flow assistant ================= */
+const HELP_CATS = [
+  {key:'step', label:'इस चरण के बारे में',    ic:'❓'},
+  {key:'tool', label:'टूल के बारे में',         ic:'🔧'},
+  {key:'esc',  label:'एस्केलेशन के बारे में',   ic:'📤'},
+  {key:'tech', label:'फ़ोन/ऐप में समस्या',       ic:'📱'}
+];
+const HELP_QA = {
+  step:[
+    {q:'मुझे इस चरण में क्या check करना है?', a:null},
+    {q:'यह सवाल क्यों पूछा जा रहा है?', a:'आपका जवाब अगले सही चरण की तरफ़ ले जाता है — हर जवाब निदान को एक कदम आगे बढ़ाता है।'}
+  ],
+  tool:[
+    {q:'मुझे टूल कहाँ मिलेगा?', a:'ज़रूरी टूल maintenance department के पास रहता है। Supervisor से संपर्क करें।'},
+    {q:'अगर सही टूल उपलब्ध नहीं है तो क्या करें?', a:'Supervisor को तुरंत बताएं — वो टूल की व्यवस्था करेंगे।'}
+  ],
+  esc:[
+    {q:'एस्केलेट करने का मतलब क्या है?', a:'इसका मतलब है supervisor को सूचित करना, ताकि maintenance team को भेजा जा सके।'},
+    {q:'मुझे किसे कॉल करना है?', a:'अपने shift supervisor को कॉल करें।'}
+  ],
+  tech:[
+    {q:'ऐप ठीक से काम नहीं कर रहा', a:'फ़ोन को बंद करके दोबारा खोलें। समस्या बनी रहे तो supervisor को बताएं।'},
+    {q:'Message नहीं जा रहा', a:'नेटवर्क check करें और दोबारा कोशिश करें।'}
+  ]
+};
+let helpView='cats', helpCat=null, helpAnswerText='';
+function currentStepForHelp(){
+  if(!S || !navStack.length) return null;
+  const top = navStack[navStack.length-1];
+  if(top && top.t==='step'){
+    const st = SCRIPTS[S.fault].steps[top.n-1];
+    if(st && !st.rcOptions) return st;
+  }
+  return null;
+}
+function openHelp(){
+  if(!S) return;
+  helpView='cats'; helpCat=null;
+  S.helpOpens = (S.helpOpens||0)+1;
+  logEvent('HELP', 'Opened help sheet');
+  renderHelp();
+  $('helpSheet').classList.add('open');
+}
+function closeHelp(){ $('helpSheet').classList.remove('open'); }
+function helpPickCat(key){ helpCat=key; helpView='qs'; renderHelp(); }
+function helpBackTo(view){ helpView=view; renderHelp(); }
+function helpPickQ(i){
+  const item = HELP_QA[helpCat][i];
+  const st = currentStepForHelp();
+  const answer = item.a || (st ? `${st.q}${st.detail?' '+st.detail:''}` : 'कृपया screen पर दिया गया सवाल ध्यान से पढ़ें और जो देखा है उसके अनुसार जवाब दें।');
+  S.helpQuestions = S.helpQuestions||[];
+  S.helpQuestions.push(item.q);
+  logEvent('HELP', `Asked: "${item.q}"`);
+  helpAnswerText = answer;
+  helpView='answer';
+  renderHelp();
+}
+function helpAskCustom(){
+  const input = $('helpCustomInput');
+  const v = input.value.trim();
+  if(!v) return;
+  S.helpQuestions = S.helpQuestions||[];
+  S.helpQuestions.push('custom: '+v);
+  logEvent('HELP', `Custom question: "${v}"`);
+  helpAnswerText = 'आपका सवाल दर्ज हो गया है। कृपया इस बीच अपने supervisor से संपर्क करें।';
+  helpView='answer';
+  renderHelp();
+}
+function renderHelp(){
+  const body = $('helpBody');
+  if(helpView==='cats'){
+    body.innerHTML = HELP_CATS.map(c=>`<button class="help-cat" onclick="helpPickCat('${c.key}')"><span class="ic">${c.ic}</span>${c.label}</button>`).join('') +
+      `<div class="help-input-row">
+        <input type="text" id="helpCustomInput" placeholder="या अपना सवाल लिखें…">
+        <button onclick="helpAskCustom()">पूछें</button>
+      </div>`;
+  } else if(helpView==='qs'){
+    body.innerHTML = `<button class="help-backrow" onclick="helpBackTo('cats')">‹ वापस</button><br>` +
+      HELP_QA[helpCat].map((item,i)=>`<button class="help-q" onclick="helpPickQ(${i})">${item.q}</button>`).join('');
+  } else if(helpView==='answer'){
+    body.innerHTML = `<button class="help-backrow" onclick="helpBackTo('qs')">‹ वापस</button><br>
+      <div class="help-answer">${helpAnswerText}</div>`;
+  }
+}
+
 /* ================= STATE ================= */
 let S = null;
 let sentAt = null;
@@ -673,7 +822,8 @@ function startSession(){
   S = { op, fault, shift, start: now().toISOString(),
         latencies: [], stepsCompleted: 0, replied:null,
         dropout:null, rootCause:'', post:'', accuracy:'', actualRC,
-        toolPicked:'', toolExpected:'', toolCorrect:'', escalationNeeded:'', escalated:'' };
+        toolPicked:'', toolExpected:'', toolCorrect:'', escalationNeeded:'', escalated:'',
+        helpOpens:0, helpQuestions:[] };
   EVENTS = [];
   logEvent('CONTEXT', `${op} · Fault ${fault} · ${shift} shift · actual root cause: ${actualRC}`);
   startElapsed();
@@ -754,7 +904,7 @@ function checkCount(){ return SCRIPTS[S.fault].steps.filter(s=>!s.rcOptions).len
 
 /* Back navigation — one screen = one decision (Miller), history stack */
 let navStack = [];
-function navGo(desc){ navStack.push(desc); navRender(desc); updateBack(); }
+function navGo(desc){ closeHelp(); navStack.push(desc); navRender(desc); updateBack(); }
 function navRender(desc){
   if(desc.t==='step') renderStep(desc.n);
   else if(desc.t==='tool') renderTool();
@@ -763,6 +913,7 @@ function navRender(desc){
 }
 function stepBack(){
   if(navStack.length<2) return;
+  closeHelp();
   clearTimeout(timeoutHandle);
   navStack.pop();
   logEvent('BACK', 'Operator went back a step');
@@ -964,6 +1115,7 @@ function showResults(){
           </div>
           ${s.toolPicked?`<div class="res-note">🔧 Tool picked: <b>${s.toolPicked}</b> · expected: <b>${s.toolExpected||'—'}</b></div>`:''}
           ${latDetail?`<div class="res-note">⏱ ${latDetail}</div>`:''}
+          <div class="res-note">🤖 Help sought: <b>${(s.helpQuestions&&s.helpQuestions.length)?`Yes (${s.helpQuestions.length})`:'No'}</b>${(s.helpQuestions&&s.helpQuestions.length)?' — '+s.helpQuestions.join(' · '):''}</div>
           ${s.post?`<div class="res-note quote">"${s.post}"</div>`:''}
           <button class="del-btn" onclick="deleteResult(${i})">🗑 Delete this result</button>
         </div>
@@ -1010,6 +1162,9 @@ function showDash(){
   const escWrong = escReached.length - escCorrect;
   const escNa = n - escReached.length;
 
+  // need-help usage
+  const helpUsed = all.filter(s=>s.helpQuestions && s.helpQuestions.length).length;
+
   // funnel: how many reached each stage
   const maxChk = Math.max(...all.map(s=>SCRIPTS[s.fault]?SCRIPTS[s.fault].steps.filter(x=>!x.rcOptions).length:5), 5);
   const stages = [
@@ -1045,6 +1200,7 @@ function showDash(){
       <div class="tile ${toolScored.length && toolOk/toolScored.length>=0.5?'good':toolScored.length?'bad':''}"><div class="v">${toolScored.length?Math.round(toolOk/toolScored.length*100)+'%':'—'}</div><div class="k">Tool identified correctly (of ${toolScored.length})</div></div>
       <div class="tile ${escReached.length && escCorrect/escReached.length>=0.5?'good':escReached.length?'bad':''}"><div class="v">${escReached.length?Math.round(escCorrect/escReached.length*100)+'%':'—'}</div><div class="k">Escalated correctly (of ${escReached.length})</div></div>
       <div class="tile"><div class="v">${all.filter(s=>s.replied==='Yes').length}<small> / ${n}</small></div><div class="k">Replied to trigger</div></div>
+      <div class="tile"><div class="v">${Math.round(helpUsed/n*100)}<small>%</small></div><div class="k">Sought "Need Help" (${helpUsed} / ${n})</div></div>
     </div>
 
     <div class="chart">
