@@ -23,7 +23,8 @@
     --wa-accent:#25D366; --wa-text:#E9EDEF; --wa-muted:#8696A0;
   }
   *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans','Noto Sans Devanagari',-apple-system,sans-serif;}
-  body{background:#DDDAD2;color:var(--ink);min-height:100vh;padding:16px;}
+  html,body{overflow:hidden;height:100%;}
+  body{background:#DDDAD2;color:var(--ink);padding:12px;}
 
   /* ============ RESEARCHER SHELL ============ */
   .shell{max-width:1180px;margin:0 auto;}
@@ -40,12 +41,13 @@
   .stage{display:flex;justify-content:center;margin-top:16px;}
 
   /* ============ PHONE ============ */
-  .phone{width:391px;height:812px;background:var(--paper);border-radius:36px;border:6px solid #B8B4A8;
+  .phone{width:391px;height:min(812px,calc(100vh - 104px));background:var(--paper);
+    border-radius:36px;border:6px solid #B8B4A8;
     box-shadow:0 24px 60px rgba(26,26,26,.3);overflow:hidden;display:flex;flex-direction:column;position:relative;}
   @media(max-width:1000px){.phone{width:100%;max-width:391px;margin:0 auto;}}
   .statusbar{height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
     padding:0 20px;font-size:12.5px;font-weight:600;background:var(--navy);color:#fff;}
-  .screen{flex:1;overflow-y:auto;display:none;min-height:0;}
+  .screen{flex:1;overflow:hidden;display:none;min-height:0;}
   .screen.on{display:flex;flex-direction:column;}
   .screen::-webkit-scrollbar{width:0;}
   .pad{padding:20px 16px 40px;}
@@ -109,7 +111,7 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .progress-track{flex-shrink:0;height:3px;background:rgba(9,36,84,.07);display:flex;}
   .progress-fill{background:var(--teal);transition:width .35s ease;border-radius:var(--r-pill);}
-  #appBody{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;}
+  #appBody{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
   #appBody::-webkit-scrollbar{width:0;}
   .step-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:9px;letter-spacing:.3px;}
   .q{font-size:24px;font-weight:700;line-height:1.4;margin-bottom:8px;}
@@ -156,14 +158,14 @@
 
   /* a check, asked by the co-pilot */
   .vb .eyebrow{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
-  .vb .cq{font-size:19px;font-weight:600;line-height:1.4;letter-spacing:-.2px;}
-  .vb .cd{font-size:15.5px;color:var(--muted);line-height:1.55;margin-top:5px;}
-  .vb .ctool{font-size:12.5px;font-weight:500;margin-top:10px;color:var(--muted);}
+  .vb .cq{font-size:18.5px;font-weight:600;line-height:1.35;letter-spacing:-.2px;}
+  .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
+  .vb .ctool{font-size:12px;font-weight:500;margin-top:8px;color:var(--muted);}
   .vb .ctool.need{color:var(--rust);font-weight:600;}
-  .vanswers{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .vanswers{display:flex;flex-direction:column;gap:6px;margin-top:11px;}
   .vans{background:var(--white);border:1px solid var(--hair);border-radius:var(--r);color:var(--ink);
-    text-align:left;font-size:16px;font-weight:600;padding:14px 16px;cursor:pointer;
-    box-shadow:var(--lift-sm);transition:.16s;min-height:52px;}
+    text-align:left;font-size:15px;font-weight:600;padding:10px 14px;cursor:pointer;
+    box-shadow:var(--lift-sm);transition:.16s;min-height:42px;}
   .vans:hover{border-color:var(--teal);box-shadow:var(--lift);transform:translateY(-1px);}
   .vans .radio{display:none;}                      /* the card is the target — no radio needed */
   .vanswers.done .vans{opacity:.32;cursor:default;box-shadow:none;transform:none;}
@@ -208,26 +210,35 @@
   .cpconvo{display:none;flex-direction:column;min-height:0;}
   .copilot.expanded .cpconvo{display:flex;flex:1;min-height:0;}
   .vprivacy{display:none;}                         /* removed — one less band of chrome */
-  .vbody{flex:1;min-height:0;overflow-y:auto;padding:16px 14px 6px;display:flex;flex-direction:column;gap:11px;}
-  .vbody::-webkit-scrollbar{width:0;}
-  .vb{max-width:90%;padding:14px 16px;font-size:15px;line-height:1.6;animation:pop .22s ease;
+  /* the stage holds exactly one turn — no transcript, so nothing scrolls */
+  .vbody{flex:1;min-height:0;overflow:hidden;padding:14px 14px 4px;display:flex;flex-direction:column;}
+  .cpnote{flex-shrink:0;display:none;align-items:center;gap:9px;padding:8px 14px;font-size:12px;
+    line-height:1.4;color:var(--muted);background:var(--white);box-shadow:var(--lift-sm);}
+  .cpnote.show{display:flex;}
+  .cpnote .txt{flex:1;min-width:0;}
+  .cpnote b{color:var(--ink);font-weight:600;}
+  .cpnote button{flex-shrink:0;background:var(--navy);color:#fff;border:none;border-radius:var(--r-pill);
+    font-size:11.5px;font-weight:600;padding:6px 12px;cursor:pointer;}
+  .vb{max-width:90%;padding:13px 15px;font-size:15px;line-height:1.55;animation:pop .22s ease;
     border-radius:var(--r-lg);}
   .vb.bot{background:var(--white);box-shadow:var(--lift);align-self:flex-start;border-top-left-radius:6px;}
   .vb.bot.haschecks{max-width:100%;width:100%;}
+  .vb{flex-shrink:0;}
+  .vb.bot.haschecks{display:flex;flex-direction:column;min-height:0;}
+  .vanswers{overflow:hidden;}
   .vb.me{background:var(--navy-tint);color:var(--navy);align-self:flex-end;font-weight:600;
     border-bottom-right-radius:6px;}
   .vb .who{display:none;}                          /* the side of the bubble already says who */
   .vb .spk{margin-top:10px;font-size:12px;font-weight:600;color:var(--navy);background:rgba(9,36,84,.06);
     border:none;border-radius:var(--r-pill);padding:7px 13px;cursor:pointer;}
   .vsteps{margin:8px 0 2px;padding-left:2px;list-style:none;}
-  .vsteps li{display:flex;gap:9px;font-size:14.5px;line-height:1.55;margin-bottom:6px;}
+  .vsteps li{display:flex;gap:9px;font-size:14px;line-height:1.5;margin-bottom:5px;}
   .vsteps li b{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--teal-tint);
     color:#2C5A63;font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center;
     margin-top:2px;}
   .vnum{background:var(--amber-tint);border-radius:var(--r);padding:11px 14px;
     font-size:15px;font-weight:600;color:#6b4200;margin:10px 0;}
-  .vchips{flex-shrink:0;display:flex;gap:8px;padding:8px 14px 10px;overflow-x:auto;scrollbar-width:none;}
-  .vchips::-webkit-scrollbar{height:0;}
+  .vchips{flex-shrink:0;display:flex;flex-wrap:wrap;gap:7px;padding:6px 14px 8px;}
   .vchip{background:transparent;border:1px solid var(--hair);border-radius:var(--r-pill);
     padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);
     white-space:nowrap;flex-shrink:0;}
@@ -410,6 +421,7 @@
 
           <div class="cpconvo" id="cpConvo">
             <div class="vprivacy" id="vPrivacy"></div>
+            <div class="cpnote" id="cpNote"></div>
             <div class="vbody" id="vBody"></div>
             <div class="vchips" id="vChips"></div>
             <div class="vbar">
@@ -688,10 +700,7 @@ function closeStep(){
   const c=curStep();
   if(c&&stepEnter)c.dwell=Math.round((now()-stepEnter)/1000);
 }
-$('vBody').addEventListener('scroll',()=>{
-  const el=$('vBody'),c=curStep();if(!c||el.scrollHeight<=el.clientHeight)return;
-  c.scroll=Math.max(c.scroll,Math.round((el.scrollTop+el.clientHeight)/el.scrollHeight*100));
-});
+/* scroll depth is no longer a signal — nothing scrolls */
 $('vBody').addEventListener('click',e=>{
   const c=curStep();if(!c)return;
   c.taps++;
@@ -721,8 +730,7 @@ function navRender(d){d.t==='step'?cpStep(d.n):d.t==='tool'?cpTool():cpWrap();}
    ============================================================ */
 function cpBubble(html){
   openVoice();
-  const b=botSay(html);
-  return b;
+  return stageSet(html,'bot');
 }
 function answerBlock(labels,onPick){
   const wrap=document.createElement('div');
@@ -747,6 +755,7 @@ function attach(bubble,block){
 }
 function cpStep(n){
   const sc=SCRIPTS[S.fault],st=sc.steps[n-1],total=checkCount();
+  redrawCurrent=()=>cpStep(n);
   if(st.rc){
     $('progFill').style.width='100%';
     const b=cpBubble(`<div class="eyebrow">निदान</div><div class="cq">${st.q}</div>
@@ -766,21 +775,25 @@ function cpStep(n){
     logEvent('REPLY',`चरण ${n} → "${o.label}" · ${fmt(curStep().dwell)}`);
     if(o.escalate)S.escalationNeeded=true;
     if(o.advice){
-      const ab=cpBubble(`<div class="eyebrow">सलाह</div><div class="cd" style="color:var(--ink);font-size:16px">${o.advice}</div>`);
-      lastNarrated='';narrateCurrent();
-      attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
+      redrawCurrent=()=>{
+        const ab=cpBubble(`<div class="eyebrow">सलाह</div><div class="cd" style="color:var(--ink);font-size:16px">${o.advice}</div>`);
+        attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
+      };
+      redrawCurrent();lastNarrated='';narrateCurrent();
     }else navGo({t:'step',n:o.next});
   }));
   logEvent('SENT','चरण '+n+': '+st.q);
   narrateCurrent();
 }
 function cpTool(){
+  redrawCurrent=cpTool;
   $('progFill').style.width='100%';
   const b=cpBubble(`<div class="eyebrow">टूल की पहचान</div><div class="cq">कौन सा टूल चाहिए?</div>`);
   attach(b,answerBlock(SCRIPTS[S.fault].toolOptions,(i,l)=>pickTool(l)));
   narrateCurrent();
 }
 function cpWrap(){
+  redrawCurrent=cpWrap;
   const esc=S.escalationNeeded;
   const b=cpBubble(`<div class="eyebrow">आख़िरी क़दम</div>
     <div class="cq">${esc?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div>
@@ -844,10 +857,6 @@ function openVoice(){
   S.helpOpens++;
   const c=curStep();if(c)c.helped=true;
   logEvent('HELP','Expanded co-pilot conversation'+(c?' at '+c.label:''),'hi');
-  if(S.helpOpens===1){
-    $('vBody').innerHTML='';
-    botSay(`नमस्ते ${S.op.split(' ')[0]}। हर जाँच मैं पढ़कर बताऊँगा — जवाब बोल दीजिए।`);
-  }
   renderChips();
   $('copilot').classList.add('expanded');
   renderConsole();
@@ -858,18 +867,32 @@ function closeVoice(){        // collapse only — the mic keeps listening acros
   el.classList.remove('expanded');
 }
 function renderChips(){   // a few suggestions, not a wall of them
-  $('vChips').innerHTML=CHIPS.slice(0,3).map(c=>`<button class="vchip" onclick="ask('${c.q}','chip')">${c.t}</button>`).join('')
+  $('vChips').innerHTML=CHIPS.slice(0,2).map(c=>`<button class="vchip" onclick="ask('${c.q}','chip')">${c.t}</button>`).join('')
     +`<button class="vchip esc" onclick="escalate('voice')">इंजीनियर को भेजें</button>`;
 }
-function bubble(html,who){
-  const b=document.createElement('div');b.className='vb '+who;b.innerHTML=html;
-  $('vBody').appendChild(b);$('vBody').scrollTop=$('vBody').scrollHeight;return b;
-}
-function meSay(t){bubble(`<span class="who">आप</span>${t}`,'me');}
-function botSay(t,extra){
-  const b=bubble(`<span class="who">डॉ. पानी</span>${t}${extra||''}`,'bot');
-  cpState(listening?'listening':'idle');   // speak() re-sets this if it talks
+/* ---------- one turn on screen, nothing scrolls ----------
+   The stage holds the current card (a check, or an answer). Short
+   conversational lines go to the note strip above it, so a question
+   or a clarification never wipes the check the operator is on. */
+let redrawCurrent=()=>{};
+function stageSet(html,cls){
+  const b=document.createElement('div');
+  b.className='vb '+(cls||'bot');b.innerHTML=html;
+  $('vBody').innerHTML='';$('vBody').appendChild(b);
   return b;
+}
+function note(label,text,btn){
+  const el=$('cpNote');
+  el.innerHTML=`<span class="txt">${label?`<b>${label}</b> `:''}${text}</span>${btn||''}`;
+  el.classList.add('show');
+}
+function clearNote(){$('cpNote').classList.remove('show');$('cpNote').innerHTML='';}
+function bubble(html,who){return stageSet(html,who);}
+function meSay(t){note('आपने कहा —',t);}
+function botSay(t,extra){                  // a short spoken line, not a card
+  note('',t,extra||'');
+  cpState(listening?'listening':'idle');
+  return $('cpNote');
 }
 function sendTyped(){
   const v=$('vInput').value.trim();if(!v)return;
@@ -902,18 +925,15 @@ function answer(text){
   if(k.id==='step'){
     const d=navStack[navStack.length-1];
     const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
-    const line=st?`${st.q} ${st.detail||''}`:'स्क्रीन पर दिया सवाल पढ़ें और जो दिखे वही चुनें।';
-    const b=botSay(`<b>${k.title}</b><br>${line}`+(S.armMedia==='video'?videoCard(k.video||'इस चेक को करते हुए'):''),
-      speakBtn(line));
-    if(S.armMedia==='video')bindVideo(b);
+    const line=st?`${st.q} ${st.detail||''}`:'जो स्क्रीन पर दिखे वही चुनें।';
+    note('',line);speak(line);
     return;
   }
-  let html=`<b>${k.title}</b>`;
+  let html=`<div class="eyebrow">जवाब</div><div class="cq">${k.title}</div>`;
   if(k.num)html+=`<div class="vnum">${k.num}</div>`;
-  if(k.steps)html+=`<ul class="vsteps">${k.steps.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ul>`;
-  if(S.armMedia==='video'&&k.video)html+=videoCard(k.video);
-  const b=botSay(html,speakBtn(k.say||k.title));
-  if(S.armMedia==='video'&&k.video)bindVideo(b);
+  if(k.steps)html+=`<ul class="vsteps">${k.steps.slice(0,4).map((x,i)=>`<li><b>${i+1}</b><span>${x}</span></li>`).join('')}</ul>`;
+  const b=stageSet(html,'bot');
+  attach(b,answerBlock(['ठीक — जाँच पर वापस'],()=>{clearNote();lastNarrated='';redrawCurrent();narrateCurrent();}));
   if(k.say)speak(k.say);
 }
 function speakBtn(t){return `<button class="spk" onclick="speak(${JSON.stringify(t).replace(/"/g,'&quot;')})">🔊 दोबारा सुनें</button>`;}
@@ -1106,8 +1126,7 @@ function voiceAnswer(btn,said){
   if(said&&said!=='(पुष्टि)')meSay(said);
   S.voiceAnswers++;
   logEvent('VOICE',`Answered by voice: “${label}”`,'ok');
-  botSay(`समझ गया — <b>${label}</b>`);
-  speak(label+' — दर्ज कर लिया।');
+  clearNote();
   const before=navStack.length;
   btn.click();
   showUndo(label,before);
