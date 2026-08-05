@@ -372,7 +372,7 @@
               <span class="st" id="vStatus">सुनने के लिए तैयार · हिंदी</span>
               <span class="heard" id="railHeard"></span>
             </div>
-            <button class="chev" id="narrBtn" title="बोलना बंद करें" onclick="toggleNarration()">🔊</button>
+            <button class="chev" id="narrBtn" title="बोलना बंद करें" onclick="event.stopPropagation();toggleNarration()">🔊</button>
             <button class="railmic" id="railMic" onclick="toggleMic()">🎙</button>
             <button class="chev" id="cpChev" title="बातचीत खोलें">⌃</button>
           </div>
@@ -681,11 +681,11 @@ function riskScore(){
 }
 
 /* ===================== APP FLOW ===================== */
-function navGo(desc){closeVoice();navStack.push(desc);beginStep(desc);navRender(desc);updateBack();narrateCurrent();if(cTabCur==='tel')renderConsole();}
+function navGo(desc){navStack.push(desc);beginStep(desc);navRender(desc);updateBack();narrateCurrent();if(cTabCur==='tel')renderConsole();}
 function navRender(d){d.t==='step'?renderStep(d.n):d.t==='tool'?renderTool():renderWrap();}
 function stepBack(){
   if(navStack.length<2)return;
-  closeVoice();closeStep();
+  closeStep();
   const c=curStep();if(c)c.backs++;
   navStack.pop();
   logEvent('BACK','Operator went back a step');
@@ -1050,7 +1050,6 @@ function voiceAnswer(btn,said){
   botSay(`समझ गया — <b>${label}</b>`);
   speak(label+' — दर्ज कर लिया।');
   const before=navStack.length;
-  closeVoice();
   btn.click();
   showUndo(label,before);
 }
@@ -1274,7 +1273,8 @@ function autoStart(){
   if(!actualRC)actualRC=SCRIPTS[document.querySelector('#faultSeg .sel').dataset.v].rcList[0];
   startSession();   // sets the arms, starts the clock
   openApp();        // skip the WhatsApp trigger, land on step 1
-  narrateCurrent(); // and read the first check out loud
+  openVoice();      // the co-pilot is present and interactive from the start
+  narrateCurrent(); // and reads the first check out loud
 }
 autoStart();
 </script>
