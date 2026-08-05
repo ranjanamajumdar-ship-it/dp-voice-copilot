@@ -30,8 +30,8 @@
   .navtoggle button{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;cursor:pointer;padding:6px 13px;border:none;background:transparent;}
   .navtoggle button.sel{background:#fff;color:var(--navy);}
 
-  .stage{display:grid;grid-template-columns:391px 1fr;gap:16px;margin-top:16px;align-items:start;}
-  @media(max-width:1000px){.stage{grid-template-columns:1fr;}}
+  /* operator flow only — the phone is the whole stage, so centre it */
+  .stage{display:flex;justify-content:center;margin-top:16px;}
 
   /* ============ PHONE ============ */
   .phone{width:391px;height:812px;background:var(--paper);border-radius:36px;border:6px solid #B8B4A8;
@@ -240,88 +240,8 @@
   .vidcard.playing .flowdash{animation-play-state:running;}
   @keyframes dash{to{stroke-dashoffset:-24;}}
 
-  /* ============ CONSOLE (monitoring engineer) ============ */
-  .console{background:var(--white);border:1px solid var(--line);min-height:812px;display:flex;flex-direction:column;}
-  .chead{background:#12203f;color:#fff;padding:11px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  .chead .t{font-size:14.5px;font-weight:700;line-height:1.2;}
-  .chead .t span{display:block;font-size:10.5px;color:var(--teal-light);font-weight:500;margin-top:2px;}
-  .chead .spacer{margin-left:auto;}
-  .whoami{display:flex;align-items:center;gap:8px;font-size:12px;}
-  .whoami .av{width:28px;height:28px;border-radius:50%;background:var(--teal);color:#04212a;
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;}
-  .ctabs{display:flex;background:var(--paper);border-bottom:1px solid var(--line);}
-  .ctabs button{border:none;background:transparent;padding:11px 16px;font-size:12.5px;font-weight:700;
-    color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;}
-  .ctabs button.sel{color:var(--navy);border-bottom-color:var(--navy);background:var(--white);}
-  .ctabs .cbadge{display:inline-block;margin-left:6px;background:var(--rust);color:#fff;font-size:10px;
-    padding:1px 6px;border-radius:999px;font-weight:700;}
-  .cbody{flex:1;overflow-y:auto;padding:16px;}
-  .cempty{color:var(--muted);font-size:13px;text-align:center;padding:60px 20px;line-height:1.7;}
-
-  .qcard{border:1px solid var(--line);border-left:4px solid var(--rust);background:var(--white);margin-bottom:12px;}
-  .qcard.acked{border-left-color:var(--teal);}
-  .qcard.closed{border-left-color:var(--sage);opacity:.75;}
-  .qtop{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-  .qtop .nm{font-size:14px;font-weight:700;}
-  .qtop .nm small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px;}
-  .kw{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:3px 8px;text-transform:uppercase;}
-  .kw-help{background:var(--rust-tint);color:var(--rust);border:1px solid var(--rust);}
-  .kw-ack{background:var(--teal-tint);color:#2C5A63;border:1px solid var(--teal);}
-  .kw-risk{background:var(--amber-tint);color:var(--amber);border:1px solid var(--amber);}
-  .kw-done{background:var(--sage-tint);color:var(--sage-forest);border:1px solid var(--sage);}
-  .kw-mine{background:var(--navy-tint);color:var(--navy);border:1px solid var(--navy);}
-  .qtimer{margin-left:auto;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--rust);}
-  .qbody{padding:12px 14px;font-size:13px;line-height:1.6;}
-  .qquote{background:var(--paper);border-left:3px solid var(--navy);padding:9px 11px;margin-bottom:10px;font-size:13px;}
-  .qquote small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.4px;margin-bottom:3px;}
-  .qacts{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:10px;flex-wrap:wrap;}
-  .qacts button{flex:1;min-width:110px;border:none;background:var(--white);padding:10px 6px;font-size:12px;
-    font-weight:700;cursor:pointer;color:var(--navy);}
-  .qacts button:hover{background:var(--navy-tint);}
-  .qacts button.danger{color:var(--rust);} .qacts button.go{background:var(--navy);color:#fff;}
-  .qacts button:disabled{color:var(--muted);cursor:default;background:var(--paper);}
-
-  /* phone-call arm (H3) */
-  .callring{border:1px solid var(--rust);background:var(--rust-tint);padding:14px;margin-bottom:12px;
-    display:flex;align-items:center;gap:12px;animation:pulse 1.2s infinite;}
-  .callring .ic{font-size:24px;}
-  .callring .t{flex:1;font-size:13.5px;font-weight:700;color:var(--rust);line-height:1.4;}
-  .callring .t small{display:block;font-weight:500;color:var(--muted);margin-top:3px;}
-  .callring button{background:var(--rust);color:#fff;border:none;padding:10px 16px;font-weight:700;cursor:pointer;font-size:12.5px;}
-
-  /* telemetry (H2) */
-  .telgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
-  .telcell{background:var(--white);padding:11px 9px;}
-  .telcell .v{font-size:19px;font-weight:700;letter-spacing:-.4px;}
-  .telcell .k{font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
-  .telcell.hot .v{color:var(--rust);}
-  .riskbar{height:24px;background:var(--paper);border:1px solid var(--line);position:relative;margin:12px 0 6px;}
-  .riskbar i{display:block;height:100%;background:var(--sage);transition:width .4s,background .4s;}
-  .riskbar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:11px;font-weight:700;letter-spacing:.4px;}
-  .steptl{border:1px solid var(--line);margin-top:12px;}
-  .steprow{display:grid;grid-template-columns:74px 1fr 58px 40px;gap:8px;align-items:center;
-    padding:8px 11px;font-size:12px;border-bottom:1px solid var(--line);}
-  .steprow:last-child{border-bottom:none;}
-  .steprow .sn{font-weight:700;} .steprow .dw{font-variant-numeric:tabular-nums;text-align:right;}
-  .steprow .bar{height:8px;background:var(--paper);} .steprow .bar i{display:block;height:100%;background:var(--navy);}
-  .steprow.slow .bar i{background:var(--rust);}
-  .steprow .tp{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);}
-
-  .sechead{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);
-    margin:20px 0 9px;display:flex;align-items:center;gap:9px;}
-  .sechead:first-child{margin-top:0;}
-  .sechead:after{content:'';flex:1;height:1px;background:var(--line);}
-
-  .feed{border:1px solid var(--line);}
-  .fev{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:9px 12px;font-size:12px;
-    line-height:1.5;border-bottom:1px solid var(--line);}
-  .fev:last-child{border-bottom:none;}
-  .fev .tm{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px;}
-  .fev.hi{background:var(--rust-tint);}
-  .fev.ok{background:var(--sage-tint);}
-
   /* results */
+  .cempty{padding:26px 16px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7;}
   .hrow{border:1px solid var(--line);margin-bottom:10px;}
   .hrow .hh{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--paper);
     border-bottom:1px solid var(--line);}
@@ -362,7 +282,7 @@
       <div class="screen on" id="scr-setup">
         <div class="pad">
           <h1>New Test</h1>
-          <div class="sub">Set the arms, press Start, hand the phone to the operator. You drive the monitoring console on the right.</div>
+          <div class="sub">Set the arms, press Start, then hand the phone to the operator and watch them work through the flow.</div>
 
           <label>Operator</label>
           <input type="text" id="opCode" placeholder="e.g. Pankaj / OP-04" value="Pankaj (OP-04)">
@@ -478,22 +398,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ==================== MONITORING CONSOLE ==================== -->
-    <div class="console">
-      <div class="chead">
-        <div class="t">Monitoring Console<span>Ganga Vihar STP · 12 MLD</span></div>
-        <div class="spacer"></div>
-        <div class="whoami"><span class="av">PR</span><span>Priyanka · Monitoring Engineer</span></div>
-      </div>
-      <div class="ctabs">
-        <button class="sel" data-ct="queue" onclick="cTab('queue')">Queue<span class="cbadge hide" id="qBadge">0</span></button>
-        <button data-ct="tel" onclick="cTab('tel')">Live telemetry</button>
-        <button data-ct="feed" onclick="cTab('feed')">Event feed</button>
-      </div>
-      <div class="cbody" id="cBody"></div>
-    </div>
-  </div>
 
   <!-- ==================== RESULTS ==================== -->
   <div id="resultsWrap" class="hide" style="background:var(--white);border:1px solid var(--line);padding:20px;margin-top:16px;">
@@ -1042,7 +946,7 @@ function escalate(source){
   if(source==='voice')botSay('ठीक है — मैंने मॉनिटरिंग इंजीनियर को भेज दिया है। जवाब आते ही यहाँ दिखेगा।');
   setAck('sent');
   cTab('queue');renderConsole();
-  toast(S.armEsc==='queue'?'NEEDS HELP raised in queue':'Phone ringing on console');
+  toast(S.armEsc==='queue'?'Sent to the engineer — NEEDS HELP raised':'Sent to the engineer — phone call placed');
 }
 function setAck(state){
   const el=$('ackStrip');
@@ -1054,135 +958,13 @@ function setAck(state){
   if(state==='resolved'){el.classList.add('resolved');el.innerHTML=`✅ इंजीनियर ने इस मुद्दे को बंद किया · ${hhmm(now())}`;}
 }
 
-/* ===================== MONITORING CONSOLE ===================== */
-function cTab(t){
-  cTabCur=t;
-  document.querySelectorAll('.ctabs button').forEach(b=>b.classList.toggle('sel',b.dataset.ct===t));
-  renderConsole();
-}
-function renderConsole(){
-  const b=$('cBody');
-  if(!S){b.innerHTML='<div class="cempty">No active session.<br>Set the arms on the phone and press <b>Start</b>.</div>';return;}
-  $('qBadge').textContent=S.escalatedAt&&!S.resolvedAt?'1':'0';
-  $('qBadge').classList.toggle('hide',!(S.escalatedAt&&!S.resolvedAt));
-  if(cTabCur==='queue')renderQueue(b);
-  else if(cTabCur==='tel')renderTel(b);
-  else renderFeed(b);
-}
+/* The monitoring-engineer console was removed — this prototype is the
+   operator diagnostic flow only. Stubs keep the flow's call sites safe. */
+function renderConsole(){}
+function cTab(){}
+/* session timing maths — used by the saved-run snapshot, not by any UI */
 function waitSec(){return S.escalatedAt?Math.round((now()-S.escalatedAt)/1000):0;}
 function ackSec(){return S.escalatedAt&&S.ackAt?Math.round((S.ackAt-S.escalatedAt)/1000):null;}
-
-function renderQueue(b){
-  let html='';
-  // H3 · phone-call arm presents as an interruption, not a queue item
-  if(S.escalatedAt&&!S.ackAt&&S.armEsc==='call'){
-    html+=`<div class="callring"><span class="ic">📞</span>
-      <div class="t">Incoming call — ${S.op}<small>Unstructured. You do not know the step, the question, or the plant state until you answer.</small></div>
-      <button onclick="ackIssue()">Answer</button></div>`;
-  }
-  if(!S.escalatedAt){
-    html+=`<div class="cempty">Queue is clear.<br><br>Risk watch is live on the <b>Live telemetry</b> tab —
-      an operator can be in trouble before they ever press Help.</div>`;
-  }else{
-    const st=S.resolvedAt?'closed':(S.ackAt?'acked':'');
-    const q=S.queue[0];
-    html+=`<div class="qcard ${st}">
-      <div class="qtop">
-        <div class="nm">${S.op}<small>${SCRIPTS[S.fault].nameEn} · ${q.step}</small></div>
-        ${S.resolvedAt?'<span class="kw kw-done">Closed</span>':S.ackAt?'<span class="kw kw-ack">Acknowledged</span>':'<span class="kw kw-help">Needs help</span>'}
-        ${S.armEsc==='queue'?'<span class="kw kw-mine">Queue</span>':'<span class="kw kw-risk">Phone</span>'}
-        <span class="qtimer">${S.ackAt?('ack in '+fmt(ackSec())):('waiting '+fmt(waitSec()))}</span>
-      </div>
-      <div class="qbody">
-        <div class="qquote"><small>Operator asked · ${q.at} · ${q.src==='voice'?'🎙 voice':'flow'}</small>${q.q}</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.6;">
-          Context carried automatically: fault <b>${SCRIPTS[S.fault].nameEn}</b>, step <b>${q.step}</b>,
-          ${S.helpAsks.length} question(s) asked, abandonment risk <b>${riskScore()}%</b>.
-        </div>
-        <div class="qacts">
-          <button class="go" onclick="ackIssue()" ${S.ackAt?'disabled':''}>${S.ackAt?'✓ Acknowledged':'Acknowledge'}</button>
-          <button onclick="sendGuidance()" ${S.ackAt?'':'disabled'}>Send ${S.armMedia==='video'?'video':'text+image'} guidance</button>
-          <button onclick="closeLoop()" ${S.ackAt?'':'disabled'}>Close the loop</button>
-          <button class="danger" onclick="logCall()">Log follow-up call</button>
-        </div>
-      </div></div>`;
-  }
-  // H5 · ownership record
-  html+=`<div class="sechead">Ownership (H5)</div>
-    <div class="feed"><div class="fev"><span class="tm">${hhmm(new Date(S.start))}</span>
-      <span>${S.armOwn==='named'?`Explicitly assigned to <b>${S.op}</b>`:'Broadcast to all operators — free pickup'} ·
-      outcome: <b>${S.ownershipAction||'pending'}</b></span></div></div>`;
-  b.innerHTML=html;
-}
-function ackIssue(){
-  if(S.ackAt)return;
-  S.ackAt=now();
-  logEvent('ACK',`Engineer acknowledged after ${fmt(ackSec())} (${S.armEsc})`,'ok');
-  setAck('seen');renderConsole();toast('Acknowledged — operator notified');
-}
-function sendGuidance(){
-  logEvent('GUIDANCE',`Sent ${S.armMedia==='video'?'video clip':'text + image'} guidance`);
-  setAck('replied');
-  if(!$('copilot').classList.contains('expanded'))$('copilot').classList.add('expanded');
-  const k=KB.find(x=>x.id==='backwash');
-  let html=`<b>इंजीनियर प्रियंका ने भेजा</b><div class="vnum">${k.num}</div>
-    <ul class="vsteps">${k.steps.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ul>`;
-  if(S.armMedia==='video')html+=videoCard(k.video);
-  const bb=botSay(html,speakBtn(k.say));
-  if(S.armMedia==='video')bindVideo(bb);
-  renderConsole();toast('Guidance delivered to operator');
-}
-function closeLoop(){
-  S.resolvedAt=now();
-  logEvent('CLOSED','Monitoring engineer closed the issue','ok');
-  setAck('resolved');renderConsole();toast('Loop closed by engineer');
-}
-function logCall(){
-  S.followUpCalls++;
-  logEvent('CALL','Engineer made a follow-up call to the operator','hi');
-  renderConsole();toast('Follow-up call logged');
-}
-
-function renderTel(b){
-  const c=curStep();
-  const dw=c&&stepEnter?Math.round((now()-stepEnter)/1000):0;
-  const r=riskScore();
-  const col=r>65?'var(--rust)':r>35?'var(--amber)':'var(--sage)';
-  b.innerHTML=`
-    <div class="sechead">Current step</div>
-    <div class="telgrid">
-      <div class="telcell ${dw>25?'hot':''}"><div class="v">${dw}s</div><div class="k">Time on step</div></div>
-      <div class="telcell"><div class="v">${c?c.taps:0}</div><div class="k">Taps</div></div>
-      <div class="telcell ${c&&c.repeatTaps>1?'hot':''}"><div class="v">${c?c.repeatTaps:0}</div><div class="k">Dead taps</div></div>
-      <div class="telcell"><div class="v">${c?c.scroll:0}%</div><div class="k">Scroll depth</div></div>
-    </div>
-    <div class="riskbar"><i style="width:${r}%;background:${col}"></i>
-      <span>Abandonment risk ${r}% — ${r>65?'INTERVENE NOW':r>35?'watch closely':'healthy'}</span></div>
-    <div style="font-size:11.5px;color:var(--muted);line-height:1.6;">H2: risk is computed from dwell &gt; 25s, taps that hit no control,
-      back-navigation, scroll-hunting, and help opened without escalating.</div>
-
-    <div class="sechead">Step-by-step trail</div>
-    <div class="steptl">${S.steps.map(s=>{
-      const d=s===c&&stepEnter?dw:s.dwell;
-      return `<div class="steprow ${d>25?'slow':''}"><span class="sn">${s.label}</span>
-        <span class="bar"><i style="width:${Math.min(100,d/60*100)}%"></i></span>
-        <span class="dw">${d}s</span><span class="tp">${s.taps}t</span></div>`;}).join('')||'<div class="fev">No steps yet</div>'}</div>
-
-    <div class="sechead">Voice assistant usage</div>
-    <div class="telgrid">
-      <div class="telcell"><div class="v">${S.helpOpens}</div><div class="k">Help opens</div></div>
-      <div class="telcell"><div class="v">${S.voiceAsks}</div><div class="k">Spoken</div></div>
-      <div class="telcell"><div class="v">${S.typedAsks}</div><div class="k">Typed</div></div>
-      <div class="telcell"><div class="v">${S.helpAsks.length}</div><div class="k">Total asks</div></div>
-    </div>
-    ${S.helpAsks.length?`<div class="steptl" style="margin-top:12px">${S.helpAsks.map(a=>
-      `<div class="steprow" style="grid-template-columns:52px 1fr 46px"><span class="sn">${a.at}</span>
-       <span style="line-height:1.4">${a.q}</span><span class="tp">${a.mode==='voice'?'🎙':'⌨'}</span></div>`).join('')}</div>`:''}`;
-}
-function renderFeed(b){
-  b.innerHTML=`<div class="feed">${EVENTS.slice().reverse().map(e=>
-    `<div class="fev ${e.cls}"><span class="tm">${e.t.slice(0,5)}</span><span><b>${e.kw}</b> · ${e.text}</span></div>`).join('')}</div>`;
-}
 
 /* ===================== FINISH + RESULTS ===================== */
 function finish(){
