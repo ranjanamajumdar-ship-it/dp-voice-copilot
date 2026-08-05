@@ -7,6 +7,12 @@
     --rust:#C4511E; --rust-tint:#FAF0EB;
     --amber:#B26B00; --amber-tint:#FBF2E2;
     --paper:#F7F6F2; --ink:#1A1A1A; --muted:#6F6F6F; --line:#E0DDD3; --white:#FFF;
+    /* soft-UI tokens */
+    --r:14px; --r-lg:20px; --r-pill:999px;
+    --hair:rgba(9,36,84,.09);
+    --lift:0 1px 2px rgba(9,36,84,.05), 0 6px 18px rgba(9,36,84,.06);
+    --lift-sm:0 1px 2px rgba(9,36,84,.05);
+    --canvas:#FBFAF7;
     --wa-bg:#0B141A; --wa-header:#202C33; --wa-in:#202C33; --wa-out:#005C4B;
     --wa-accent:#25D366; --wa-text:#E9EDEF; --wa-muted:#8696A0;
   }
@@ -87,14 +93,16 @@
 
   /* ---- App flow ---- */
   .app-header{flex-shrink:0;background:var(--navy);color:#fff;padding:10px 12px;display:flex;align-items:center;gap:9px;}
-  .app-back{height:42px;flex-shrink:0;border:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.08);
-    color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:none;align-items:center;padding:0 12px 0 8px;}
+  .app-back{height:38px;flex-shrink:0;border:none;background:rgba(9,36,84,.06);border-radius:var(--r-pill);
+    color:var(--navy);font-size:14px;font-weight:600;cursor:pointer;display:none;align-items:center;padding:0 14px;}
   .app-back.show{display:flex;}
   .app-header .htxt{min-width:0;flex:1;}
-  .app-header .brand{font-size:11.5px;font-weight:600;color:var(--teal-light);}
-  .app-header .fault{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .progress-track{flex-shrink:0;height:5px;background:var(--navy-tint);display:flex;}
-  .progress-fill{background:var(--teal);transition:width .3s;}
+  .app-header{background:var(--white)!important;color:var(--ink)!important;box-shadow:var(--lift-sm);}
+  .app-header .brand{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.2px;}
+  .app-header .fault{font-size:15px;font-weight:600;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .progress-track{flex-shrink:0;height:3px;background:rgba(9,36,84,.07);display:flex;}
+  .progress-fill{background:var(--teal);transition:width .35s ease;border-radius:var(--r-pill);}
   #appBody{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;}
   #appBody::-webkit-scrollbar{width:0;}
   .step-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:9px;letter-spacing:.3px;}
@@ -120,7 +128,7 @@
 
   /* ---- H6 · live acknowledgement strip inside operator app ---- */
   .ackstrip{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:12.5px;
-    font-weight:600;background:var(--amber-tint);color:var(--amber);border-bottom:1px solid var(--line);}
+    font-weight:500;background:var(--white);color:var(--amber);box-shadow:var(--lift-sm);}
   .ackstrip.seen{background:var(--teal-tint);color:#2C5A63;}
   .ackstrip.resolved{background:var(--sage-tint);color:var(--sage-forest);}
   .ackstrip .dotpulse{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 1.4s infinite;flex-shrink:0;}
@@ -132,38 +140,35 @@
      shrinks #appBody (which scrolls) instead of overlaying it.
      ============================================================ */
   #scr-app{position:relative;}
-  .copilot{flex-shrink:0;background:var(--paper);border-top:3px solid var(--teal);
-    display:flex;flex-direction:column;min-height:0;}
+  .copilot{flex-shrink:0;background:var(--canvas);display:flex;flex-direction:column;min-height:0;}
   /* expanded rail is bounded by the device, never taller than 62% of it */
   .copilot.expanded{height:62%;}
   /* full mode: the co-pilot IS the screen — the flow lives in the conversation */
-  .copilot.full{flex:1;height:auto;border-top:none;}
+  .copilot.full{flex:1;height:auto;}
   .copilot.full .cpconvo{display:flex;flex:1;min-height:0;}
   body .copilot.full ~ *{}                     /* no-op, keeps specificity honest */
 
   /* a check, asked by the co-pilot */
-  .vb .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.6px;color:var(--muted);
-    text-transform:uppercase;margin-bottom:5px;}
-  .vb .cq{font-size:19px;font-weight:700;line-height:1.35;}
-  .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
-  .vb .ctool{font-size:12.5px;font-weight:600;margin-top:9px;color:var(--sage-forest);}
-  .vb .ctool.need{color:var(--rust);}
-  .vb .cillus{margin-top:10px;border:1px solid var(--line);background:var(--white);padding:6px;}
-  .vb .cillus svg{width:100%;height:86px;color:var(--ink);display:block;}
-  .vanswers{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
-  .vans{background:var(--white);border:1px solid var(--navy);color:var(--ink);text-align:left;
-    font-size:16px;font-weight:600;padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;
-    min-height:52px;}
-  .vans:hover{background:var(--navy-tint);}
-  .vans .radio{width:20px;height:20px;border-radius:50%;border:2px solid #8D8D8D;flex-shrink:0;}
-  .vanswers.done .vans{opacity:.45;cursor:default;border-color:var(--line);}
-  .vanswers.done .vans.chosen{opacity:1;background:var(--navy);color:#fff;border-color:var(--navy);}
-  .vanswers.done .vans.chosen .radio{border-color:#fff;background:#fff;}
+  .vb .eyebrow{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .vb .cq{font-size:19px;font-weight:600;line-height:1.4;letter-spacing:-.2px;}
+  .vb .cd{font-size:15.5px;color:var(--muted);line-height:1.55;margin-top:5px;}
+  .vb .ctool{font-size:12.5px;font-weight:500;margin-top:10px;color:var(--muted);}
+  .vb .ctool.need{color:var(--rust);font-weight:600;}
+  .vanswers{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .vans{background:var(--white);border:1px solid var(--hair);border-radius:var(--r);color:var(--ink);
+    text-align:left;font-size:16px;font-weight:600;padding:14px 16px;cursor:pointer;
+    box-shadow:var(--lift-sm);transition:.16s;min-height:52px;}
+  .vans:hover{border-color:var(--teal);box-shadow:var(--lift);transform:translateY(-1px);}
+  .vans .radio{display:none;}                      /* the card is the target — no radio needed */
+  .vanswers.done .vans{opacity:.32;cursor:default;box-shadow:none;transform:none;}
+  .vanswers.done .vans:hover{border-color:var(--hair);}
+  .vanswers.done .vans.chosen{opacity:1;background:var(--teal-tint);border-color:var(--teal);color:#22474E;}
+  .vanswers.done .vans.chosen::before{content:'✓ ';font-weight:700;color:#2C5A63;}
 
   /* --- the always-visible status bar of the rail --- */
-  .cprail{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:10px 12px;
-    background:var(--navy);color:#fff;cursor:pointer;}
-  .cprail .av{width:34px;height:34px;border-radius:50%;background:var(--teal);color:#04212a;
+  .cprail{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:11px 14px;
+    background:var(--white);color:var(--ink);cursor:pointer;box-shadow:var(--lift-sm);}
+  .cprail .av{width:36px;height:36px;border-radius:50%;background:var(--teal-tint);color:#2C5A63;
     display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;
     position:relative;}
   .copilot.listening .cprail .av{background:var(--rust);color:#fff;}
@@ -171,64 +176,68 @@
     border:2px solid var(--rust);animation:ring 1.2s infinite;}
   .copilot.speaking .cprail .av{background:var(--sage);color:#0d2408;}
   .cprail .who{flex:1;min-width:0;}
-  .cprail .who b{display:block;font-size:14px;font-weight:700;line-height:1.2;}
-  .cprail .who .st{display:block;font-size:11px;font-weight:600;color:var(--teal-light);margin-top:2px;
+  .cprail .who b{display:block;font-size:14.5px;font-weight:600;line-height:1.2;}
+  .cprail .who .st{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:2px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .copilot.listening .cprail .who .st{color:#F5B79B;}
-  /* live transcript preview, collapsed state only */
-  .cprail .heard{display:none;font-size:11.5px;font-weight:600;color:#fff;margin-top:3px;
+  .copilot.listening .cprail .who .st{color:var(--rust);font-weight:600;}
+  .cprail .heard{display:none;font-size:12px;font-weight:600;color:var(--ink);margin-top:3px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .copilot.listening .cprail .heard{display:block;}
-  .cprail .chev{flex-shrink:0;width:30px;height:30px;border:1px solid rgba(255,255,255,.4);
-    background:transparent;color:#fff;font-size:13px;cursor:pointer;display:flex;
-    align-items:center;justify-content:center;transition:transform .2s;}
+  .cprail .chev{flex-shrink:0;width:32px;height:32px;border:none;border-radius:var(--r-pill);
+    background:rgba(9,36,84,.05);color:var(--muted);font-size:13px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;transition:transform .25s;}
   .copilot.expanded .cprail .chev{transform:rotate(180deg);}
-  /* mic lives on the rail so it is reachable without expanding */
-  .cprail .railmic{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
-    background:var(--teal);color:#04212a;font-size:19px;display:flex;align-items:center;
-    justify-content:center;position:relative;transition:.15s;}
-  .cprail .railmic.live{background:var(--rust);color:#fff;}
+  .cprail .railmic{display:none;}                 /* one mic only — it lives in the input row */
 
   /* --- undo strip: a voice answer commits, but stays correctable --- */
-  .cpundo{display:none;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;font-weight:600;
-    background:var(--amber-tint);color:#6b4200;border-bottom:1px solid var(--line);}
+  .cpundo{display:none;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;font-weight:500;
+    background:var(--white);color:var(--muted);box-shadow:var(--lift-sm);}
   .cpundo.show{display:flex;}
   .cpundo span{flex:1;}
-  .cpundo button{background:var(--white);border:1px solid var(--amber);color:var(--amber);
-    font-weight:700;font-size:12px;padding:5px 11px;cursor:pointer;}
+  .cpundo b{color:var(--ink);font-weight:600;}
+  .cpundo button{background:transparent;border:1px solid var(--hair);border-radius:var(--r-pill);
+    color:var(--navy);font-weight:600;font-size:12px;padding:6px 13px;cursor:pointer;}
 
   /* --- the conversation, revealed by expanding --- */
   .cpconvo{display:none;flex-direction:column;min-height:0;}
   .copilot.expanded .cpconvo{display:flex;flex:1;min-height:0;}
-  .vprivacy{flex-shrink:0;font-size:11px;padding:7px 14px;background:var(--sage-tint);color:var(--sage-forest);
-    font-weight:600;line-height:1.45;border-bottom:1px solid var(--line);}
-  .vbody{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;}
+  .vprivacy{display:none;}                         /* removed — one less band of chrome */
+  .vbody{flex:1;min-height:0;overflow-y:auto;padding:16px 14px 6px;display:flex;flex-direction:column;gap:11px;}
   .vbody::-webkit-scrollbar{width:0;}
-  .vb{max-width:88%;padding:11px 13px;font-size:15px;line-height:1.6;animation:pop .2s ease;}
-  .vb.bot{background:var(--white);border:1px solid var(--line);border-left:3px solid var(--teal);align-self:flex-start;}
-  .vb.me{background:var(--navy);color:#fff;align-self:flex-end;}
-  .vb .who{display:block;font-size:10px;letter-spacing:.6px;font-weight:700;text-transform:uppercase;
-    color:var(--muted);margin-bottom:4px;}
-  .vb.me .who{color:var(--teal-light);}
-  .vb .spk{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--navy);background:var(--navy-tint);
-    border:none;padding:5px 10px;cursor:pointer;}
+  .vb{max-width:90%;padding:14px 16px;font-size:15px;line-height:1.6;animation:pop .22s ease;
+    border-radius:var(--r-lg);}
+  .vb.bot{background:var(--white);box-shadow:var(--lift);align-self:flex-start;border-top-left-radius:6px;}
+  .vb.bot.haschecks{max-width:100%;width:100%;}
+  .vb.me{background:var(--navy-tint);color:var(--navy);align-self:flex-end;font-weight:600;
+    border-bottom-right-radius:6px;}
+  .vb .who{display:none;}                          /* the side of the bubble already says who */
+  .vb .spk{margin-top:10px;font-size:12px;font-weight:600;color:var(--navy);background:rgba(9,36,84,.06);
+    border:none;border-radius:var(--r-pill);padding:7px 13px;cursor:pointer;}
   .vsteps{margin:8px 0 2px;padding-left:2px;list-style:none;}
   .vsteps li{display:flex;gap:9px;font-size:14.5px;line-height:1.55;margin-bottom:6px;}
-  .vsteps li b{flex-shrink:0;width:20px;height:20px;background:var(--teal);color:#04212a;
-    font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:2px;}
-  .vnum{background:var(--amber-tint);border-left:3px solid var(--amber);padding:9px 11px;
-    font-size:15px;font-weight:700;color:#6b4200;margin:8px 0;}
-  .vchips{flex-shrink:0;display:flex;gap:7px;flex-wrap:wrap;padding:0 14px 10px;}
-  .vchip{background:var(--white);border:1px solid var(--line);padding:9px 12px;font-size:13px;
-    font-weight:600;cursor:pointer;color:var(--ink);text-align:left;}
-  .vchip:hover{border-color:var(--teal);background:var(--teal-tint);}
-  .vchip.esc{border-color:var(--rust);color:var(--rust);}
+  .vsteps li b{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--teal-tint);
+    color:#2C5A63;font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center;
+    margin-top:2px;}
+  .vnum{background:var(--amber-tint);border-radius:var(--r);padding:11px 14px;
+    font-size:15px;font-weight:600;color:#6b4200;margin:10px 0;}
+  .vchips{flex-shrink:0;display:flex;gap:8px;padding:8px 14px 10px;overflow-x:auto;scrollbar-width:none;}
+  .vchips::-webkit-scrollbar{height:0;}
+  .vchip{background:transparent;border:1px solid var(--hair);border-radius:var(--r-pill);
+    padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);
+    white-space:nowrap;flex-shrink:0;}
+  .vchip:hover{border-color:var(--teal);color:var(--ink);background:var(--white);}
+  .vchip.esc{color:var(--rust);border-color:rgba(196,81,30,.3);}
 
-  .vmicbar{flex-shrink:0;background:var(--white);border-top:1px solid var(--line);padding:12px 14px 16px;
-    display:flex;align-items:center;gap:12px;}
-  .micbtn{width:64px;height:64px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
-    background:var(--navy);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;
-    position:relative;transition:.15s;}
+  .vbar{flex-shrink:0;background:var(--white);padding:10px 14px 16px;box-shadow:0 -1px 2px rgba(9,36,84,.04);}
+  .vhint{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:8px;line-height:1.4;}
+  .vhint small{display:block;}
+  .vbar-row{display:flex;align-items:center;gap:10px;}
+  .vbar-row input{flex:1;min-width:0;border:1px solid var(--hair);border-radius:var(--r-pill);
+    padding:13px 16px;font-size:15px;background:var(--canvas);}
+  .vbar-row input:focus{outline:none;border-color:var(--teal);background:var(--white);}
+  .micbtn{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+    background:var(--navy);color:#fff;font-size:21px;display:flex;align-items:center;justify-content:center;
+    position:relative;transition:.16s;box-shadow:var(--lift);}
   .micbtn:hover{background:var(--navy-mid);}
   .micbtn.live{background:var(--rust);}
   .micbtn.live::after{content:'';position:absolute;inset:-9px;border-radius:50%;
@@ -237,16 +246,14 @@
   .micside{flex:1;min-width:0;}
   .micside .hint{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35;}
   .micside .hint small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:3px;}
-  .wave{display:none;align-items:flex-end;gap:3px;height:26px;margin-top:6px;}
+  .wave{display:none;align-items:flex-end;gap:3px;height:18px;margin-top:10px;justify-content:center;}
   .wave.on{display:flex;}
   .wave i{width:4px;background:var(--rust);animation:wv .7s ease-in-out infinite;}
   .wave i:nth-child(2){animation-delay:.08s;} .wave i:nth-child(3){animation-delay:.16s;}
   .wave i:nth-child(4){animation-delay:.24s;} .wave i:nth-child(5){animation-delay:.32s;}
   .wave i:nth-child(6){animation-delay:.4s;} .wave i:nth-child(7){animation-delay:.48s;}
   @keyframes wv{0%,100%{height:6px;}50%{height:24px;}}
-  .vtype{display:flex;gap:6px;padding:0 14px 12px;}
-  .vtype input{flex:1;}
-  .vtype button{background:var(--navy);color:#fff;border:none;padding:0 16px;font-weight:700;cursor:pointer;font-size:13px;}
+  .micside{display:none;}
 
   /* ---- H4 · guidance media ---- */
   .vidcard{margin-top:9px;border:1px solid var(--line);background:#0c161b;}
@@ -398,16 +405,13 @@
             <div class="vprivacy" id="vPrivacy"></div>
             <div class="vbody" id="vBody"></div>
             <div class="vchips" id="vChips"></div>
-            <div class="vtype">
-              <input type="text" id="vInput" placeholder="या यहाँ लिखें…" onkeydown="if(event.key==='Enter')sendTyped()">
-              <button onclick="sendTyped()">भेजें</button>
-            </div>
-            <div class="vmicbar">
-              <button class="micbtn" id="micBtn" onclick="toggleMic()">🎙</button>
-              <div class="micside">
-                <div class="hint" id="micHint">दबाकर बोलें<small>सवाल पूछें — या जवाब बोलें</small></div>
-                <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="vbar">
+              <div class="vhint" id="micHint">दबाकर बोलिए — या लिखिए</div>
+              <div class="vbar-row">
+                <input type="text" id="vInput" placeholder="लिखकर पूछें…" onkeydown="if(event.key==='Enter')sendTyped()">
+                <button class="micbtn" id="micBtn" onclick="toggleMic()" title="बोलें">🎙</button>
               </div>
+              <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
             </div>
           </div>
         </div>
@@ -730,6 +734,7 @@ function answerBlock(labels,onPick){
   return wrap;
 }
 function attach(bubble,block){
+  bubble.classList.add('haschecks');   // a check needs the full width for its answers
   bubble.appendChild(block);
   $('vBody').scrollTop=$('vBody').scrollHeight;
 }
@@ -738,7 +743,7 @@ function cpStep(n){
   if(st.rc){
     $('progFill').style.width='100%';
     const b=cpBubble(`<div class="eyebrow">निदान</div><div class="cq">${st.q}</div>
-      <div class="cillus">${illusSvg(st.illus)}</div>`);
+`);
     attach(b,answerBlock(sc.rcList,(i,l)=>pickRC(l)));
     logEvent('SENT','RC asked by co-pilot');
     narrateCurrent();return;
@@ -747,7 +752,6 @@ function cpStep(n){
   const toolNeeded=st.tool&&st.tool!=='';
   const b=cpBubble(`<div class="eyebrow">चरण ${n} / ${total}</div>
     <div class="cq">${st.q}</div>${st.detail?`<div class="cd">${st.detail}</div>`:''}
-    <div class="cillus">${illusSvg(st.illus)}</div>
     <div class="ctool ${toolNeeded?'need':''}">${toolNeeded?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`);
   attach(b,answerBlock(st.opts.map(o=>o.label),(i)=>{
     const o=st.opts[i];
@@ -835,9 +839,7 @@ function openVoice(){
   logEvent('HELP','Expanded co-pilot conversation'+(c?' at '+c.label:''),'hi');
   if(S.helpOpens===1){
     $('vBody').innerHTML='';
-    botSay(`नमस्ते ${S.op.split(' ')[0]}। मैं डॉ. पानी हूँ — हर चरण साथ में पढ़कर बताऊँगा।<br>
-      माइक दबाकर <b>जवाब भी बोल सकते हैं</b> — जैसे “बंद है”, या पूछिए “कितना PPM डालना है?”।<br>
-      बीच में टोक सकते हैं — मैं रुक जाऊँगा। कहिए “पीछे”, “दोबारा”, या “इंजीनियर को भेजो”।`);
+    botSay(`नमस्ते ${S.op.split(' ')[0]}। हर जाँच मैं पढ़कर बताऊँगा — जवाब बोल दीजिए।`);
   }
   renderChips();
   $('copilot').classList.add('expanded');
@@ -848,9 +850,9 @@ function closeVoice(){        // collapse only — the mic keeps listening acros
   if(!el)return;
   el.classList.remove('expanded');
 }
-function renderChips(){
-  $('vChips').innerHTML=CHIPS.map(c=>`<button class="vchip" onclick="ask('${c.q}','chip')">${c.t}</button>`).join('')
-    +`<button class="vchip esc" onclick="escalate('voice')">📤 इंजीनियर को भेजें</button>`;
+function renderChips(){   // a few suggestions, not a wall of them
+  $('vChips').innerHTML=CHIPS.slice(0,3).map(c=>`<button class="vchip" onclick="ask('${c.q}','chip')">${c.t}</button>`).join('')
+    +`<button class="vchip esc" onclick="escalate('voice')">इंजीनियर को भेजें</button>`;
 }
 function bubble(html,who){
   const b=document.createElement('div');b.className='vb '+who;b.innerHTML=html;
@@ -1139,7 +1141,7 @@ function startMic(){
   }
   wantListen=true;listening=true;
   micUI(true);cpState('listening');
-  $('micHint').innerHTML='सुन रहा हूँ… बोलिए<small>जवाब भी बोल सकते हैं — जैसे “बंद है”</small>';
+  $('micHint').innerHTML='सुन रहा हूँ… बोलिए';
   spinRecog();
 }
 function spinRecog(){
@@ -1199,7 +1201,7 @@ function stopMic(){
   if(recog){try{recog.onend=null;recog.stop();}catch(e){}recog=null;}
   micUI(false);
   cpState('idle');
-  setTimeout(()=>{if(!listening)$('micHint').innerHTML='दबाकर बोलें<small>सवाल पूछें — या जवाब बोलें</small>';},900);
+  setTimeout(()=>{if(!listening)$('micHint').innerHTML='दबाकर बोलिए — या लिखिए';},900);
 }
 
 
