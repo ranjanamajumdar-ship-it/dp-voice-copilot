@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Open Alert — Voice Co-pilot · Step 1: persistent rail</title>
+<title>Open Alert — Voice Co-pilot · voice-first, end to end</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -142,6 +142,29 @@
     display:flex;flex-direction:column;min-height:0;}
   /* expanded rail is bounded by the device, never taller than 62% of it */
   .copilot.expanded{height:62%;}
+  /* full mode: the co-pilot IS the screen — the flow lives in the conversation */
+  .copilot.full{flex:1;height:auto;border-top:none;}
+  .copilot.full .cpconvo{display:flex;flex:1;min-height:0;}
+  body .copilot.full ~ *{}                     /* no-op, keeps specificity honest */
+
+  /* a check, asked by the co-pilot */
+  .vb .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.6px;color:var(--muted);
+    text-transform:uppercase;margin-bottom:5px;}
+  .vb .cq{font-size:19px;font-weight:700;line-height:1.35;}
+  .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
+  .vb .ctool{font-size:12.5px;font-weight:600;margin-top:9px;color:var(--sage-forest);}
+  .vb .ctool.need{color:var(--rust);}
+  .vb .cillus{margin-top:10px;border:1px solid var(--line);background:var(--white);padding:6px;}
+  .vb .cillus svg{width:100%;height:86px;color:var(--ink);display:block;}
+  .vanswers{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+  .vans{background:var(--white);border:1px solid var(--navy);color:var(--ink);text-align:left;
+    font-size:16px;font-weight:600;padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;
+    min-height:52px;}
+  .vans:hover{background:var(--navy-tint);}
+  .vans .radio{width:20px;height:20px;border-radius:50%;border:2px solid #8D8D8D;flex-shrink:0;}
+  .vanswers.done .vans{opacity:.45;cursor:default;border-color:var(--line);}
+  .vanswers.done .vans.chosen{opacity:1;background:var(--navy);color:#fff;border-color:var(--navy);}
+  .vanswers.done .vans.chosen .radio{border-color:#fff;background:#fff;}
 
   /* --- the always-visible status bar of the rail --- */
   .cprail{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:10px 12px;
@@ -442,6 +465,7 @@ const ICONS={
  none:`<svg ${A}><circle cx="80" cy="60" r="30"/><line x1="60" y1="40" x2="100" y2="80"/><line x1="100" y1="40" x2="60" y2="80"/></svg>`
 };
 const illusBox=k=>k&&ICONS[k]?`<div class="illus">${ICONS[k]}</div>`:'';
+const illusSvg=k=>k&&ICONS[k]?ICONS[k]:'';
 const optIcon=k=>k&&ICONS[k]?`<span class="oic">${ICONS[k]}</span>`:'<span class="radio"></span>';
 
 /* ===================== DIAGNOSTIC SCRIPTS (Hindi, Yes/No) ===================== */
@@ -627,6 +651,8 @@ function onAccept(){
 }
 function openApp(){
   logEvent('DEEPLINK','Opened app via deeplink');
+  $('copilot').classList.add('full');   // the co-pilot is the screen, end to end
+  $('appBody').style.display='none';
   $('appFault').textContent=SCRIPTS[S.fault].nameHi;
   renderHelpFraming();
   navStack=[];show('scr-app');navGo({t:'step',n:1});
@@ -658,11 +684,11 @@ function closeStep(){
   const c=curStep();
   if(c&&stepEnter)c.dwell=Math.round((now()-stepEnter)/1000);
 }
-$('appBody').addEventListener('scroll',()=>{
-  const el=$('appBody'),c=curStep();if(!c||el.scrollHeight<=el.clientHeight)return;
+$('vBody').addEventListener('scroll',()=>{
+  const el=$('vBody'),c=curStep();if(!c||el.scrollHeight<=el.clientHeight)return;
   c.scroll=Math.max(c.scroll,Math.round((el.scrollTop+el.clientHeight)/el.scrollHeight*100));
 });
-$('appBody').addEventListener('click',e=>{
+$('vBody').addEventListener('click',e=>{
   const c=curStep();if(!c)return;
   c.taps++;
   if(!e.target.closest('button'))c.repeatTaps++;   // taps that hit nothing = hesitation
@@ -682,7 +708,83 @@ function riskScore(){
 
 /* ===================== APP FLOW ===================== */
 function navGo(desc){navStack.push(desc);beginStep(desc);navRender(desc);updateBack();narrateCurrent();if(cTabCur==='tel')renderConsole();}
-function navRender(d){d.t==='step'?renderStep(d.n):d.t==='tool'?renderTool():renderWrap();}
+function navRender(d){d.t==='step'?cpStep(d.n):d.t==='tool'?cpTool():cpWrap();}
+
+/* ============================================================
+   THE FLOW, ASKED BY THE CO-PILOT
+   Every check is a message from डॉ. पानी with its answers attached.
+   There is no separate form to tap through — this is the whole screen.
+   ============================================================ */
+function cpBubble(html){
+  openVoice();
+  const b=botSay(html);
+  return b;
+}
+function answerBlock(labels,onPick){
+  const wrap=document.createElement('div');
+  wrap.className='vanswers';
+  labels.forEach((l,i)=>{
+    const btn=document.createElement('button');
+    btn.className='vans';
+    btn.innerHTML=`<span class="radio"></span>${l}`;
+    btn.onclick=()=>{
+      if(wrap.classList.contains('done'))return;
+      wrap.classList.add('done');btn.classList.add('chosen');
+      onPick(i,l);
+    };
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+function attach(bubble,block){
+  bubble.appendChild(block);
+  $('vBody').scrollTop=$('vBody').scrollHeight;
+}
+function cpStep(n){
+  const sc=SCRIPTS[S.fault],st=sc.steps[n-1],total=checkCount();
+  if(st.rc){
+    $('progFill').style.width='100%';
+    const b=cpBubble(`<div class="eyebrow">निदान</div><div class="cq">${st.q}</div>
+      <div class="cillus">${illusSvg(st.illus)}</div>`);
+    attach(b,answerBlock(sc.rcList,(i,l)=>pickRC(l)));
+    logEvent('SENT','RC asked by co-pilot');
+    narrateCurrent();return;
+  }
+  $('progFill').style.width=((n-1)/total*100)+'%';
+  const toolNeeded=st.tool&&st.tool!=='';
+  const b=cpBubble(`<div class="eyebrow">चरण ${n} / ${total}</div>
+    <div class="cq">${st.q}</div>${st.detail?`<div class="cd">${st.detail}</div>`:''}
+    <div class="cillus">${illusSvg(st.illus)}</div>
+    <div class="ctool ${toolNeeded?'need':''}">${toolNeeded?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`);
+  attach(b,answerBlock(st.opts.map(o=>o.label),(i)=>{
+    const o=st.opts[i];
+    closeStep();
+    logEvent('REPLY',`चरण ${n} → "${o.label}" · ${fmt(curStep().dwell)}`);
+    if(o.escalate)S.escalationNeeded=true;
+    if(o.advice){
+      const ab=cpBubble(`<div class="eyebrow">सलाह</div><div class="cd" style="color:var(--ink);font-size:16px">${o.advice}</div>`);
+      lastNarrated='';narrateCurrent();
+      attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
+    }else navGo({t:'step',n:o.next});
+  }));
+  logEvent('SENT','चरण '+n+': '+st.q);
+  narrateCurrent();
+}
+function cpTool(){
+  $('progFill').style.width='100%';
+  const b=cpBubble(`<div class="eyebrow">टूल की पहचान</div><div class="cq">कौन सा टूल चाहिए?</div>`);
+  attach(b,answerBlock(SCRIPTS[S.fault].toolOptions,(i,l)=>pickTool(l)));
+  narrateCurrent();
+}
+function cpWrap(){
+  const esc=S.escalationNeeded;
+  const b=cpBubble(`<div class="eyebrow">आख़िरी क़दम</div>
+    <div class="cq">${esc?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div>
+    <div class="cd">${esc?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>`);
+  const labels=esc?['हाँ, इंजीनियर को भेजें','पूरा हुआ']:['पूरा हुआ'];
+  attach(b,answerBlock(labels,(i,l)=>{l.includes('इंजीनियर')?escalate('flow'):finish();}));
+  narrateCurrent();
+}
 function stepBack(){
   if(navStack.length<2)return;
   closeStep();
@@ -698,37 +800,9 @@ function toolChip(st){
   const n=st.tool&&st.tool!=='';
   return `<div class="toolchip ${n?'need':''}">${n?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`;
 }
-function renderStep(n){
-  const st=SCRIPTS[S.fault].steps[n-1],total=checkCount(),body=$('appBody');
-  if(st.rc){
-    $('progFill').style.width='100%';
-    body.innerHTML=`<div class="step-label">निदान</div>${illusBox(st.illus)}<div class="q">${st.q}</div><div class="opts-wrap">`+
-      SCRIPTS[S.fault].rcList.map(o=>`<button class="opt" onclick="pickRC('${o.replace(/'/g,"\\'")}')"><span class="radio"></span>${o}</button>`).join('')+`</div>`;
-    logEvent('SENT','RC screen shown');return;
-  }
-  $('progFill').style.width=((n-1)/total*100)+'%';
-  body.innerHTML=`<div class="step-label">चरण ${n} / ${total}</div>${illusBox(st.illus)}
-    <div class="q">${st.q}</div>${st.detail?`<div class="q-detail">${st.detail}</div>`:''}
-    ${toolChip(st)}<div class="opts-wrap" id="optsWrap"></div>`;
-  const wrap=$('optsWrap');
-  st.opts.forEach(o=>{
-    const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="radio"></span>${o.label}`;
-    b.onclick=()=>{
-      closeStep();
-      logEvent('REPLY',`चरण ${n} → "${o.label}" · ${fmt(curStep().dwell)}`);
-      if(o.escalate)S.escalationNeeded=true;
-      if(o.advice){
-        body.innerHTML=`<div class="step-label">चरण ${n} / ${total}</div>${illusBox(o.illus||st.illus)}
-          <div class="advice ${o.warn?'warn':''}"><b>सलाह</b>${o.advice}</div>${toolChip(st)}
-          <div class="opts-wrap"><button class="btn btn-primary center" id="advNext">आगे बढ़ें</button></div>`;
-        $('advNext').onclick=()=>navGo({t:'step',n:o.next});
-        lastNarrated='';narrateCurrent();      // the advice is new information — read it out
-      }else navGo({t:'step',n:o.next});
-    };
-    wrap.appendChild(b);
-  });
-  logEvent('SENT','चरण '+n+': '+st.q);
-}
+/* The old tap-through form renderers are gone — cpStep/cpTool/cpWrap
+   above ask everything through the co-pilot instead. These two commit
+   the answer and move the flow on, so they stay. */
 function pickRC(label){
   closeStep();
   S.rootCause=label;
@@ -736,25 +810,9 @@ function pickRC(label){
   logEvent('ACCURACY',`Picked "${label}" vs staged "${S.actualRC}" → ${S.accuracy}`,S.accuracy==='Match'?'ok':'hi');
   navGo({t:'tool'});
 }
-function renderTool(){
-  $('progFill').style.width='100%';
-  $('appBody').innerHTML=`<div class="step-label">टूल की पहचान</div><div class="q">कौन सा टूल चाहिए?</div>
-    <div class="opts-wrap">`+SCRIPTS[S.fault].toolOptions.map(o=>
-      `<button class="opt" onclick="pickTool('${o.replace(/'/g,"\\'")}')">${optIcon({'मैकेनिकल सील':'seal','ग्लैंड':'gland','बेयरिंग':'bearing','कोई टूल नहीं':'none','डी.ओ. प्रोब किट':'probe','डिफ्यूज़र स्पैनर':'diffuser'}[o])}${o}</button>`).join('')+`</div>`;
-}
 function pickTool(t){
   closeStep();S.toolPicked=t;logEvent('REPLY','Tool → '+t);
   navGo({t:'wrap'});
-}
-function renderWrap(){
-  const escNeeded=S.escalationNeeded;
-  $('appBody').innerHTML=`<div class="step-label">आख़िरी क़दम</div>
-    <div class="q">${escNeeded?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div>
-    <div class="q-detail">${escNeeded?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>
-    <div class="opts-wrap">
-      ${escNeeded?`<button class="opt" onclick="escalate('flow')"><span class="radio"></span>हाँ, इंजीनियर को भेजें</button>`:''}
-      <button class="opt" onclick="finish()"><span class="radio"></span>पूरा हुआ</button>
-    </div>`;
 }
 
 /* ===================== VOICE CO-PILOT RAIL =====================
@@ -925,14 +983,14 @@ function shutUp(){                      // barge-in: operator talks, co-pilot yi
 /* ---------- narration: the co-pilot speaks first ---------- */
 function narrateCurrent(){
   if(!narrateOn||!S)return;
-  const body=$('appBody');if(!body)return;
-  const q=body.querySelector('.q,.advice');if(!q)return;
-  const detail=body.querySelector('.q-detail');
-  const opts=[...body.querySelectorAll('.opt')].map(b=>b.textContent.trim()).filter(Boolean);
-  let line=q.textContent.replace(/^सलाह/,'').trim();
-  if(detail)line+=' '+detail.textContent.trim();
+  const bubbles=[...$('vBody').querySelectorAll('.vb.bot')];
+  const last=bubbles[bubbles.length-1];if(!last)return;
+  const q=last.querySelector('.cq'),d=last.querySelector('.cd'),tool=last.querySelector('.ctool');
+  const opts=visibleOptions().map(b=>b.textContent.trim()).filter(Boolean);
+  let line=(q?q.textContent.trim():last.textContent.replace(/^डॉ\. पानी/,'').trim());
+  if(d)line+=' '+d.textContent.trim();
+  if(tool)line+=' '+tool.textContent.replace(/[🔧✅]/g,'').trim()+'।';
   if(opts.length)line+=' विकल्प: '+opts.join(', या ')+'।';
-  else if(body.querySelector('#advNext'))line+=' आगे बढ़ने के लिए बोलिए “आगे”।';
   if(line===lastNarrated)return;         // don't repeat on a re-render
   lastNarrated=line;
   S.narrations++;
@@ -954,10 +1012,9 @@ const ORDINAL={'पहला':0,'पहले':0,'एक':0,'दूसरा':1,
 const norm=t=>t.toLowerCase().replace(/[।,.?!"“”]/g,' ').replace(/\s+/g,' ').trim();
 
 function visibleOptions(){
-  const body=$('appBody');
-  const opts=[...body.querySelectorAll('.opt')];
-  const next=body.querySelector('#advNext');
-  return next?[...opts,next]:opts;
+  const blocks=[...$('vBody').querySelectorAll('.vanswers')].filter(w=>!w.classList.contains('done'));
+  const live=blocks[blocks.length-1];
+  return live?[...live.querySelectorAll('.vans')]:[];
 }
 /* score how well an utterance matches a button's label */
 function scoreOption(said,label){
