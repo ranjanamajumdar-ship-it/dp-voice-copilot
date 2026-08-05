@@ -1039,4 +1039,14 @@ function showResults(){
       <div class="hnote">${h.n}</div></div>`).join('');
 }
 renderConsole();
+
+/* ===================== OPEN STRAIGHT INTO THE FLOW =====================
+   The page lands on चरण 1 with the default arms. The setup screen is
+   still there for changing arms — press "Test" in the top bar. */
+function autoStart(){
+  if(!actualRC)actualRC=SCRIPTS[document.querySelector('#faultSeg .sel').dataset.v].rcList[0];
+  startSession();   // sets the arms, starts the clock
+  openApp();        // skip the WhatsApp trigger, land on step 1
+}
+autoStart();
 </script>
