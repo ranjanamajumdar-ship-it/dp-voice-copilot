@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Alert — Voice Co-pilot · Step 1: persistent rail</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#092454; --navy-mid:#1a2d5d; --navy-tint:#E8EBF2;
+    --teal:#6AA8B0; --teal-light:#B0C3D6; --teal-tint:#E8F0F2;
+    --sage:#8AB878; --sage-forest:#2E5924; --sage-tint:#F1F8EC;
+    --rust:#C4511E; --rust-tint:#FAF0EB;
+    --amber:#B26B00; --amber-tint:#FBF2E2;
+    --paper:#F7F6F2; --ink:#1A1A1A; --muted:#6F6F6F; --line:#E0DDD3; --white:#FFF;
+    --wa-bg:#0B141A; --wa-header:#202C33; --wa-in:#202C33; --wa-out:#005C4B;
+    --wa-accent:#25D366; --wa-text:#E9EDEF; --wa-muted:#8696A0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans','Noto Sans Devanagari',-apple-system,sans-serif;}
+  body{background:#DDDAD2;color:var(--ink);min-height:100vh;padding:16px;}
+
+  /* ============ RESEARCHER SHELL ============ */
+  .shell{max-width:1180px;margin:0 auto;}
+  .rbar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 16px;flex-wrap:wrap;}
+  .rbar .brand{font-size:14px;font-weight:600;line-height:1.2;}
+  .rbar .brand span{display:block;font-size:10px;color:var(--teal-light);font-weight:500;}
+  .rbar .spacer{margin-left:auto;}
+  .rbar .timer{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .navtoggle{display:flex;border:1px solid rgba(255,255,255,.35);}
+  .navtoggle button{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;cursor:pointer;padding:6px 13px;border:none;background:transparent;}
+  .navtoggle button.sel{background:#fff;color:var(--navy);}
+
+  .stage{display:grid;grid-template-columns:391px 1fr;gap:16px;margin-top:16px;align-items:start;}
+  @media(max-width:1000px){.stage{grid-template-columns:1fr;}}
+
+  /* ============ PHONE ============ */
+  .phone{width:391px;height:812px;background:var(--paper);border-radius:36px;border:6px solid #B8B4A8;
+    box-shadow:0 24px 60px rgba(26,26,26,.3);overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  @media(max-width:1000px){.phone{width:100%;max-width:391px;margin:0 auto;}}
+  .statusbar{height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;font-size:12.5px;font-weight:600;background:var(--navy);color:#fff;}
+  .screen{flex:1;overflow-y:auto;display:none;min-height:0;}
+  .screen.on{display:flex;flex-direction:column;}
+  .screen::-webkit-scrollbar{width:0;}
+  .pad{padding:20px 16px 40px;}
+
+  h1{font-size:21px;font-weight:600;margin-bottom:4px;letter-spacing:-.2px;}
+  .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+
+  label{font-size:11.5px;color:var(--muted);display:block;margin:14px 0 6px;font-weight:600;letter-spacing:.2px;}
+  input[type=text]{width:100%;background:var(--white);border:none;border-bottom:1px solid #8D8D8D;color:var(--ink);
+    padding:11px 13px;font-size:14px;outline:none;}
+  input:focus{outline:2px solid var(--navy);outline-offset:-2px;}
+  .seg{display:flex;gap:1px;background:var(--line);}
+  .seg button{flex:1;background:var(--white);border:none;color:var(--muted);padding:11px 4px;
+    font-size:11.5px;font-weight:600;cursor:pointer;line-height:1.3;}
+  .seg button.sel{background:var(--navy);color:#fff;}
+  .seg.arm button.sel{background:var(--teal);color:#04212a;}
+  .armnote{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.45;}
+  .armnote b{color:var(--navy);}
+
+  .btn{width:100%;border:none;padding:14px 16px;font-size:14px;font-weight:600;cursor:pointer;
+    margin-top:14px;text-align:left;display:flex;justify-content:space-between;align-items:center;}
+  .btn:after{content:'→';}
+  .btn.center{justify-content:center;} .btn.center:after{content:'';}
+  .btn-primary{background:var(--navy);color:#fff;} .btn-primary:hover{background:var(--navy-mid);}
+  .btn-secondary{background:transparent;color:var(--navy);border:1px solid var(--navy);}
+  .btn-danger{background:transparent;color:var(--rust);border:1px solid var(--rust);}
+
+  /* ---- WhatsApp ---- */
+  #scr-wa{background:var(--wa-bg);}
+  .wa-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--wa-header);color:var(--wa-text);}
+  .wa-header .avatar{width:34px;height:34px;border-radius:50%;background:var(--wa-accent);color:#04160B;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .wa-header .t{font-size:14px;font-weight:600;}
+  .wa-header .t span{display:block;font-size:10.5px;color:var(--wa-muted);font-weight:400;}
+  #waScroll{flex:1;overflow-y:auto;padding:16px 14px 8px;}
+  .wa-bubble{max-width:84%;margin-bottom:8px;padding:9px 12px;font-size:14.5px;line-height:1.6;
+    border-radius:9px;animation:pop .25s ease;color:var(--wa-text);}
+  @keyframes pop{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .wa-in{background:var(--wa-in);border-top-left-radius:0;}
+  .wa-out{background:var(--wa-out);border-top-right-radius:0;margin-left:auto;}
+  .wa-bubble .time{display:block;font-size:10px;color:var(--wa-muted);margin-top:4px;text-align:right;}
+  .wa-link{display:block;margin-top:8px;padding:11px;background:rgba(37,211,102,.12);border:1px solid var(--wa-accent);
+    border-radius:8px;color:var(--wa-accent);font-weight:700;font-size:13.5px;text-align:center;cursor:pointer;}
+  .wa-replybar{flex-shrink:0;padding:10px 14px 16px;background:var(--wa-header);display:flex;flex-direction:column;gap:8px;}
+  .wa-chip{width:100%;background:transparent;border:1px solid var(--wa-accent);color:var(--wa-accent);
+    border-radius:999px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;}
+  .typing{display:inline-flex;gap:4px;padding:13px;}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--wa-muted);animation:blink 1s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s;}.typing i:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{50%{opacity:.25;}}
+
+  /* ---- App flow ---- */
+  .app-header{flex-shrink:0;background:var(--navy);color:#fff;padding:10px 12px;display:flex;align-items:center;gap:9px;}
+  .app-back{height:42px;flex-shrink:0;border:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.08);
+    color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:none;align-items:center;padding:0 12px 0 8px;}
+  .app-back.show{display:flex;}
+  .app-header .htxt{min-width:0;flex:1;}
+  .app-header .brand{font-size:11.5px;font-weight:600;color:var(--teal-light);}
+  .app-header .fault{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .progress-track{flex-shrink:0;height:5px;background:var(--navy-tint);display:flex;}
+  .progress-fill{background:var(--teal);transition:width .3s;}
+  #appBody{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;}
+  #appBody::-webkit-scrollbar{width:0;}
+  .step-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:9px;letter-spacing:.3px;}
+  .q{font-size:24px;font-weight:700;line-height:1.4;margin-bottom:8px;}
+  .q-detail{font-size:16.5px;color:var(--muted);line-height:1.55;margin-bottom:18px;}
+  .opts-wrap{margin-top:auto;}
+  .opt{width:100%;background:var(--white);border:1px solid var(--line);color:var(--ink);min-height:62px;
+    padding:16px;font-size:17.5px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:10px;
+    display:flex;align-items:center;gap:13px;}
+  .opt:hover{border-color:var(--navy);} .opt:active{background:var(--navy-tint);}
+  .opt .radio{width:23px;height:23px;border-radius:50%;border:2px solid #8D8D8D;flex-shrink:0;}
+  .opt .oic{width:30px;height:30px;flex-shrink:0;color:var(--navy);} .opt .oic svg{width:100%;height:100%;}
+  .advice{border-left:4px solid var(--teal);background:var(--teal-tint);padding:15px;font-size:16.5px;
+    line-height:1.6;margin-bottom:18px;animation:pop .25s ease;}
+  .advice.warn{border-left-color:var(--rust);background:var(--rust-tint);}
+  .advice b{display:block;font-size:11.5px;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;font-weight:700;}
+  .toolchip{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 13px;font-size:13.5px;
+    font-weight:600;border:1px solid var(--line);align-self:flex-start;background:var(--sage-tint);color:var(--sage-forest);}
+  .toolchip.need{background:var(--rust-tint);color:var(--rust);border-color:var(--rust);}
+  .illus{background:var(--white);border:1px solid var(--line);padding:8px;display:flex;
+    align-items:center;justify-content:center;margin-bottom:14px;}
+  .illus svg{width:100%;height:110px;color:var(--ink);}
+
+  /* ---- H6 · live acknowledgement strip inside operator app ---- */
+  .ackstrip{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:12.5px;
+    font-weight:600;background:var(--amber-tint);color:var(--amber);border-bottom:1px solid var(--line);}
+  .ackstrip.seen{background:var(--teal-tint);color:#2C5A63;}
+  .ackstrip.resolved{background:var(--sage-tint);color:var(--sage-forest);}
+  .ackstrip .dotpulse{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 1.4s infinite;flex-shrink:0;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  /* ============================================================
+     VOICE CO-PILOT RAIL — always docked, never covers the question.
+     The rail lives in the app screen's flex column, so expanding it
+     shrinks #appBody (which scrolls) instead of overlaying it.
+     ============================================================ */
+  #scr-app{position:relative;}
+  .copilot{flex-shrink:0;background:var(--paper);border-top:3px solid var(--teal);
+    display:flex;flex-direction:column;min-height:0;}
+  /* expanded rail is bounded by the device, never taller than 62% of it */
+  .copilot.expanded{height:62%;}
+
+  /* --- the always-visible status bar of the rail --- */
+  .cprail{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:10px 12px;
+    background:var(--navy);color:#fff;cursor:pointer;}
+  .cprail .av{width:34px;height:34px;border-radius:50%;background:var(--teal);color:#04212a;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;
+    position:relative;}
+  .copilot.listening .cprail .av{background:var(--rust);color:#fff;}
+  .copilot.listening .cprail .av::after{content:'';position:absolute;inset:-6px;border-radius:50%;
+    border:2px solid var(--rust);animation:ring 1.2s infinite;}
+  .copilot.speaking .cprail .av{background:var(--sage);color:#0d2408;}
+  .cprail .who{flex:1;min-width:0;}
+  .cprail .who b{display:block;font-size:14px;font-weight:700;line-height:1.2;}
+  .cprail .who .st{display:block;font-size:11px;font-weight:600;color:var(--teal-light);margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .copilot.listening .cprail .who .st{color:#F5B79B;}
+  /* live transcript preview, collapsed state only */
+  .cprail .heard{display:none;font-size:11.5px;font-weight:600;color:#fff;margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .copilot.listening .cprail .heard{display:block;}
+  .cprail .chev{flex-shrink:0;width:30px;height:30px;border:1px solid rgba(255,255,255,.4);
+    background:transparent;color:#fff;font-size:13px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;transition:transform .2s;}
+  .copilot.expanded .cprail .chev{transform:rotate(180deg);}
+  /* mic lives on the rail so it is reachable without expanding */
+  .cprail .railmic{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--teal);color:#04212a;font-size:19px;display:flex;align-items:center;
+    justify-content:center;position:relative;transition:.15s;}
+  .cprail .railmic.live{background:var(--rust);color:#fff;}
+
+  /* --- the conversation, revealed by expanding --- */
+  .cpconvo{display:none;flex-direction:column;min-height:0;}
+  .copilot.expanded .cpconvo{display:flex;flex:1;min-height:0;}
+  .vprivacy{flex-shrink:0;font-size:11px;padding:7px 14px;background:var(--sage-tint);color:var(--sage-forest);
+    font-weight:600;line-height:1.45;border-bottom:1px solid var(--line);}
+  .vbody{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;}
+  .vbody::-webkit-scrollbar{width:0;}
+  .vb{max-width:88%;padding:11px 13px;font-size:15px;line-height:1.6;animation:pop .2s ease;}
+  .vb.bot{background:var(--white);border:1px solid var(--line);border-left:3px solid var(--teal);align-self:flex-start;}
+  .vb.me{background:var(--navy);color:#fff;align-self:flex-end;}
+  .vb .who{display:block;font-size:10px;letter-spacing:.6px;font-weight:700;text-transform:uppercase;
+    color:var(--muted);margin-bottom:4px;}
+  .vb.me .who{color:var(--teal-light);}
+  .vb .spk{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--navy);background:var(--navy-tint);
+    border:none;padding:5px 10px;cursor:pointer;}
+  .vsteps{margin:8px 0 2px;padding-left:2px;list-style:none;}
+  .vsteps li{display:flex;gap:9px;font-size:14.5px;line-height:1.55;margin-bottom:6px;}
+  .vsteps li b{flex-shrink:0;width:20px;height:20px;background:var(--teal);color:#04212a;
+    font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+  .vnum{background:var(--amber-tint);border-left:3px solid var(--amber);padding:9px 11px;
+    font-size:15px;font-weight:700;color:#6b4200;margin:8px 0;}
+  .vchips{flex-shrink:0;display:flex;gap:7px;flex-wrap:wrap;padding:0 14px 10px;}
+  .vchip{background:var(--white);border:1px solid var(--line);padding:9px 12px;font-size:13px;
+    font-weight:600;cursor:pointer;color:var(--ink);text-align:left;}
+  .vchip:hover{border-color:var(--teal);background:var(--teal-tint);}
+  .vchip.esc{border-color:var(--rust);color:var(--rust);}
+
+  .vmicbar{flex-shrink:0;background:var(--white);border-top:1px solid var(--line);padding:12px 14px 16px;
+    display:flex;align-items:center;gap:12px;}
+  .micbtn{width:64px;height:64px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+    background:var(--navy);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;
+    position:relative;transition:.15s;}
+  .micbtn:hover{background:var(--navy-mid);}
+  .micbtn.live{background:var(--rust);}
+  .micbtn.live::after{content:'';position:absolute;inset:-9px;border-radius:50%;
+    border:2px solid var(--rust);animation:ring 1.2s infinite;}
+  @keyframes ring{0%{transform:scale(.85);opacity:.9;}100%{transform:scale(1.25);opacity:0;}}
+  .micside{flex:1;min-width:0;}
+  .micside .hint{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35;}
+  .micside .hint small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:3px;}
+  .wave{display:none;align-items:flex-end;gap:3px;height:26px;margin-top:6px;}
+  .wave.on{display:flex;}
+  .wave i{width:4px;background:var(--rust);animation:wv .7s ease-in-out infinite;}
+  .wave i:nth-child(2){animation-delay:.08s;} .wave i:nth-child(3){animation-delay:.16s;}
+  .wave i:nth-child(4){animation-delay:.24s;} .wave i:nth-child(5){animation-delay:.32s;}
+  .wave i:nth-child(6){animation-delay:.4s;} .wave i:nth-child(7){animation-delay:.48s;}
+  @keyframes wv{0%,100%{height:6px;}50%{height:24px;}}
+  .vtype{display:flex;gap:6px;padding:0 14px 12px;}
+  .vtype input{flex:1;}
+  .vtype button{background:var(--navy);color:#fff;border:none;padding:0 16px;font-weight:700;cursor:pointer;font-size:13px;}
+
+  /* ---- H4 · guidance media ---- */
+  .vidcard{margin-top:9px;border:1px solid var(--line);background:#0c161b;}
+  .vidstage{position:relative;aspect-ratio:16/9;background:radial-gradient(120% 120% at 50% 0,#12242c,#0a1318);overflow:hidden;}
+  .vidstage svg{position:absolute;inset:0;width:100%;height:100%;}
+  .vidplay{position:absolute;inset:0;margin:auto;width:52px;height:52px;border-radius:50%;border:none;
+    background:rgba(106,168,176,.95);color:#04212a;font-size:21px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;}
+  .vidcap{position:absolute;left:0;right:0;bottom:0;padding:9px 11px;font-size:12.5px;color:#EAF1F0;
+    background:linear-gradient(0deg,rgba(6,12,15,.94),transparent);min-height:42px;display:flex;align-items:flex-end;}
+  .vidbar{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.08);}
+  .vidbar .track{flex:1;height:5px;background:rgba(255,255,255,.15);position:relative;}
+  .vidbar .prog{position:absolute;left:0;top:0;bottom:0;background:var(--teal);width:0;}
+  .vidbar .tm{font-size:10.5px;color:#8fa2a6;font-variant-numeric:tabular-nums;}
+  .flowdash{stroke-dasharray:5 7;animation:dash 1s linear infinite;animation-play-state:paused;}
+  .vidcard.playing .flowdash{animation-play-state:running;}
+  @keyframes dash{to{stroke-dashoffset:-24;}}
+
+  /* ============ CONSOLE (monitoring engineer) ============ */
+  .console{background:var(--white);border:1px solid var(--line);min-height:812px;display:flex;flex-direction:column;}
+  .chead{background:#12203f;color:#fff;padding:11px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .chead .t{font-size:14.5px;font-weight:700;line-height:1.2;}
+  .chead .t span{display:block;font-size:10.5px;color:var(--teal-light);font-weight:500;margin-top:2px;}
+  .chead .spacer{margin-left:auto;}
+  .whoami{display:flex;align-items:center;gap:8px;font-size:12px;}
+  .whoami .av{width:28px;height:28px;border-radius:50%;background:var(--teal);color:#04212a;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;}
+  .ctabs{display:flex;background:var(--paper);border-bottom:1px solid var(--line);}
+  .ctabs button{border:none;background:transparent;padding:11px 16px;font-size:12.5px;font-weight:700;
+    color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;}
+  .ctabs button.sel{color:var(--navy);border-bottom-color:var(--navy);background:var(--white);}
+  .ctabs .cbadge{display:inline-block;margin-left:6px;background:var(--rust);color:#fff;font-size:10px;
+    padding:1px 6px;border-radius:999px;font-weight:700;}
+  .cbody{flex:1;overflow-y:auto;padding:16px;}
+  .cempty{color:var(--muted);font-size:13px;text-align:center;padding:60px 20px;line-height:1.7;}
+
+  .qcard{border:1px solid var(--line);border-left:4px solid var(--rust);background:var(--white);margin-bottom:12px;}
+  .qcard.acked{border-left-color:var(--teal);}
+  .qcard.closed{border-left-color:var(--sage);opacity:.75;}
+  .qtop{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .qtop .nm{font-size:14px;font-weight:700;}
+  .qtop .nm small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px;}
+  .kw{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:3px 8px;text-transform:uppercase;}
+  .kw-help{background:var(--rust-tint);color:var(--rust);border:1px solid var(--rust);}
+  .kw-ack{background:var(--teal-tint);color:#2C5A63;border:1px solid var(--teal);}
+  .kw-risk{background:var(--amber-tint);color:var(--amber);border:1px solid var(--amber);}
+  .kw-done{background:var(--sage-tint);color:var(--sage-forest);border:1px solid var(--sage);}
+  .kw-mine{background:var(--navy-tint);color:var(--navy);border:1px solid var(--navy);}
+  .qtimer{margin-left:auto;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--rust);}
+  .qbody{padding:12px 14px;font-size:13px;line-height:1.6;}
+  .qquote{background:var(--paper);border-left:3px solid var(--navy);padding:9px 11px;margin-bottom:10px;font-size:13px;}
+  .qquote small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.4px;margin-bottom:3px;}
+  .qacts{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:10px;flex-wrap:wrap;}
+  .qacts button{flex:1;min-width:110px;border:none;background:var(--white);padding:10px 6px;font-size:12px;
+    font-weight:700;cursor:pointer;color:var(--navy);}
+  .qacts button:hover{background:var(--navy-tint);}
+  .qacts button.danger{color:var(--rust);} .qacts button.go{background:var(--navy);color:#fff;}
+  .qacts button:disabled{color:var(--muted);cursor:default;background:var(--paper);}
+
+  /* phone-call arm (H3) */
+  .callring{border:1px solid var(--rust);background:var(--rust-tint);padding:14px;margin-bottom:12px;
+    display:flex;align-items:center;gap:12px;animation:pulse 1.2s infinite;}
+  .callring .ic{font-size:24px;}
+  .callring .t{flex:1;font-size:13.5px;font-weight:700;color:var(--rust);line-height:1.4;}
+  .callring .t small{display:block;font-weight:500;color:var(--muted);margin-top:3px;}
+  .callring button{background:var(--rust);color:#fff;border:none;padding:10px 16px;font-weight:700;cursor:pointer;font-size:12.5px;}
+
+  /* telemetry (H2) */
+  .telgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .telcell{background:var(--white);padding:11px 9px;}
+  .telcell .v{font-size:19px;font-weight:700;letter-spacing:-.4px;}
+  .telcell .k{font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
+  .telcell.hot .v{color:var(--rust);}
+  .riskbar{height:24px;background:var(--paper);border:1px solid var(--line);position:relative;margin:12px 0 6px;}
+  .riskbar i{display:block;height:100%;background:var(--sage);transition:width .4s,background .4s;}
+  .riskbar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;letter-spacing:.4px;}
+  .steptl{border:1px solid var(--line);margin-top:12px;}
+  .steprow{display:grid;grid-template-columns:74px 1fr 58px 40px;gap:8px;align-items:center;
+    padding:8px 11px;font-size:12px;border-bottom:1px solid var(--line);}
+  .steprow:last-child{border-bottom:none;}
+  .steprow .sn{font-weight:700;} .steprow .dw{font-variant-numeric:tabular-nums;text-align:right;}
+  .steprow .bar{height:8px;background:var(--paper);} .steprow .bar i{display:block;height:100%;background:var(--navy);}
+  .steprow.slow .bar i{background:var(--rust);}
+  .steprow .tp{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);}
+
+  .sechead{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);
+    margin:20px 0 9px;display:flex;align-items:center;gap:9px;}
+  .sechead:first-child{margin-top:0;}
+  .sechead:after{content:'';flex:1;height:1px;background:var(--line);}
+
+  .feed{border:1px solid var(--line);}
+  .fev{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:9px 12px;font-size:12px;
+    line-height:1.5;border-bottom:1px solid var(--line);}
+  .fev:last-child{border-bottom:none;}
+  .fev .tm{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px;}
+  .fev.hi{background:var(--rust-tint);}
+  .fev.ok{background:var(--sage-tint);}
+
+  /* results */
+  .hrow{border:1px solid var(--line);margin-bottom:10px;}
+  .hrow .hh{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--paper);
+    border-bottom:1px solid var(--line);}
+  .hrow .hid{font-size:12px;font-weight:800;background:var(--navy);color:#fff;padding:3px 8px;}
+  .hrow .ht{font-size:12.5px;font-weight:600;flex:1;line-height:1.4;}
+  .hrow .hb{padding:12px 13px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:none;}
+  .hmet{background:var(--white);padding:9px;text-align:center;}
+  .hmet .v{font-size:17px;font-weight:700;} .hmet .k{font-size:9.5px;color:var(--muted);font-weight:700;
+    text-transform:uppercase;letter-spacing:.4px;margin-top:3px;line-height:1.3;}
+  .hnote{padding:0 13px 12px;font-size:11.5px;color:var(--muted);line-height:1.55;}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);opacity:0;
+    background:var(--ink);color:#fff;font-weight:600;font-size:12.5px;padding:11px 20px;transition:.3s;
+    z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  .hide{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="rbar">
+    <div class="brand">DigitalPaani<span>Open Alert · Round 2 — Monitoring Loop</span></div>
+    <div class="spacer"></div>
+    <div class="timer" id="elapsed">00:00</div>
+    <div class="navtoggle">
+      <button id="tgTest" class="sel" onclick="goTest()">Test</button>
+      <button id="tgResults" onclick="showResults()">Results</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <!-- ==================== PHONE ==================== -->
+    <div class="phone" id="phone">
+      <div class="statusbar"><span>9:41</span><span>▮▮▮ ▲ ▉</span></div>
+
+      <!-- SETUP -->
+      <div class="screen on" id="scr-setup">
+        <div class="pad">
+          <h1>New Test</h1>
+          <div class="sub">Set the arms, press Start, hand the phone to the operator. You drive the monitoring console on the right.</div>
+
+          <label>Operator</label>
+          <input type="text" id="opCode" placeholder="e.g. Pankaj / OP-04" value="Pankaj (OP-04)">
+
+          <label>Fault</label>
+          <div class="seg" id="faultSeg">
+            <button data-v="A" class="sel">A · Pump Leakage</button>
+            <button data-v="B">B · Low DO</button>
+          </div>
+
+          <label>H1 — Help framing</label>
+          <div class="seg arm" id="armFrame">
+            <button data-v="neutral" class="sel">Neutral</button>
+            <button data-v="reassuring">Reassuring</button>
+          </div>
+          <div class="armnote"><b>Neutral:</b> plain “?” help. <b>Reassuring:</b> states the request is private, is logged as a plant-knowledge gap, and is not shared with the plant head.</div>
+
+          <label>H3 — Escalation channel</label>
+          <div class="seg arm" id="armEsc">
+            <button data-v="queue" class="sel">NEEDS HELP queue</button>
+            <button data-v="call">Phone call</button>
+          </div>
+          <div class="armnote">Measures time-to-engage from the engineer’s side.</div>
+
+          <label>H4 — Guidance media</label>
+          <div class="seg arm" id="armMedia">
+            <button data-v="text" class="sel">Text + image</button>
+            <button data-v="video">30–60s video</button>
+          </div>
+
+          <label>H5 — Ownership</label>
+          <div class="seg arm" id="armOwn">
+            <button data-v="named" class="sel">Named assignment</button>
+            <button data-v="pickup">Free pickup</button>
+          </div>
+
+          <label>H6 — Live acknowledgement to operator</label>
+          <div class="seg arm" id="armAck">
+            <button data-v="on" class="sel">On</button>
+            <button data-v="off">Off</button>
+          </div>
+
+          <label>Actual root cause (staged — auto-scores accuracy)</label>
+          <div id="actualRCList"></div>
+
+          <button class="btn btn-primary" onclick="startSession()">Start — send WhatsApp trigger</button>
+        </div>
+      </div>
+
+      <!-- WHATSAPP -->
+      <div class="screen" id="scr-wa">
+        <div class="wa-header">
+          <div class="avatar">DP</div>
+          <div class="t">डिजिटलपानी सहायक<span>ऑनलाइन</span></div>
+        </div>
+        <div id="waScroll"></div>
+        <div class="wa-replybar" id="waReplybar"></div>
+      </div>
+
+      <!-- APP FLOW -->
+      <div class="screen" id="scr-app">
+        <div class="app-header">
+          <button class="app-back" id="appBack" onclick="stepBack()">‹ पीछे</button>
+          <div class="htxt">
+            <div class="brand">डिजिटलपानी</div>
+            <div class="fault" id="appFault">—</div>
+          </div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+        <div class="ackstrip hide" id="ackStrip"></div>
+        <div class="pad" id="appBody"></div>
+
+        <!-- ===== VOICE CO-PILOT · persistent rail ===== -->
+        <div class="copilot" id="copilot">
+          <div class="cprail" onclick="if(!event.target.closest('.railmic'))toggleConvo()">
+            <div class="av">DP</div>
+            <div class="who">
+              <b>डॉ. पानी</b>
+              <span class="st" id="vStatus">सुनने के लिए तैयार · हिंदी</span>
+              <span class="heard" id="railHeard"></span>
+            </div>
+            <button class="railmic" id="railMic" onclick="toggleMic()">🎙</button>
+            <button class="chev" id="cpChev" title="बातचीत खोलें">⌃</button>
+          </div>
+
+          <div class="cpconvo" id="cpConvo">
+            <div class="vprivacy" id="vPrivacy"></div>
+            <div class="vbody" id="vBody"></div>
+            <div class="vchips" id="vChips"></div>
+            <div class="vtype">
+              <input type="text" id="vInput" placeholder="या यहाँ लिखें…" onkeydown="if(event.key==='Enter')sendTyped()">
+              <button onclick="sendTyped()">भेजें</button>
+            </div>
+            <div class="vmicbar">
+              <button class="micbtn" id="micBtn" onclick="toggleMic()">🎙</button>
+              <div class="micside">
+                <div class="hint" id="micHint">दबाकर बोलें<small>जैसे: “कितना PPM डालना है?”</small></div>
+                <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DONE -->
+      <div class="screen" id="scr-done">
+        <div class="pad" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+          <div style="width:70px;height:70px;border-radius:50%;background:var(--sage-tint);border:2px solid var(--sage);
+            display:flex;align-items:center;justify-content:center;font-size:31px;color:var(--sage-forest);margin-bottom:16px;">✓</div>
+          <h1>धन्यवाद!</h1>
+          <div class="sub" id="doneSub">आपकी जाँच पूरी हो गई।<br>फ़ोन वापस दे दें।</div>
+          <button class="btn btn-primary center" style="max-width:250px" onclick="showResults()">परिणाम देखें</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MONITORING CONSOLE ==================== -->
+    <div class="console">
+      <div class="chead">
+        <div class="t">Monitoring Console<span>Ganga Vihar STP · 12 MLD</span></div>
+        <div class="spacer"></div>
+        <div class="whoami"><span class="av">PR</span><span>Priyanka · Monitoring Engineer</span></div>
+      </div>
+      <div class="ctabs">
+        <button class="sel" data-ct="queue" onclick="cTab('queue')">Queue<span class="cbadge hide" id="qBadge">0</span></button>
+        <button data-ct="tel" onclick="cTab('tel')">Live telemetry</button>
+        <button data-ct="feed" onclick="cTab('feed')">Event feed</button>
+      </div>
+      <div class="cbody" id="cBody"></div>
+    </div>
+  </div>
+
+  <!-- ==================== RESULTS ==================== -->
+  <div id="resultsWrap" class="hide" style="background:var(--white);border:1px solid var(--line);padding:20px;margin-top:16px;">
+    <h1>Round 2 — Hypothesis Readout</h1>
+    <div class="sub">Auto-scored from this session. Run both arms of each hypothesis to compare.</div>
+    <div id="resBody"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary center" style="max-width:200px" onclick="newTest()">New Test</button>
+      <button class="btn btn-secondary center" style="max-width:200px" onclick="window.print()">Download PDF</button>
+      <button class="btn btn-danger center" style="max-width:200px" onclick="resetAll()">Clear saved runs</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+/* ===================== ICONS ===================== */
+const A='viewBox="0 0 160 120" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS={
+ valve:`<svg ${A}><rect x="8" y="50" width="52" height="20"/><rect x="100" y="50" width="52" height="20"/><rect x="60" y="40" width="40" height="40"/><line x1="80" y1="40" x2="80" y2="18"/><circle cx="80" cy="14" r="11"/><line x1="69" y1="14" x2="91" y2="14"/></svg>`,
+ filter:`<svg ${A}><rect x="8" y="50" width="32" height="20"/><rect x="120" y="50" width="32" height="20"/><rect x="40" y="28" width="80" height="64" rx="6"/><line x1="55" y1="28" x2="55" y2="92"/><line x1="70" y1="28" x2="70" y2="92"/><line x1="90" y1="28" x2="90" y2="92"/><line x1="105" y1="28" x2="105" y2="92"/></svg>`,
+ seal:`<svg ${A}><circle cx="52" cy="60" r="36"/><circle cx="52" cy="60" r="10" fill="currentColor" stroke="none"/><rect x="88" y="48" width="52" height="24"/><rect x="100" y="42" width="16" height="36"/><path d="M108 78 q4 9 0 16" stroke-dasharray="2 4"/></svg>`,
+ gland:`<svg ${A}><rect x="14" y="45" width="64" height="30"/><line x1="26" y1="45" x2="26" y2="75"/><line x1="38" y1="45" x2="38" y2="75"/><line x1="50" y1="45" x2="50" y2="75"/><line x1="62" y1="45" x2="62" y2="75"/><rect x="82" y="52" width="60" height="16"/><path d="M88 75 q4 10 0 18" stroke-dasharray="2 4"/></svg>`,
+ bearing:`<svg ${A}><rect x="14" y="50" width="40" height="20"/><rect x="106" y="50" width="40" height="20"/><circle cx="80" cy="60" r="34"/><circle cx="80" cy="60" r="17"/><circle cx="80" cy="27" r="5"/><circle cx="109" cy="45" r="5"/><circle cx="109" cy="75" r="5"/><circle cx="51" cy="45" r="5"/><circle cx="51" cy="75" r="5"/><circle cx="80" cy="93" r="5"/></svg>`,
+ pump:`<svg ${A}><rect x="8" y="35" width="66" height="48" rx="4"/><line x1="21" y1="35" x2="21" y2="83"/><line x1="34" y1="35" x2="34" y2="83"/><line x1="47" y1="35" x2="47" y2="83"/><line x1="60" y1="35" x2="60" y2="83"/><rect x="78" y="50" width="18" height="18"/><circle cx="132" cy="59" r="34"/><circle cx="132" cy="59" r="7" fill="currentColor" stroke="none"/></svg>`,
+ blower:`<svg ${A}><rect x="10" y="35" width="58" height="48" rx="4"/><line x1="22" y1="35" x2="22" y2="83"/><line x1="34" y1="35" x2="34" y2="83"/><line x1="46" y1="35" x2="46" y2="83"/><circle cx="116" cy="59" r="30"/><line x1="116" y1="32" x2="116" y2="86"/><line x1="89" y1="59" x2="143" y2="59"/><line x1="97" y1="40" x2="135" y2="78"/><line x1="97" y1="78" x2="135" y2="40"/></svg>`,
+ airvalve:`<svg ${A}><rect x="8" y="52" width="48" height="16"/><rect x="104" y="52" width="48" height="16"/><circle cx="80" cy="60" r="24"/><line x1="80" y1="60" x2="107" y2="33" stroke-width="4.5"/></svg>`,
+ diffuser:`<svg ${A}><rect x="14" y="18" width="132" height="82" rx="4"/><line x1="14" y1="76" x2="146" y2="76" stroke-dasharray="4 3"/><ellipse cx="80" cy="91" rx="32" ry="6"/><circle cx="64" cy="68" r="4"/><circle cx="80" cy="52" r="5"/><circle cx="97" cy="38" r="4"/></svg>`,
+ sludge:`<svg ${A}><rect x="14" y="18" width="132" height="82" rx="4"/><line x1="14" y1="76" x2="146" y2="76" stroke-dasharray="4 3"/><path d="M14 92 q22 -12 44 0 t44 0 t44 0"/></svg>`,
+ probe:`<svg ${A}><rect x="14" y="18" width="132" height="82" rx="4"/><line x1="14" y1="72" x2="146" y2="72" stroke-dasharray="4 3"/><line x1="100" y1="8" x2="100" y2="88"/><rect x="91" y="2" width="18" height="14"/><circle cx="100" cy="88" r="6"/></svg>`,
+ none:`<svg ${A}><circle cx="80" cy="60" r="30"/><line x1="60" y1="40" x2="100" y2="80"/><line x1="100" y1="40" x2="60" y2="80"/></svg>`
+};
+const illusBox=k=>k&&ICONS[k]?`<div class="illus">${ICONS[k]}</div>`:'';
+const optIcon=k=>k&&ICONS[k]?`<span class="oic">${ICONS[k]}</span>`:'<span class="radio"></span>';
+
+/* ===================== DIAGNOSTIC SCRIPTS (Hindi, Yes/No) ===================== */
+const SCRIPTS={
+ A:{nameEn:"Pump Leakage",nameHi:"फ़िल्टर फ़ीड पंप — रिसाव जाँच",
+  trigger:"⚠️ फ़िल्टर फ़ीड पंप में रिसाव मिला है। जाँच शुरू करें?",
+  toolOptions:["कोई टूल नहीं","मैकेनिकल सील","ग्लैंड","बेयरिंग"],
+  rcList:["प्रेशर बहुत ज़्यादा है","मैकेनिकल सील ख़राब है","पंप के पुर्ज़े ढीले हैं","बेयरिंग ख़राब है — बदलना पड़ेगा"],
+  steps:[
+   {q:"डिस्चार्ज वाल्व देखें।",detail:"वाल्व बंद है या खुला?",illus:"valve",
+    opts:[{label:"बंद है",advice:"प्रेशर कम करने के लिए वाल्व खोलें।",next:2},{label:"खुला है",next:2}]},
+   {q:"फ़िल्टर देखें।",detail:"क्या उसमें चोकिंग है?",illus:"filter",
+    opts:[{label:"हाँ, चोकिंग है",advice:"फ़िल्टर बैकवॉश करें।",next:3},{label:"नहीं",next:3}]},
+   {q:"सील एरिया में लीकेज देखें।",detail:"क्या लगातार पानी बह रहा है?",tool:"मैकेनिकल सील — मेंटेनेंस द्वारा",illus:"seal",
+    opts:[{label:"हाँ",advice:"मेंटेनेंस को मैकेनिकल सील लगानी पड़ेगी। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:6},{label:"नहीं",next:4}]},
+   {q:"ग्लैंड बॉक्स में देखें।",detail:"क्या ड्रिपिंग हो रही है?",tool:"ग्लैंड — मेंटेनेंस द्वारा",illus:"gland",
+    opts:[{label:"हाँ, ज़्यादा है",advice:"मेंटेनेंस को बुलाएं। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:6},
+          {label:"हाँ, पर कम है",advice:"नज़र रखें — ड्रिपिंग बढ़े तो मेंटेनेंस को बुलाएं।",next:5},{label:"नहीं",next:5}]},
+   {q:"बेयरिंग जाँचें।",detail:"क्या कंपन या तापमान ज़्यादा है?",tool:"बेयरिंग — मेंटेनेंस द्वारा",illus:"bearing",
+    opts:[{label:"हाँ",advice:"मेंटेनेंस को बुलाएं — बेयरिंग बदलनी पड़ेगी।",warn:true,escalate:true,next:6},{label:"नहीं",next:6}]},
+   {q:"रिसाव का सबसे संभावित कारण क्या है?",illus:"pump",rc:true}
+  ]},
+ B:{nameEn:"Low DO",nameHi:"एरेशन टैंक — कम डी.ओ. जाँच",
+  trigger:"⚠️ एरेशन टैंक में डी.ओ. 0.8 mg/L है (सामान्य 2–4)। जाँच शुरू करें?",
+  toolOptions:["कोई टूल नहीं","डी.ओ. प्रोब किट","डिफ्यूज़र स्पैनर"],
+  rcList:["ब्लोअर बंद/ट्रिप","एयर वाल्व बंद","डिफ्यूज़र ख़राब","ज़्यादा लोड","डी.ओ. प्रोब ख़राब"],
+  steps:[
+   {q:"क्या ब्लोअर चल रहा है?",detail:"पैनल पर कोई ट्रिप/अलार्म है?",illus:"blower",
+    opts:[{label:"चल रहा है",next:2},{label:"बंद है / ट्रिप",advice:"ब्लोअर फिर से शुरू करें। ट्रिप दोबारा हो तो इलेक्ट्रीशियन को बुलाएं।",next:2}]},
+   {q:"एयर वाल्व देखें।",detail:"क्या पूरा खुला है?",illus:"airvalve",
+    opts:[{label:"खुला है",next:3},{label:"बंद / आधा",advice:"वाल्व पूरा खोलें, 15 मिनट बाद डी.ओ. फिर देखें।",next:3}]},
+   {q:"टैंक की सतह देखें।",detail:"क्या बुलबुले एक जैसे उठ रहे हैं?",illus:"diffuser",
+    opts:[{label:"एक जैसे",next:4},{label:"असमान",advice:"डिफ्यूज़र बंद या ख़राब हो सकता है। मेंटेनेंस को बुलाएं।",warn:true,escalate:true,next:5}]},
+   {q:"लोड और स्लज देखें।",detail:"क्या आज लोड ज़्यादा है या स्लज बहुत गाढ़ा/काला है?",illus:"sludge",
+    opts:[{label:"हाँ",advice:"ज़्यादा स्लज निकालें और सुपरवाइज़र को बताएं।",next:5},
+          {label:"नहीं",advice:"डी.ओ. प्रोब साफ़ करके रीडिंग दोबारा लें।",illus:"probe",next:5}]},
+   {q:"कम डी.ओ. का सबसे संभावित कारण क्या है?",illus:"diffuser",rc:true}
+  ]}
+};
+
+/* ===================== VOICE ASSISTANT KNOWLEDGE ===================== */
+/* Procedural (HOW), not observational (WHAT) — per Priyanka's interview. */
+const KB=[
+ {id:'ppm',match:['ppm','पीपीएम','डोज','dose','कितना','क्लोरीन','chlorine','मात्रा'],
+  title:'क्लोरीन डोज़िंग — कितना डालना है',
+  say:'बारह एम एल डी प्रवाह पर दो पी पी एम के लिए, एक घंटे में लगभग एक किलो सोडियम हाइपोक्लोराइट चाहिए।',
+  num:'2 PPM × 12 MLD ÷ 24 = लगभग 1.0 kg/घंटा',
+  steps:['डोज़िंग टैंक में 1.0 kg हाइपो प्रति घंटा सेट करें।','पंप स्ट्रोक 60% पर रखें।','30 मिनट बाद रेसिड्युअल क्लोरीन नापें — 0.5 mg/L आना चाहिए।'],
+  video:'डोज़िंग पंप स्ट्रोक सेट करना — 42 सेकंड'},
+ {id:'backwash',match:['backwash','बैकवॉश','बैक वाश','फ़िल्टर','filter','धोना'],
+  title:'फ़िल्टर बैकवॉश — कैसे करें',
+  say:'फ़ीड वाल्प बंद करें, बैकवॉश वाल्व खोलें, आठ से दस मिनट चलाएँ, फिर दो मिनट रिन्स करें।',
+  num:'बैकवॉश 8–10 मिनट · रिन्स 2 मिनट',
+  steps:['फ़ीड वाल्व बंद करें, पंप बंद करें।','बैकवॉश और ड्रेन वाल्व खोलें।','पंप चालू करें — 8–10 मिनट, जब तक पानी साफ़ न दिखे।','2 मिनट रिन्स करके नॉर्मल लाइन-अप पर लौटें।'],
+  video:'बैकवॉश वाल्व सीक्वेंस — 55 सेकंड'},
+ {id:'hmi',match:['hmi','एचएमआई','पैनल','panel','सेटिंग','टाइमर','timer','configure'],
+  title:'HMI पर टाइमर सेट करना',
+  say:'एच एम आई पर सेटिंग्स, फिर बैकवॉश टाइमर चुनें, मान बदलें और सेव दबाएँ।',
+  num:'Settings → Backwash → Timer → Save',
+  steps:['HMI होम पर “Settings” दबाएँ।','“Backwash” चुनें।','Timer में नया मान डालें।','“Save” दबाएँ — हरी लाइट जलेगी।'],
+  video:'HMI टाइमर बदलना — 38 सेकंड'},
+ {id:'step',match:['यह','इस','क्या','चरण','step','समझ','देखना','कहाँ'],
+  title:'इस चरण में क्या देखना है',
+  say:null,num:null,steps:null,video:'इस चेक को करते हुए — 30 सेकंड'},
+ {id:'tool',match:['टूल','tool','औज़ार','सामान','कहाँ मिलेगा'],
+  title:'टूल कहाँ से मिलेगा',
+  say:'ज़रूरी टूल मेंटेनेंस स्टोर में रहता है। मैं आपके लिए मॉनिटरिंग इंजीनियर को बता सकता हूँ।',
+  num:null,steps:['मेंटेनेंस स्टोर से इंडेंट पर्ची लें।','टूल न हो तो नीचे “इंजीनियर को भेजें” दबाएँ।'],video:null}
+];
+const CHIPS=[
+ {t:'कितना PPM डालना है?',q:'कितना PPM डालना है'},
+ {t:'बैकवॉश कैसे करें?',q:'बैकवॉश कैसे करें'},
+ {t:'HMI पर टाइमर कैसे सेट करें?',q:'HMI पर टाइमर कैसे सेट करें'},
+ {t:'इस चरण में क्या देखना है?',q:'इस चरण में क्या देखना है'},
+ {t:'टूल कहाँ मिलेगा?',q:'टूल कहाँ मिलेगा'}
+];
+
+/* ===================== STATE ===================== */
+let S=null, EVENTS=[], navStack=[], actualRC='', elapsedTimer=null, sessionStart=null;
+let stepEnter=null, curStepKey=null, recog=null, listening=false, cTabCur='queue';
+const $=id=>document.getElementById(id);
+const now=()=>new Date();
+const hhmm=d=>d.toTimeString().slice(0,5);
+const hhmmss=d=>d.toTimeString().slice(0,8);
+const fmt=s=>s<60?s+'s':Math.floor(s/60)+'m '+(s%60)+'s';
+const arm=id=>document.querySelector('#'+id+' .sel').dataset.v;
+
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');}
+function logEvent(kw,text,cls){EVENTS.push({t:hhmmss(now()),kw,text,cls:cls||''});if(cTabCur==='feed')renderConsole();}
+
+document.querySelectorAll('.seg').forEach(seg=>seg.addEventListener('click',e=>{
+  if(e.target.tagName!=='BUTTON')return;
+  seg.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));
+  e.target.classList.add('sel');
+  if(seg.id==='faultSeg')renderActualRC();
+}));
+
+function renderActualRC(){
+  const f=document.querySelector('#faultSeg .sel').dataset.v;
+  actualRC='';
+  $('actualRCList').innerHTML=SCRIPTS[f].rcList.map(r=>
+    `<button class="opt" style="min-height:0;padding:11px 13px;font-size:13.5px;" onclick="pickActual(this,'${r.replace(/'/g,"\\'")}')"><span class="radio"></span>${r}</button>`).join('');
+}
+function pickActual(el,r){
+  actualRC=r;
+  el.parentNode.querySelectorAll('.opt').forEach(b=>{b.style.background='';b.style.borderColor='';});
+  el.style.background='var(--navy-tint)';el.style.borderColor='var(--navy)';
+}
+renderActualRC();
+
+/* ===================== SESSION ===================== */
+function startSession(){
+  const op=$('opCode').value.trim();
+  if(!op){toast('Enter operator name');return;}
+  if(!actualRC){toast('Select the staged root cause');return;}
+  S={op,fault:document.querySelector('#faultSeg .sel').dataset.v,
+     armFrame:arm('armFrame'),armEsc:arm('armEsc'),armMedia:arm('armMedia'),
+     armOwn:arm('armOwn'),armAck:arm('armAck'),
+     start:now().toISOString(),
+     steps:[],            // {key,label,dwell,taps,repeatTaps,scroll,backs}
+     helpOpens:0, helpAsks:[], voiceAsks:0, typedAsks:0,
+     escalatedAt:null, ackAt:null, resolvedAt:null, pickedUpBy:null,
+     ownershipAction:null, followUpCalls:0, mediaViews:0, mediaCompleted:0,
+     rootCause:'', accuracy:'', actualRC, abandoned:false, abandonStep:null,
+     queue:[], replied:null};
+  EVENTS=[];
+  logEvent('CONTEXT',`${op} · Fault ${S.fault} · arms: frame=${S.armFrame}, esc=${S.armEsc}, media=${S.armMedia}, own=${S.armOwn}, ack=${S.armAck}`);
+  $('resultsWrap').classList.add('hide');
+  startElapsed(); renderConsole(); openWhatsApp();
+}
+function startElapsed(){
+  sessionStart=now(); clearInterval(elapsedTimer);
+  elapsedTimer=setInterval(()=>{
+    const s=Math.floor((now()-sessionStart)/1000);
+    $('elapsed').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    if(S&&S.escalatedAt&&!S.ackAt&&cTabCur==='queue')renderConsole();
+  },1000);
+}
+
+/* ===================== WHATSAPP TRIGGER (H5) ===================== */
+function openWhatsApp(){
+  $('waScroll').innerHTML='';$('waReplybar').innerHTML='';
+  show('scr-wa');
+  const own=S.armOwn==='named'
+    ? `👤 ${S.op} — यह अलर्ट आपको सौंपा गया है।`
+    : `📣 सभी ऑपरेटर — जो पहले उठाए, वही करे।`;
+  waBot(own,()=>waBot(SCRIPTS[S.fault].trigger,()=>{
+    waChips([{l:S.armOwn==='named'?'1 · मैं देखता हूँ':'1 · मैं उठाता हूँ',fn:onAccept},{l:'0 · अभी नहीं',fn:onDecline}]);
+  }));
+}
+function waBot(text,after){
+  const sc=$('waScroll');const tp=document.createElement('div');
+  tp.className='wa-bubble wa-in typing';tp.innerHTML='<i></i><i></i><i></i>';
+  sc.appendChild(tp);sc.scrollTop=sc.scrollHeight;
+  setTimeout(()=>{tp.classList.remove('typing');tp.innerHTML=text+`<span class="time">${hhmm(now())}</span>`;
+    sc.scrollTop=sc.scrollHeight;logEvent('SENT',text);if(after)after();},650);
+}
+function waMe(text){const sc=$('waScroll');const b=document.createElement('div');
+  b.className='wa-bubble wa-out';b.innerHTML=text+`<span class="time">${hhmm(now())}</span>`;
+  sc.appendChild(b);sc.scrollTop=sc.scrollHeight;}
+function waChips(opts){
+  const bar=$('waReplybar');bar.innerHTML='';
+  opts.forEach(o=>{const c=document.createElement('button');c.className='wa-chip';c.textContent=o.l;
+    c.onclick=()=>{bar.innerHTML='';waMe(o.l);o.fn();};bar.appendChild(c);});
+}
+function onDecline(){
+  S.replied='Declined';S.abandoned=true;S.abandonStep='Trigger';
+  S.ownershipAction='declined';
+  logEvent('DROPOUT','Declined at trigger','hi');
+  waBot("ठीक है। ज़रूरत पड़ने पर message करें।",()=>setTimeout(finish,900));
+}
+function onAccept(){
+  S.replied='Accepted';
+  S.ownershipAction=S.armOwn==='named'?'accepted-named':'picked-up';
+  logEvent('OWNERSHIP',S.armOwn==='named'?'Accepted named assignment':'Picked up from broadcast','ok');
+  waBot("ऐप में जाँच तैयार है। नीचे टैप करें 👇",()=>{
+    const sc=$('waScroll');const l=document.createElement('div');l.className='wa-bubble wa-in';
+    l.innerHTML=`डिजिटलपानी ऐप<div class="wa-link" onclick="openApp()">🔗 जाँच शुरू करें — ऐप खोलें</div><span class="time">${hhmm(now())}</span>`;
+    sc.appendChild(l);sc.scrollTop=sc.scrollHeight;
+  });
+}
+function openApp(){
+  logEvent('DEEPLINK','Opened app via deeplink');
+  $('appFault').textContent=SCRIPTS[S.fault].nameHi;
+  renderHelpFraming();
+  navStack=[];show('scr-app');navGo({t:'step',n:1});
+}
+
+/* ===================== H1 · HELP FRAMING ===================== */
+function renderHelpFraming(){
+  if(S.armFrame==='reassuring'){
+    $('vPrivacy').innerHTML='🔒 <b>पूछना काम का हिस्सा है।</b> यह बातचीत निजी है — सिर्फ़ मॉनिटरिंग इंजीनियर देख सकते हैं, प्लांट हेड नहीं। यह आपके प्रदर्शन के मूल्यांकन में नहीं जाती।';
+  }else{
+    $('vPrivacy').innerHTML='डॉ. पानी · प्लांट सहायक';
+  }
+}
+
+/* ===================== H2 · BEHAVIOURAL TELEMETRY ===================== */
+function stepKey(desc){return desc.t==='step'?('S'+desc.n):desc.t.toUpperCase();}
+function stepLabel(desc){
+  if(desc.t!=='step')return desc.t==='tool'?'Tool pick':'Wrap-up';
+  const st=SCRIPTS[S.fault].steps[desc.n-1];
+  return st.rc?'Root cause':('चरण '+desc.n);
+}
+function beginStep(desc){
+  closeStep();
+  curStepKey=stepKey(desc);stepEnter=now();
+  S.steps.push({key:curStepKey,label:stepLabel(desc),dwell:0,taps:0,repeatTaps:0,scroll:0,backs:0,helped:false});
+}
+function curStep(){return S?S.steps[S.steps.length-1]:null;}
+function closeStep(){
+  const c=curStep();
+  if(c&&stepEnter)c.dwell=Math.round((now()-stepEnter)/1000);
+}
+$('appBody').addEventListener('scroll',()=>{
+  const el=$('appBody'),c=curStep();if(!c||el.scrollHeight<=el.clientHeight)return;
+  c.scroll=Math.max(c.scroll,Math.round((el.scrollTop+el.clientHeight)/el.scrollHeight*100));
+});
+$('appBody').addEventListener('click',e=>{
+  const c=curStep();if(!c)return;
+  c.taps++;
+  if(!e.target.closest('button'))c.repeatTaps++;   // taps that hit nothing = hesitation
+  if(cTabCur==='tel')renderConsole();
+});
+function riskScore(){
+  const c=curStep();if(!c)return 0;
+  const dw=stepEnter?Math.round((now()-stepEnter)/1000):c.dwell;
+  let r=0;
+  r+=Math.min(40,Math.max(0,(dw-25)*1.6));          // long dwell
+  r+=Math.min(25,c.repeatTaps*8);                    // dead taps
+  r+=Math.min(15,c.backs*8);                         // back-tracking
+  r+=(c.scroll>85?10:0);                             // scroll-hunting
+  r+=(S.helpOpens>0&&!S.escalatedAt?10:0);
+  return Math.min(100,Math.round(r));
+}
+
+/* ===================== APP FLOW ===================== */
+function navGo(desc){closeVoice();navStack.push(desc);beginStep(desc);navRender(desc);updateBack();if(cTabCur==='tel')renderConsole();}
+function navRender(d){d.t==='step'?renderStep(d.n):d.t==='tool'?renderTool():renderWrap();}
+function stepBack(){
+  if(navStack.length<2)return;
+  closeVoice();closeStep();
+  const c=curStep();if(c)c.backs++;
+  navStack.pop();
+  logEvent('BACK','Operator went back a step');
+  const d=navStack[navStack.length-1];beginStep(d);navRender(d);updateBack();
+}
+function updateBack(){$('appBack').classList.toggle('show',navStack.length>1);}
+function checkCount(){return SCRIPTS[S.fault].steps.filter(s=>!s.rc).length;}
+function toolChip(st){
+  const n=st.tool&&st.tool!=='';
+  return `<div class="toolchip ${n?'need':''}">${n?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`;
+}
+function renderStep(n){
+  const st=SCRIPTS[S.fault].steps[n-1],total=checkCount(),body=$('appBody');
+  if(st.rc){
+    $('progFill').style.width='100%';
+    body.innerHTML=`<div class="step-label">निदान</div>${illusBox(st.illus)}<div class="q">${st.q}</div><div class="opts-wrap">`+
+      SCRIPTS[S.fault].rcList.map(o=>`<button class="opt" onclick="pickRC('${o.replace(/'/g,"\\'")}')"><span class="radio"></span>${o}</button>`).join('')+`</div>`;
+    logEvent('SENT','RC screen shown');return;
+  }
+  $('progFill').style.width=((n-1)/total*100)+'%';
+  body.innerHTML=`<div class="step-label">चरण ${n} / ${total}</div>${illusBox(st.illus)}
+    <div class="q">${st.q}</div>${st.detail?`<div class="q-detail">${st.detail}</div>`:''}
+    ${toolChip(st)}<div class="opts-wrap" id="optsWrap"></div>`;
+  const wrap=$('optsWrap');
+  st.opts.forEach(o=>{
+    const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="radio"></span>${o.label}`;
+    b.onclick=()=>{
+      closeStep();
+      logEvent('REPLY',`चरण ${n} → "${o.label}" · ${fmt(curStep().dwell)}`);
+      if(o.escalate)S.escalationNeeded=true;
+      if(o.advice){
+        body.innerHTML=`<div class="step-label">चरण ${n} / ${total}</div>${illusBox(o.illus||st.illus)}
+          <div class="advice ${o.warn?'warn':''}"><b>सलाह</b>${o.advice}</div>${toolChip(st)}
+          <div class="opts-wrap"><button class="btn btn-primary center" id="advNext">आगे बढ़ें</button></div>`;
+        $('advNext').onclick=()=>navGo({t:'step',n:o.next});
+      }else navGo({t:'step',n:o.next});
+    };
+    wrap.appendChild(b);
+  });
+  logEvent('SENT','चरण '+n+': '+st.q);
+}
+function pickRC(label){
+  closeStep();
+  S.rootCause=label;
+  S.accuracy=label===S.actualRC?'Match':'No match';
+  logEvent('ACCURACY',`Picked "${label}" vs staged "${S.actualRC}" → ${S.accuracy}`,S.accuracy==='Match'?'ok':'hi');
+  navGo({t:'tool'});
+}
+function renderTool(){
+  $('progFill').style.width='100%';
+  $('appBody').innerHTML=`<div class="step-label">टूल की पहचान</div><div class="q">कौन सा टूल चाहिए?</div>
+    <div class="opts-wrap">`+SCRIPTS[S.fault].toolOptions.map(o=>
+      `<button class="opt" onclick="pickTool('${o.replace(/'/g,"\\'")}')">${optIcon({'मैकेनिकल सील':'seal','ग्लैंड':'gland','बेयरिंग':'bearing','कोई टूल नहीं':'none','डी.ओ. प्रोब किट':'probe','डिफ्यूज़र स्पैनर':'diffuser'}[o])}${o}</button>`).join('')+`</div>`;
+}
+function pickTool(t){
+  closeStep();S.toolPicked=t;logEvent('REPLY','Tool → '+t);
+  navGo({t:'wrap'});
+}
+function renderWrap(){
+  const escNeeded=S.escalationNeeded;
+  $('appBody').innerHTML=`<div class="step-label">आख़िरी क़दम</div>
+    <div class="q">${escNeeded?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div>
+    <div class="q-detail">${escNeeded?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>
+    <div class="opts-wrap">
+      ${escNeeded?`<button class="opt" onclick="escalate('flow')"><span class="radio"></span>हाँ, इंजीनियर को भेजें</button>`:''}
+      <button class="opt" onclick="finish()"><span class="radio"></span>पूरा हुआ</button>
+    </div>`;
+}
+
+/* ===================== VOICE CO-PILOT RAIL =====================
+   The rail is always docked. openVoice() expands the conversation,
+   closeVoice() collapses it back to the status bar — the co-pilot
+   itself never goes away, so the operator never has to summon it. */
+function cpState(state){          // 'idle' | 'listening' | 'speaking' | 'thinking'
+  const el=$('copilot');
+  el.classList.remove('listening','speaking','thinking');
+  if(state!=='idle')el.classList.add(state);
+  const labels={
+    idle:'सुनने के लिए तैयार · हिंदी',
+    listening:'🔴 सुन रहा हूँ',
+    speaking:'बोल रहा हूँ…',
+    thinking:'देख रहा हूँ…'
+  };
+  $('vStatus').textContent=labels[state]||labels.idle;
+  if(state!=='listening')$('railHeard').textContent='';
+}
+function toggleConvo(){
+  $('copilot').classList.contains('expanded')?closeVoice():openVoice();
+}
+function openVoice(){
+  if(!S)return;
+  S.helpOpens++;
+  const c=curStep();if(c)c.helped=true;
+  logEvent('HELP','Expanded co-pilot conversation'+(c?' at '+c.label:''),'hi');
+  if(S.helpOpens===1){
+    $('vBody').innerHTML='';
+    botSay(`नमस्ते ${S.op.split(' ')[0]}। मैं डॉ. पानी हूँ — साथ ही चल रहा हूँ। माइक दबाकर हिंदी में पूछिए — जैसे “कितना PPM डालना है?”`);
+  }
+  renderChips();
+  $('copilot').classList.add('expanded');
+  renderConsole();
+}
+function closeVoice(){
+  const el=$('copilot');
+  if(!el)return;
+  el.classList.remove('expanded');
+  stopMic();
+}
+function renderChips(){
+  $('vChips').innerHTML=CHIPS.map(c=>`<button class="vchip" onclick="ask('${c.q}','chip')">${c.t}</button>`).join('')
+    +`<button class="vchip esc" onclick="escalate('voice')">📤 इंजीनियर को भेजें</button>`;
+}
+function bubble(html,who){
+  const b=document.createElement('div');b.className='vb '+who;b.innerHTML=html;
+  $('vBody').appendChild(b);$('vBody').scrollTop=$('vBody').scrollHeight;return b;
+}
+function meSay(t){bubble(`<span class="who">आप</span>${t}`,'me');}
+function botSay(t,extra){
+  const b=bubble(`<span class="who">डॉ. पानी</span>${t}${extra||''}`,'bot');
+  cpState(listening?'listening':'idle');   // speak() re-sets this if it talks
+  return b;
+}
+function sendTyped(){
+  const v=$('vInput').value.trim();if(!v)return;
+  $('vInput').value='';S.typedAsks++;ask(v,'typed');
+}
+function ask(text,mode){
+  meSay(text);
+  S.helpAsks.push({q:text,mode,at:hhmm(now()),step:curStep()?curStep().label:'—'});
+  if(mode==='voice')S.voiceAsks++;
+  logEvent('HELP',`${mode==='voice'?'🎙 Voice':'⌨ Typed'} question: “${text}”`,'hi');
+  renderConsole();
+  cpState('thinking');
+  setTimeout(()=>answer(text),450);
+}
+function matchKB(text){
+  const t=text.toLowerCase();
+  let best=null,score=0;
+  KB.forEach(k=>{const s=k.match.filter(m=>t.includes(m.toLowerCase())).length;if(s>score){score=s;best=k;}});
+  return score?best:null;
+}
+function answer(text){
+  const k=matchKB(text);
+  if(!k){
+    botSay('यह सवाल मेरे पास दर्ज नहीं है। मैं इसे मॉनिटरिंग इंजीनियर को भेज दूँ?',
+      `<button class="spk" onclick="escalate('voice')">📤 हाँ, भेजें</button>`);
+    logEvent('HELP','No KB match — offered escalation');
+    return;
+  }
+  // step-context answer
+  if(k.id==='step'){
+    const d=navStack[navStack.length-1];
+    const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
+    const line=st?`${st.q} ${st.detail||''}`:'स्क्रीन पर दिया सवाल पढ़ें और जो दिखे वही चुनें।';
+    const b=botSay(`<b>${k.title}</b><br>${line}`+(S.armMedia==='video'?videoCard(k.video||'इस चेक को करते हुए'):''),
+      speakBtn(line));
+    if(S.armMedia==='video')bindVideo(b);
+    return;
+  }
+  let html=`<b>${k.title}</b>`;
+  if(k.num)html+=`<div class="vnum">${k.num}</div>`;
+  if(k.steps)html+=`<ul class="vsteps">${k.steps.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ul>`;
+  if(S.armMedia==='video'&&k.video)html+=videoCard(k.video);
+  const b=botSay(html,speakBtn(k.say||k.title));
+  if(S.armMedia==='video'&&k.video)bindVideo(b);
+  if(k.say)speak(k.say);
+}
+function speakBtn(t){return `<button class="spk" onclick="speak(${JSON.stringify(t).replace(/"/g,'&quot;')})">🔊 दोबारा सुनें</button>`;}
+
+/* --- H4 · simulated 30–60s video card --- */
+function videoCard(caption){
+  S.mediaViews++;
+  return `<div class="vidcard">
+    <div class="vidstage">
+      <svg viewBox="0 0 320 180" fill="none" stroke="#6AA8B0" stroke-width="3" stroke-linecap="round">
+        <rect x="24" y="70" width="76" height="46" rx="4"/><circle cx="200" cy="93" r="34"/>
+        <circle cx="200" cy="93" r="7" fill="#6AA8B0" stroke="none"/>
+        <line x1="100" y1="93" x2="166" y2="93" class="flowdash"/>
+        <line x1="234" y1="93" x2="296" y2="93" class="flowdash"/>
+        <rect x="20" y="130" width="280" height="5" fill="#1a2d5d" stroke="none"/>
+      </svg>
+      <button class="vidplay">▶</button>
+      <div class="vidcap">${caption}</div>
+    </div>
+    <div class="vidbar"><span class="tm">0:00</span><div class="track"><div class="prog"></div></div><span class="tm dur">0:45</span></div>
+  </div>`;
+}
+function bindVideo(container){
+  const card=container.querySelector('.vidcard');if(!card)return;
+  const play=card.querySelector('.vidplay'),prog=card.querySelector('.prog'),cur=card.querySelector('.tm');
+  let t=0,iv=null;
+  play.onclick=()=>{
+    if(iv){clearInterval(iv);iv=null;card.classList.remove('playing');play.textContent='▶';return;}
+    card.classList.add('playing');play.textContent='❚❚';
+    logEvent('MEDIA','Played guidance video');
+    iv=setInterval(()=>{
+      t+=1;prog.style.width=(t/45*100)+'%';
+      cur.textContent='0:'+String(t).padStart(2,'0');
+      if(t>=45){clearInterval(iv);iv=null;card.classList.remove('playing');play.textContent='↻';t=0;
+        S.mediaCompleted++;logEvent('MEDIA','Video watched to end','ok');renderConsole();}
+    },1000);
+  };
+}
+
+/* --- speech --- */
+function speak(text){
+  if(!('speechSynthesis' in window))return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='hi-IN';u.rate=.92;
+    speechSynthesis.speak(u);
+    cpState('speaking');
+    u.onend=()=>cpState(listening?'listening':'idle');
+  }catch(e){}
+}
+function toggleMic(){listening?stopMic():startMic();}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  listening=true;
+  $('micBtn').classList.add('live');$('micBtn').textContent='■';
+  $('railMic').classList.add('live');$('railMic').textContent='■';
+  $('wave').classList.add('on');
+  $('micHint').innerHTML='सुन रहा हूँ… बोलिए<small>रोकने के लिए दोबारा दबाएँ</small>';
+  cpState('listening');
+  if(!SR){   // fallback: no browser STT — offer the chips as "recognised" phrases
+    $('micHint').innerHTML='इस ब्राउज़र में माइक उपलब्ध नहीं<small>नीचे दिए सवालों में से चुनें या लिखें</small>';
+    setTimeout(stopMic,1400);
+    return;
+  }
+  recog=new SR();recog.lang='hi-IN';recog.interimResults=true;recog.continuous=false;
+  let finalText='';
+  recog.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal)finalText+=r[0].transcript;else interim+=r[0].transcript;
+    }
+    $('micHint').innerHTML=`<span style="color:var(--rust)">${(finalText+interim)||'…'}</span><small>सुन रहा हूँ</small>`;
+    $('railHeard').textContent=(finalText+interim)||'…';   // visible even when collapsed
+  };
+  recog.onerror=()=>{$('micHint').innerHTML='आवाज़ नहीं पकड़ी गई<small>दोबारा कोशिश करें या लिखें</small>';stopMic();};
+  recog.onend=()=>{
+    stopMic();
+    if(finalText.trim()){
+      openVoice();                 // an answer is coming — make sure it is readable
+      ask(finalText.trim(),'voice');
+    }
+  };
+  try{recog.start();}catch(e){stopMic();}
+}
+function stopMic(){
+  listening=false;
+  if(recog){try{recog.stop();}catch(e){}recog=null;}
+  $('micBtn').classList.remove('live');$('micBtn').textContent='🎙';
+  $('railMic').classList.remove('live');$('railMic').textContent='🎙';
+  $('wave').classList.remove('on');
+  cpState('idle');
+  setTimeout(()=>{if(!listening)$('micHint').innerHTML='दबाकर बोलें<small>जैसे: “कितना PPM डालना है?”</small>';},900);
+}
+
+/* ===================== ESCALATION → CONSOLE (H3/H6) ===================== */
+function escalate(source){
+  if(S.escalatedAt){toast('Already in the queue');cTab('queue');return;}
+  S.escalatedAt=now();
+  const last=S.helpAsks.length?S.helpAsks[S.helpAsks.length-1].q:'(कोई सवाल नहीं — फ़्लो से एस्केलेट)';
+  S.queue.push({q:last,step:curStep()?curStep().label:'—',at:hhmm(now()),src:source});
+  logEvent('ESCALATE',`Escalated via ${source==='voice'?'voice assistant':'diagnostic flow'} — channel: ${S.armEsc==='queue'?'NEEDS HELP queue':'phone call'}`,'hi');
+  if(source==='voice')botSay('ठीक है — मैंने मॉनिटरिंग इंजीनियर को भेज दिया है। जवाब आते ही यहाँ दिखेगा।');
+  setAck('sent');
+  cTab('queue');renderConsole();
+  toast(S.armEsc==='queue'?'NEEDS HELP raised in queue':'Phone ringing on console');
+}
+function setAck(state){
+  const el=$('ackStrip');
+  if(S.armAck==='off'){el.classList.add('hide');return;}   // H6 control arm — operator sees nothing
+  el.className='ackstrip';el.classList.remove('hide');
+  if(state==='sent')el.innerHTML=`<span class="dotpulse"></span>आपका सवाल भेजा गया — इंजीनियर के जवाब का इंतज़ार`;
+  if(state==='seen'){el.classList.add('seen');el.innerHTML=`👁 इंजीनियर प्रियंका ने देख लिया · ${hhmm(now())} — वे देख रही हैं`;}
+  if(state==='replied'){el.classList.add('seen');el.innerHTML=`💬 इंजीनियर ने जवाब भेजा · ${hhmm(now())}`;}
+  if(state==='resolved'){el.classList.add('resolved');el.innerHTML=`✅ इंजीनियर ने इस मुद्दे को बंद किया · ${hhmm(now())}`;}
+}
+
+/* ===================== MONITORING CONSOLE ===================== */
+function cTab(t){
+  cTabCur=t;
+  document.querySelectorAll('.ctabs button').forEach(b=>b.classList.toggle('sel',b.dataset.ct===t));
+  renderConsole();
+}
+function renderConsole(){
+  const b=$('cBody');
+  if(!S){b.innerHTML='<div class="cempty">No active session.<br>Set the arms on the phone and press <b>Start</b>.</div>';return;}
+  $('qBadge').textContent=S.escalatedAt&&!S.resolvedAt?'1':'0';
+  $('qBadge').classList.toggle('hide',!(S.escalatedAt&&!S.resolvedAt));
+  if(cTabCur==='queue')renderQueue(b);
+  else if(cTabCur==='tel')renderTel(b);
+  else renderFeed(b);
+}
+function waitSec(){return S.escalatedAt?Math.round((now()-S.escalatedAt)/1000):0;}
+function ackSec(){return S.escalatedAt&&S.ackAt?Math.round((S.ackAt-S.escalatedAt)/1000):null;}
+
+function renderQueue(b){
+  let html='';
+  // H3 · phone-call arm presents as an interruption, not a queue item
+  if(S.escalatedAt&&!S.ackAt&&S.armEsc==='call'){
+    html+=`<div class="callring"><span class="ic">📞</span>
+      <div class="t">Incoming call — ${S.op}<small>Unstructured. You do not know the step, the question, or the plant state until you answer.</small></div>
+      <button onclick="ackIssue()">Answer</button></div>`;
+  }
+  if(!S.escalatedAt){
+    html+=`<div class="cempty">Queue is clear.<br><br>Risk watch is live on the <b>Live telemetry</b> tab —
+      an operator can be in trouble before they ever press Help.</div>`;
+  }else{
+    const st=S.resolvedAt?'closed':(S.ackAt?'acked':'');
+    const q=S.queue[0];
+    html+=`<div class="qcard ${st}">
+      <div class="qtop">
+        <div class="nm">${S.op}<small>${SCRIPTS[S.fault].nameEn} · ${q.step}</small></div>
+        ${S.resolvedAt?'<span class="kw kw-done">Closed</span>':S.ackAt?'<span class="kw kw-ack">Acknowledged</span>':'<span class="kw kw-help">Needs help</span>'}
+        ${S.armEsc==='queue'?'<span class="kw kw-mine">Queue</span>':'<span class="kw kw-risk">Phone</span>'}
+        <span class="qtimer">${S.ackAt?('ack in '+fmt(ackSec())):('waiting '+fmt(waitSec()))}</span>
+      </div>
+      <div class="qbody">
+        <div class="qquote"><small>Operator asked · ${q.at} · ${q.src==='voice'?'🎙 voice':'flow'}</small>${q.q}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+          Context carried automatically: fault <b>${SCRIPTS[S.fault].nameEn}</b>, step <b>${q.step}</b>,
+          ${S.helpAsks.length} question(s) asked, abandonment risk <b>${riskScore()}%</b>.
+        </div>
+        <div class="qacts">
+          <button class="go" onclick="ackIssue()" ${S.ackAt?'disabled':''}>${S.ackAt?'✓ Acknowledged':'Acknowledge'}</button>
+          <button onclick="sendGuidance()" ${S.ackAt?'':'disabled'}>Send ${S.armMedia==='video'?'video':'text+image'} guidance</button>
+          <button onclick="closeLoop()" ${S.ackAt?'':'disabled'}>Close the loop</button>
+          <button class="danger" onclick="logCall()">Log follow-up call</button>
+        </div>
+      </div></div>`;
+  }
+  // H5 · ownership record
+  html+=`<div class="sechead">Ownership (H5)</div>
+    <div class="feed"><div class="fev"><span class="tm">${hhmm(new Date(S.start))}</span>
+      <span>${S.armOwn==='named'?`Explicitly assigned to <b>${S.op}</b>`:'Broadcast to all operators — free pickup'} ·
+      outcome: <b>${S.ownershipAction||'pending'}</b></span></div></div>`;
+  b.innerHTML=html;
+}
+function ackIssue(){
+  if(S.ackAt)return;
+  S.ackAt=now();
+  logEvent('ACK',`Engineer acknowledged after ${fmt(ackSec())} (${S.armEsc})`,'ok');
+  setAck('seen');renderConsole();toast('Acknowledged — operator notified');
+}
+function sendGuidance(){
+  logEvent('GUIDANCE',`Sent ${S.armMedia==='video'?'video clip':'text + image'} guidance`);
+  setAck('replied');
+  if(!$('copilot').classList.contains('expanded'))$('copilot').classList.add('expanded');
+  const k=KB.find(x=>x.id==='backwash');
+  let html=`<b>इंजीनियर प्रियंका ने भेजा</b><div class="vnum">${k.num}</div>
+    <ul class="vsteps">${k.steps.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ul>`;
+  if(S.armMedia==='video')html+=videoCard(k.video);
+  const bb=botSay(html,speakBtn(k.say));
+  if(S.armMedia==='video')bindVideo(bb);
+  renderConsole();toast('Guidance delivered to operator');
+}
+function closeLoop(){
+  S.resolvedAt=now();
+  logEvent('CLOSED','Monitoring engineer closed the issue','ok');
+  setAck('resolved');renderConsole();toast('Loop closed by engineer');
+}
+function logCall(){
+  S.followUpCalls++;
+  logEvent('CALL','Engineer made a follow-up call to the operator','hi');
+  renderConsole();toast('Follow-up call logged');
+}
+
+function renderTel(b){
+  const c=curStep();
+  const dw=c&&stepEnter?Math.round((now()-stepEnter)/1000):0;
+  const r=riskScore();
+  const col=r>65?'var(--rust)':r>35?'var(--amber)':'var(--sage)';
+  b.innerHTML=`
+    <div class="sechead">Current step</div>
+    <div class="telgrid">
+      <div class="telcell ${dw>25?'hot':''}"><div class="v">${dw}s</div><div class="k">Time on step</div></div>
+      <div class="telcell"><div class="v">${c?c.taps:0}</div><div class="k">Taps</div></div>
+      <div class="telcell ${c&&c.repeatTaps>1?'hot':''}"><div class="v">${c?c.repeatTaps:0}</div><div class="k">Dead taps</div></div>
+      <div class="telcell"><div class="v">${c?c.scroll:0}%</div><div class="k">Scroll depth</div></div>
+    </div>
+    <div class="riskbar"><i style="width:${r}%;background:${col}"></i>
+      <span>Abandonment risk ${r}% — ${r>65?'INTERVENE NOW':r>35?'watch closely':'healthy'}</span></div>
+    <div style="font-size:11.5px;color:var(--muted);line-height:1.6;">H2: risk is computed from dwell &gt; 25s, taps that hit no control,
+      back-navigation, scroll-hunting, and help opened without escalating.</div>
+
+    <div class="sechead">Step-by-step trail</div>
+    <div class="steptl">${S.steps.map(s=>{
+      const d=s===c&&stepEnter?dw:s.dwell;
+      return `<div class="steprow ${d>25?'slow':''}"><span class="sn">${s.label}</span>
+        <span class="bar"><i style="width:${Math.min(100,d/60*100)}%"></i></span>
+        <span class="dw">${d}s</span><span class="tp">${s.taps}t</span></div>`;}).join('')||'<div class="fev">No steps yet</div>'}</div>
+
+    <div class="sechead">Voice assistant usage</div>
+    <div class="telgrid">
+      <div class="telcell"><div class="v">${S.helpOpens}</div><div class="k">Help opens</div></div>
+      <div class="telcell"><div class="v">${S.voiceAsks}</div><div class="k">Spoken</div></div>
+      <div class="telcell"><div class="v">${S.typedAsks}</div><div class="k">Typed</div></div>
+      <div class="telcell"><div class="v">${S.helpAsks.length}</div><div class="k">Total asks</div></div>
+    </div>
+    ${S.helpAsks.length?`<div class="steptl" style="margin-top:12px">${S.helpAsks.map(a=>
+      `<div class="steprow" style="grid-template-columns:52px 1fr 46px"><span class="sn">${a.at}</span>
+       <span style="line-height:1.4">${a.q}</span><span class="tp">${a.mode==='voice'?'🎙':'⌨'}</span></div>`).join('')}</div>`:''}`;
+}
+function renderFeed(b){
+  b.innerHTML=`<div class="feed">${EVENTS.slice().reverse().map(e=>
+    `<div class="fev ${e.cls}"><span class="tm">${e.t.slice(0,5)}</span><span><b>${e.kw}</b> · ${e.text}</span></div>`).join('')}</div>`;
+}
+
+/* ===================== FINISH + RESULTS ===================== */
+function finish(){
+  closeStep();clearInterval(elapsedTimer);
+  if(!S.rootCause&&!S.abandoned){S.abandoned=true;S.abandonStep=curStep()?curStep().label:'—';}
+  $('doneSub').innerHTML=S.armAck==='on'&&S.escalatedAt
+    ? 'आपकी जाँच दर्ज हो गई।<br>इंजीनियर आगे देखेंगे — आपको सूचना मिलेगी।'
+    : 'आपकी जाँच पूरी हो गई।<br>फ़ोन वापस दे दें।';
+  show('scr-done');
+  const runs=load();runs.push(snapshot());save(runs);
+  logEvent('SAVED','Run saved');
+}
+function snapshot(){
+  const dw=S.steps.map(s=>s.dwell);
+  return{op:S.op,fault:S.fault,armFrame:S.armFrame,armEsc:S.armEsc,armMedia:S.armMedia,
+    armOwn:S.armOwn,armAck:S.armAck,helpOpens:S.helpOpens,voiceAsks:S.voiceAsks,typedAsks:S.typedAsks,
+    escalated:!!S.escalatedAt,ackSec:ackSec(),abandoned:S.abandoned,abandonStep:S.abandonStep,
+    accuracy:S.accuracy,rootCause:S.rootCause,followUpCalls:S.followUpCalls,
+    mediaViews:S.mediaViews,mediaCompleted:S.mediaCompleted,ownershipAction:S.ownershipAction,
+    maxDwell:dw.length?Math.max(...dw):0,totalTaps:S.steps.reduce((a,s)=>a+s.taps,0),
+    deadTaps:S.steps.reduce((a,s)=>a+s.repeatTaps,0),
+    closedByEngineer:!!S.resolvedAt,at:new Date().toISOString()};
+}
+const KEY='dp_round2_runs';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||[];}catch(e){return[];}}
+function save(r){try{localStorage.setItem(KEY,JSON.stringify(r));}catch(e){}}
+function resetAll(){save([]);toast('Cleared');showResults();}
+function newTest(){S=null;$('resultsWrap').classList.add('hide');show('scr-setup');renderConsole();
+  document.querySelector('#tgTest').classList.add('sel');document.querySelector('#tgResults').classList.remove('sel');}
+function goTest(){$('resultsWrap').classList.add('hide');
+  document.querySelector('#tgTest').classList.add('sel');document.querySelector('#tgResults').classList.remove('sel');}
+
+function showResults(){
+  document.querySelector('#tgResults').classList.add('sel');document.querySelector('#tgTest').classList.remove('sel');
+  const runs=load();
+  const cur=S?[snapshot()]:[];
+  const all=runs.length?runs:cur;
+  $('resultsWrap').classList.remove('hide');
+  if(!all.length){$('resBody').innerHTML='<div class="cempty">No runs saved yet.</div>';return;}
+  const by=(f,v)=>all.filter(r=>r[f]===v);
+  const avg=(a,f)=>a.length?Math.round(a.reduce((x,r)=>x+(r[f]||0),0)/a.length*10)/10:0;
+  const pct=(a,f)=>a.length?Math.round(a.filter(r=>r[f]).length/a.length*100):0;
+
+  const H=[
+   {id:'H1',t:'Operators use Request Help only if it will not read as incompetence.',
+    m:[['Neutral framing',avg(by('armFrame','neutral'),'helpOpens')+' opens/run'],
+       ['Reassuring framing',avg(by('armFrame','reassuring'),'helpOpens')+' opens/run'],
+       ['Escalation rate',pct(all,'escalated')+'%']],
+    n:'If reassuring framing lifts opens without lifting escalations, the barrier was social, not informational.'},
+   {id:'H2',t:'Abandonment leaves detectable behavioural signals.',
+    m:[['Abandoned runs',pct(all,'abandoned')+'%'],
+       ['Avg max dwell',avg(all,'maxDwell')+'s'],
+       ['Avg dead taps',avg(all,'deadTaps')]],
+    n:'Compare dwell and dead-tap counts between abandoned and completed runs. A gap means the signal is real.'},
+   {id:'H3',t:'A queue notification beats a phone call for engineer engagement speed.',
+    m:[['Queue — time to ack',avg(by('armEsc','queue').filter(r=>r.ackSec!=null),'ackSec')+'s'],
+       ['Call — time to ack',avg(by('armEsc','call').filter(r=>r.ackSec!=null),'ackSec')+'s'],
+       ['Escalations',all.filter(r=>r.escalated).length]],
+    n:'The queue also arrives with fault, step and risk attached; the call arrives with nothing.'},
+   {id:'H4',t:'Video guidance outperforms text + image for procedural tasks.',
+    m:[['Video — completion',pct(by('armMedia','video'),'mediaCompleted')+'%'],
+       ['Video runs · accuracy',by('armMedia','video').filter(r=>r.accuracy==='Match').length+'/'+by('armMedia','video').length],
+       ['Text runs · accuracy',by('armMedia','text').filter(r=>r.accuracy==='Match').length+'/'+by('armMedia','text').length]],
+    n:'Accuracy is scored against the staged root cause; procedural questions (PPM, backwash, HMI) are the ones to watch.'},
+   {id:'H5',t:'Named assignment creates more reliable ownership than free pickup.',
+    m:[['Named — accepted',by('armOwn','named').filter(r=>r.ownershipAction==='accepted-named').length+'/'+by('armOwn','named').length],
+       ['Pickup — claimed',by('armOwn','pickup').filter(r=>r.ownershipAction==='picked-up').length+'/'+by('armOwn','pickup').length],
+       ['Declined at trigger',all.filter(r=>r.ownershipAction==='declined').length]],
+    n:'Watch declines and time-to-accept, not just eventual completion.'},
+   {id:'H6',t:'Real-time acknowledgement reduces engineer follow-up calls.',
+    m:[['Ack ON — calls/run',avg(by('armAck','on'),'followUpCalls')],
+       ['Ack OFF — calls/run',avg(by('armAck','off'),'followUpCalls')],
+       ['Closed by engineer',pct(all,'closedByEngineer')+'%']],
+    n:'Loop closure is an engineer action by design — operators almost never report back.'}
+  ];
+  $('resBody').innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${all.length} run(s) in this dataset.</div>`+
+    H.map(h=>`<div class="hrow"><div class="hh"><span class="hid">${h.id}</span><span class="ht">${h.t}</span></div>
+      <div class="hb">${h.m.map(m=>`<div class="hmet"><div class="v">${m[1]}</div><div class="k">${m[0]}</div></div>`).join('')}</div>
+      <div class="hnote">${h.n}</div></div>`).join('');
+}
+renderConsole();
+</script>
+</body>
+</html>
