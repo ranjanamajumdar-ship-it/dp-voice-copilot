@@ -98,6 +98,9 @@
   .app-back{height:38px;flex-shrink:0;border:none;background:rgba(9,36,84,.06);border-radius:var(--r-pill);
     color:var(--navy);font-size:14px;font-weight:600;cursor:pointer;display:none;align-items:center;padding:0 14px;}
   .app-back.show{display:flex;}
+  .app-restart{order:9;flex-shrink:0;width:36px;height:36px;border:none;border-radius:var(--r-pill);
+    background:rgba(9,36,84,.06);color:var(--navy);font-size:16px;cursor:pointer;}
+  .app-restart:hover{background:rgba(9,36,84,.12);}
   .app-header .htxt{min-width:0;flex:1;}
   .app-header{background:var(--white)!important;color:var(--ink)!important;box-shadow:var(--lift-sm);}
   .app-header .brand{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.2px;}
@@ -155,6 +158,10 @@
   .vb .cq{font-size:18.5px;font-weight:600;line-height:1.35;letter-spacing:-.2px;}
   .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
   .vb .ctool{font-size:12px;font-weight:500;margin-top:8px;color:var(--muted);}
+  .vb .issuemeta{display:flex;flex-direction:column;gap:7px;margin-top:12px;padding-top:12px;
+    border-top:1px solid var(--hair);}
+  .vb .issuemeta span{font-size:13px;font-weight:600;color:var(--ink);display:flex;gap:8px;}
+  .vb .issuemeta i{font-style:normal;font-size:12px;font-weight:500;color:var(--muted);width:52px;flex-shrink:0;}
   .vb .ctool.need{color:var(--rust);font-weight:600;}
   .vanswers{display:flex;flex-direction:column;gap:6px;margin-top:11px;}
   .vans{background:var(--white);border:1px solid var(--hair);border-radius:var(--r);color:var(--ink);
@@ -388,6 +395,7 @@
       <div class="screen" id="scr-app">
         <div class="app-header">
           <button class="app-back" id="appBack" onclick="stepBack()">‹ पीछे</button>
+          <button class="app-restart" id="appRestart" onclick="restartFlow()" title="शुरू से">⟲</button>
           <div class="htxt">
             <div class="brand">डिजिटलपानी</div>
             <div class="fault" id="appFault">—</div>
@@ -436,7 +444,8 @@
             display:flex;align-items:center;justify-content:center;font-size:31px;color:var(--sage-forest);margin-bottom:16px;">✓</div>
           <h1>धन्यवाद!</h1>
           <div class="sub" id="doneSub">आपकी जाँच पूरी हो गई।<br>फ़ोन वापस दे दें।</div>
-          <button class="btn btn-primary center" style="max-width:250px" onclick="showResults()">परिणाम देखें</button>
+          <button class="btn btn-primary center" style="max-width:250px" onclick="restartFlow()">फिर से शुरू करें</button>
+          <button class="btn center" style="max-width:250px;margin-top:10px;background:transparent;border:1px solid var(--hair)" onclick="showResults()">परिणाम देखें</button>
         </div>
       </div>
     </div>
@@ -664,7 +673,7 @@ function openApp(){
   $('appBody').style.display='none';
   $('appFault').textContent=SCRIPTS[S.fault].nameHi;
   renderHelpFraming();
-  navStack=[];show('scr-app');navGo({t:'step',n:1});
+  navStack=[];show('scr-app');navGo({t:'issue'});
 }
 
 /* ===================== H1 · HELP FRAMING ===================== */
@@ -679,6 +688,7 @@ function renderHelpFraming(){
 /* ===================== H2 · BEHAVIOURAL TELEMETRY ===================== */
 function stepKey(desc){return desc.t==='step'?('S'+desc.n):desc.t.toUpperCase();}
 function stepLabel(desc){
+  if(desc.t==='issue')return 'Issue card';
   if(desc.t!=='step')return desc.t==='tool'?'Tool pick':'Wrap-up';
   const st=SCRIPTS[S.fault].steps[desc.n-1];
   return st.rc?'Root cause':('चरण '+desc.n);
@@ -714,7 +724,26 @@ function riskScore(){
 
 /* ===================== APP FLOW ===================== */
 function navGo(desc){navStack.push(desc);beginStep(desc);navRender(desc);updateBack();narrateCurrent();if(cTabCur==='tel')renderConsole();}
-function navRender(d){d.t==='step'?cpStep(d.n):d.t==='tool'?cpTool():cpWrap();}
+function navRender(d){
+  d.t==='issue'?cpIssue():d.t==='step'?cpStep(d.n):d.t==='tool'?cpTool():cpWrap();
+}
+
+/* the alert the operator was sent, before any checking begins */
+function cpIssue(){
+  redrawCurrent=cpIssue;
+  $('progFill').style.width='0%';
+  const sc=SCRIPTS[S.fault];
+  const b=cpBubble(`<div class="eyebrow">नया अलर्ट · ${hhmm(now())}</div>
+    <div class="cq">${sc.nameHi}</div>
+    <div class="cd">${sc.trigger.replace(/^⚠️\s*/,'').replace(/\s*जाँच शुरू करें\?$/,'')}</div>
+    <div class="issuemeta">
+      <span><i>प्लांट</i>गंगा विहार STP · 12 MLD</span>
+      <span><i>जाँच</i>${checkCount()} चरण · ${sc.nameEn}</span>
+    </div>`);
+  attach(b,answerBlock(['जाँच शुरू करें'],()=>navGo({t:'step',n:1})));
+  logEvent('SENT','Issue card shown');
+  narrateCurrent();
+}
 
 /* ============================================================
    THE FLOW, ASKED BY THE CO-PILOT
@@ -1340,6 +1369,21 @@ renderConsole();
 /* ===================== OPEN STRAIGHT INTO THE FLOW =====================
    The page lands on चरण 1 with the default arms. The setup screen is
    still there for changing arms — press "Test" in the top bar. */
+function restartFlow(){
+  stopMic();
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+  clearInterval(elapsedTimer);
+  $('cpUndo').classList.remove('show');
+  clearNote();
+  $('vBody').innerHTML='';
+  $('ackStrip').classList.add('hide');
+  lastNarrated='';srFatal=false;window.__weak=null;
+  S=null;navStack=[];
+  $('resultsWrap').classList.add('hide');
+  logEvent('RESTART','Flow restarted from the issue card');
+  autoStart();
+  toast('शुरू से — नया अलर्ट');
+}
 function autoStart(){
   if(!actualRC)actualRC=SCRIPTS[document.querySelector('#faultSeg .sel').dataset.v].rcList[0];
   startSession();   // sets the arms, starts the clock
