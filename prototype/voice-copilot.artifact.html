@@ -166,6 +166,14 @@
     justify-content:center;position:relative;transition:.15s;}
   .cprail .railmic.live{background:var(--rust);color:#fff;}
 
+  /* --- undo strip: a voice answer commits, but stays correctable --- */
+  .cpundo{display:none;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;font-weight:600;
+    background:var(--amber-tint);color:#6b4200;border-bottom:1px solid var(--line);}
+  .cpundo.show{display:flex;}
+  .cpundo span{flex:1;}
+  .cpundo button{background:var(--white);border:1px solid var(--amber);color:var(--amber);
+    font-weight:700;font-size:12px;padding:5px 11px;cursor:pointer;}
+
   /* --- the conversation, revealed by expanding --- */
   .cpconvo{display:none;flex-direction:column;min-height:0;}
   .copilot.expanded .cpconvo{display:flex;flex:1;min-height:0;}
@@ -357,9 +365,11 @@
               <span class="st" id="vStatus">सुनने के लिए तैयार · हिंदी</span>
               <span class="heard" id="railHeard"></span>
             </div>
+            <button class="chev" id="narrBtn" title="बोलना बंद करें" onclick="toggleNarration()">🔊</button>
             <button class="railmic" id="railMic" onclick="toggleMic()">🎙</button>
             <button class="chev" id="cpChev" title="बातचीत खोलें">⌃</button>
           </div>
+          <div class="cpundo" id="cpUndo"></div>
 
           <div class="cpconvo" id="cpConvo">
             <div class="vprivacy" id="vPrivacy"></div>
@@ -372,7 +382,7 @@
             <div class="vmicbar">
               <button class="micbtn" id="micBtn" onclick="toggleMic()">🎙</button>
               <div class="micside">
-                <div class="hint" id="micHint">दबाकर बोलें<small>जैसे: “कितना PPM डालना है?”</small></div>
+                <div class="hint" id="micHint">दबाकर बोलें<small>सवाल पूछें — या जवाब बोलें</small></div>
                 <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
               </div>
             </div>
@@ -547,6 +557,7 @@ function startSession(){
      start:now().toISOString(),
      steps:[],            // {key,label,dwell,taps,repeatTaps,scroll,backs}
      helpOpens:0, helpAsks:[], voiceAsks:0, typedAsks:0,
+     voiceAnswers:0, bargeIns:0, reprompts:0, voiceFallbacks:0, narrations:0,
      escalatedAt:null, ackAt:null, resolvedAt:null, pickedUpBy:null,
      ownershipAction:null, followUpCalls:0, mediaViews:0, mediaCompleted:0,
      rootCause:'', accuracy:'', actualRC, abandoned:false, abandonStep:null,
@@ -663,7 +674,7 @@ function riskScore(){
 }
 
 /* ===================== APP FLOW ===================== */
-function navGo(desc){closeVoice();navStack.push(desc);beginStep(desc);navRender(desc);updateBack();if(cTabCur==='tel')renderConsole();}
+function navGo(desc){closeVoice();navStack.push(desc);beginStep(desc);navRender(desc);updateBack();narrateCurrent();if(cTabCur==='tel')renderConsole();}
 function navRender(d){d.t==='step'?renderStep(d.n):d.t==='tool'?renderTool():renderWrap();}
 function stepBack(){
   if(navStack.length<2)return;
@@ -672,6 +683,7 @@ function stepBack(){
   navStack.pop();
   logEvent('BACK','Operator went back a step');
   const d=navStack[navStack.length-1];beginStep(d);navRender(d);updateBack();
+  lastNarrated='';narrateCurrent();
 }
 function updateBack(){$('appBack').classList.toggle('show',navStack.length>1);}
 function checkCount(){return SCRIPTS[S.fault].steps.filter(s=>!s.rc).length;}
@@ -703,6 +715,7 @@ function renderStep(n){
           <div class="advice ${o.warn?'warn':''}"><b>सलाह</b>${o.advice}</div>${toolChip(st)}
           <div class="opts-wrap"><button class="btn btn-primary center" id="advNext">आगे बढ़ें</button></div>`;
         $('advNext').onclick=()=>navGo({t:'step',n:o.next});
+        lastNarrated='';narrateCurrent();      // the advice is new information — read it out
       }else navGo({t:'step',n:o.next});
     };
     wrap.appendChild(b);
@@ -764,17 +777,18 @@ function openVoice(){
   logEvent('HELP','Expanded co-pilot conversation'+(c?' at '+c.label:''),'hi');
   if(S.helpOpens===1){
     $('vBody').innerHTML='';
-    botSay(`नमस्ते ${S.op.split(' ')[0]}। मैं डॉ. पानी हूँ — साथ ही चल रहा हूँ। माइक दबाकर हिंदी में पूछिए — जैसे “कितना PPM डालना है?”`);
+    botSay(`नमस्ते ${S.op.split(' ')[0]}। मैं डॉ. पानी हूँ — हर चरण साथ में पढ़कर बताऊँगा।<br>
+      माइक दबाकर <b>जवाब भी बोल सकते हैं</b> — जैसे “बंद है”, या पूछिए “कितना PPM डालना है?”।<br>
+      बीच में टोक सकते हैं — मैं रुक जाऊँगा। कहिए “पीछे”, “दोबारा”, या “इंजीनियर को भेजो”।`);
   }
   renderChips();
   $('copilot').classList.add('expanded');
   renderConsole();
 }
-function closeVoice(){
+function closeVoice(){        // collapse only — the mic keeps listening across steps
   const el=$('copilot');
   if(!el)return;
   el.classList.remove('expanded');
-  stopMic();
 }
 function renderChips(){
   $('vChips').innerHTML=CHIPS.map(c=>`<button class="vchip" onclick="ask('${c.q}','chip')">${c.t}</button>`).join('')
@@ -872,62 +886,266 @@ function bindVideo(container){
   };
 }
 
-/* --- speech --- */
+/* ==================================================================
+   CO-PILOT SPEECH ENGINE
+   Three behaviours make this a co-pilot rather than a help desk:
+   1. it listens continuously and can be interrupted mid-sentence
+   2. it speaks each step first, unprompted
+   3. what the operator says can answer the step, not just ask about it
+   ================================================================== */
+let narrateOn=true, lastNarrated='', wantListen=false, srFatal=false, undoTimer=null;
+
+/* ---------- speaking (with barge-in) ---------- */
 function speak(text){
-  if(!('speechSynthesis' in window))return;
+  if(!('speechSynthesis' in window)||!text)return;
   try{
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
     u.lang='hi-IN';u.rate=.92;
+    u.onend=()=>cpState(listening?'listening':'idle');
     speechSynthesis.speak(u);
     cpState('speaking');
-    u.onend=()=>cpState(listening?'listening':'idle');
   }catch(e){}
 }
-function toggleMic(){listening?stopMic():startMic();}
-function startMic(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  listening=true;
-  $('micBtn').classList.add('live');$('micBtn').textContent='■';
-  $('railMic').classList.add('live');$('railMic').textContent='■';
-  $('wave').classList.add('on');
-  $('micHint').innerHTML='सुन रहा हूँ… बोलिए<small>रोकने के लिए दोबारा दबाएँ</small>';
-  cpState('listening');
-  if(!SR){   // fallback: no browser STT — offer the chips as "recognised" phrases
-    $('micHint').innerHTML='इस ब्राउज़र में माइक उपलब्ध नहीं<small>नीचे दिए सवालों में से चुनें या लिखें</small>';
-    setTimeout(stopMic,1400);
+function shutUp(){                      // barge-in: operator talks, co-pilot yields
+  if('speechSynthesis' in window&&speechSynthesis.speaking){
+    speechSynthesis.cancel();
+    if(S)S.bargeIns++;
+    logEvent('VOICE','Operator interrupted the co-pilot (barge-in)');
+  }
+}
+
+/* ---------- narration: the co-pilot speaks first ---------- */
+function narrateCurrent(){
+  if(!narrateOn||!S)return;
+  const body=$('appBody');if(!body)return;
+  const q=body.querySelector('.q,.advice');if(!q)return;
+  const detail=body.querySelector('.q-detail');
+  const opts=[...body.querySelectorAll('.opt')].map(b=>b.textContent.trim()).filter(Boolean);
+  let line=q.textContent.replace(/^सलाह/,'').trim();
+  if(detail)line+=' '+detail.textContent.trim();
+  if(opts.length)line+=' विकल्प: '+opts.join(', या ')+'।';
+  else if(body.querySelector('#advNext'))line+=' आगे बढ़ने के लिए बोलिए “आगे”।';
+  if(line===lastNarrated)return;         // don't repeat on a re-render
+  lastNarrated=line;
+  S.narrations++;
+  speak(line);
+}
+function toggleNarration(){
+  narrateOn=!narrateOn;
+  $('narrBtn').textContent=narrateOn?'🔊':'🔇';
+  $('narrBtn').title=narrateOn?'बोलना बंद करें':'बोलना चालू करें';
+  if(!narrateOn)speechSynthesis.cancel();
+  logEvent('VOICE','Step narration '+(narrateOn?'on':'off'));
+  toast(narrateOn?'डॉ. पानी हर चरण पढ़कर बताएँगे':'अब चुप रहेंगे');
+}
+
+/* ---------- intent routing ---------- */
+const YES=['हाँ','हां','हा','जी','ठीक','सही','है','यस','yes','ok'];
+const NO =['नहीं','नही','ना','नो','no','नहि'];
+const ORDINAL={'पहला':0,'पहले':0,'एक':0,'दूसरा':1,'दूसरे':1,'दो':1,'तीसरा':2,'तीन':2,'चौथा':3,'चार':3};
+const norm=t=>t.toLowerCase().replace(/[।,.?!"“”]/g,' ').replace(/\s+/g,' ').trim();
+
+function visibleOptions(){
+  const body=$('appBody');
+  const opts=[...body.querySelectorAll('.opt')];
+  const next=body.querySelector('#advNext');
+  return next?[...opts,next]:opts;
+}
+/* score how well an utterance matches a button's label */
+function scoreOption(said,label){
+  const s=norm(said),l=norm(label);
+  if(!l)return 0;
+  if(s===l)return 100;
+  if(s.includes(l)||l.includes(s))return 80;
+  const lw=l.split(' ').filter(w=>w.length>2);
+  const hit=lw.filter(w=>s.includes(w)).length;
+  return lw.length?Math.round(hit/lw.length*100):0;   // 2 of 3 content words = confident
+}
+function matchOption(said){
+  const btns=visibleOptions();
+  if(!btns.length)return null;
+  const s=norm(said);
+  // ordinals — "पहला", "दूसरा"
+  for(const k in ORDINAL) if(s.split(' ').includes(k)&&btns[ORDINAL[k]])return {btn:btns[ORDINAL[k]],why:'ordinal',score:75};
+  // best textual match
+  let best=null;
+  btns.forEach(b=>{const sc=scoreOption(said,b.textContent);if(!best||sc>best.score)best={btn:b,score:sc,why:'label'};});
+  if(best&&best.score>=55)return best;
+  // bare yes / no, when the options themselves are a yes/no pair
+  const words=s.split(' ');
+  const saidYes=words.some(w=>YES.includes(w)),saidNo=words.some(w=>NO.includes(w));
+  if(saidYes!==saidNo){
+    const hit=btns.find(b=>{const t=norm(b.textContent);
+      return saidNo?NO.some(n=>t.startsWith(n)):YES.some(y=>t.startsWith(y));});
+    if(hit)return {btn:hit,why:'yes/no',score:70};
+  }
+  return best&&best.score>=35?{...best,weak:true}:null;
+}
+function matchCommand(said){
+  const s=norm(said);
+  const has=arr=>arr.some(w=>s.includes(w));
+  if(has(['पीछे','वापस','पिछला','back']))return 'back';
+  if(has(['दोहरा','दोबारा','फिर बोल','फिर से बोल','repeat']))return 'repeat';
+  if(has(['चुप','बंद कर','रुको','stop']))return 'stop';
+  if(has(['इंजीनियर','एस्केलेट','escalate','मदद भेज']))return 'escalate';
+  return null;
+}
+
+/* ---------- what happens when the operator speaks ---------- */
+function routeUtterance(said){
+  if(!S)return;
+  const cmd=matchCommand(said);
+  if(cmd){
+    meSay(said);logEvent('VOICE','Command: '+cmd);
+    if(cmd==='back'){ navStack.length>1?stepBack():botSay('यह पहला चरण है — पीछे कुछ नहीं है।'); return; }
+    if(cmd==='repeat'){ lastNarrated='';narrateCurrent(); return; }
+    if(cmd==='stop'){ stopMic();botSay('ठीक है, माइक बंद कर दिया। ज़रूरत हो तो दबा दीजिए।'); return; }
+    if(cmd==='escalate'){ escalate('voice'); return; }
+  }
+  const m=matchOption(said);
+  if(m&&!m.weak){ voiceAnswer(m.btn,said); return; }
+  if(m&&m.weak){                       // heard something close — ask once, don't guess
+    S.reprompts++;
+    meSay(said);
+    botSay(`मुझे ठीक से समझ नहीं आया। क्या आपका मतलब <b>${m.btn.textContent.trim()}</b> है?`,
+      `<button class="spk" onclick="confirmWeak()">हाँ, यही</button>`);
+    window.__weak=m.btn;
+    speak('मुझे ठीक से समझ नहीं आया। क्या आपका मतलब '+m.btn.textContent.trim()+' है?');
+    logEvent('VOICE','Low confidence — re-prompted');
     return;
   }
-  recog=new SR();recog.lang='hi-IN';recog.interimResults=true;recog.continuous=false;
-  let finalText='';
+  // a bare "हाँ"/"नहीं" on a step whose options are not yes/no — re-offer them
+  const words=norm(said).split(' ');
+  if(words.length<=3&&words.some(w=>YES.includes(w)||NO.includes(w))){
+    const opts=visibleOptions().map(b=>b.textContent.trim()).filter(Boolean);
+    if(opts.length){
+      S.reprompts++;
+      meSay(said);
+      const line=`इस सवाल का जवाब हाँ या नहीं में नहीं है। बोलिए: ${opts.join(', या ')}।`;
+      botSay(line);speak(line);
+      logEvent('VOICE','Yes/no given where options differ — re-offered options');
+      return;
+    }
+  }
+  ask(said,'voice');                   // not an answer or a command → treat as a question
+}
+function confirmWeak(){
+  if(window.__weak){const b=window.__weak;window.__weak=null;voiceAnswer(b,'(पुष्टि)');}
+}
+
+/* ---------- committing an answer by voice, with an undo ---------- */
+function voiceAnswer(btn,said){
+  const label=btn.textContent.trim();
+  if(said&&said!=='(पुष्टि)')meSay(said);
+  S.voiceAnswers++;
+  logEvent('VOICE',`Answered by voice: “${label}”`,'ok');
+  botSay(`समझ गया — <b>${label}</b>`);
+  speak(label+' — दर्ज कर लिया।');
+  const before=navStack.length;
+  closeVoice();
+  btn.click();
+  showUndo(label,before);
+}
+function showUndo(label,before){
+  const el=$('cpUndo');
+  el.innerHTML=`<span>दर्ज: <b>${label}</b></span><button onclick="undoVoice(${before})">बदलें</button>`;
+  el.classList.add('show');
+  clearTimeout(undoTimer);
+  undoTimer=setTimeout(()=>el.classList.remove('show'),5000);
+}
+function undoVoice(before){
+  $('cpUndo').classList.remove('show');
+  logEvent('VOICE','Operator corrected a voice answer','hi');
+  if(navStack.length>before)stepBack();
+  else{lastNarrated='';navRender(navStack[navStack.length-1]);narrateCurrent();}
+  toast('ठीक — दोबारा चुनिए');
+}
+
+/* ---------- the microphone: continuous, restarting, interruptible ---------- */
+function toggleMic(){listening?stopMic():startMic();}
+function micUI(on){
+  ['micBtn','railMic'].forEach(id=>{
+    const b=$(id);if(!b)return;
+    b.classList.toggle('live',on);b.textContent=on?'■':'🎙';
+  });
+  $('wave').classList.toggle('on',on);
+}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    micFail('इस ब्राउज़र में आवाज़ नहीं चलती','Chrome या Safari में खोलें — या नीचे दबाकर चुनें');
+    return;
+  }
+  if(srFatal){
+    micFail('माइक की अनुमति नहीं है','ब्राउज़र की सेटिंग में माइक चालू करें');
+    return;
+  }
+  wantListen=true;listening=true;
+  micUI(true);cpState('listening');
+  $('micHint').innerHTML='सुन रहा हूँ… बोलिए<small>जवाब भी बोल सकते हैं — जैसे “बंद है”</small>';
+  spinRecog();
+}
+function spinRecog(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();
+  recog.lang='hi-IN';recog.interimResults=true;recog.continuous=true;
+  let saidFinal='';
   recog.onresult=e=>{
     let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
-      if(r.isFinal)finalText+=r[0].transcript;else interim+=r[0].transcript;
+      if(r.isFinal)saidFinal+=r[0].transcript+' ';else interim+=r[0].transcript;
     }
-    $('micHint').innerHTML=`<span style="color:var(--rust)">${(finalText+interim)||'…'}</span><small>सुन रहा हूँ</small>`;
-    $('railHeard').textContent=(finalText+interim)||'…';   // visible even when collapsed
-  };
-  recog.onerror=()=>{$('micHint').innerHTML='आवाज़ नहीं पकड़ी गई<small>दोबारा कोशिश करें या लिखें</small>';stopMic();};
-  recog.onend=()=>{
-    stopMic();
-    if(finalText.trim()){
-      openVoice();                 // an answer is coming — make sure it is readable
-      ask(finalText.trim(),'voice');
+    if(interim||saidFinal)shutUp();                   // barge-in the moment we hear anything
+    const live=(saidFinal+interim).trim();
+    $('micHint').innerHTML=`<span style="color:var(--rust)">${live||'…'}</span><small>सुन रहा हूँ</small>`;
+    $('railHeard').textContent=live||'…';
+    if(saidFinal.trim()){
+      const utt=saidFinal.trim();saidFinal='';
+      openVoice();
+      routeUtterance(utt);
     }
   };
-  try{recog.start();}catch(e){stopMic();}
+  recog.onerror=ev=>{
+    const err=ev.error||'';
+    if(err==='no-speech')return;                      // silence is fine, keep listening
+    if(err==='not-allowed'||err==='service-not-allowed'){
+      srFatal=true;wantListen=false;
+      micFail('माइक की अनुमति नहीं मिली','ब्राउज़र में माइक चालू करें — तब तक दबाकर चुनें');
+      logEvent('VOICE','Mic permission denied','hi');return;
+    }
+    if(err==='audio-capture'){
+      srFatal=true;wantListen=false;
+      micFail('माइक नहीं मिला','हेडसेट जोड़ें या दबाकर चुनें');return;
+    }
+    if(err==='network'){micFail('इंटरनेट नहीं है','आवाज़ पहचान के लिए इंटरनेट चाहिए');
+      logEvent('VOICE','Speech recognition offline','hi');}
+  };
+  recog.onend=()=>{                                   // continuous mode still ends — restart it
+    if(wantListen&&!srFatal){try{spinRecog();}catch(e){stopMic();}}
+    else stopMic();
+  };
+  try{recog.start();}catch(e){/* already running */}
+}
+function micFail(head,sub){
+  if(S)S.voiceFallbacks++;
+  wantListen=false;listening=false;
+  micUI(false);
+  $('copilot').classList.remove('listening','speaking','thinking');
+  $('vStatus').textContent='आवाज़ उपलब्ध नहीं';
+  $('micHint').innerHTML=`<span style="color:var(--rust)">${head}</span><small>${sub}</small>`;
+  $('railHeard').textContent='';
+  openVoice();
 }
 function stopMic(){
-  listening=false;
-  if(recog){try{recog.stop();}catch(e){}recog=null;}
-  $('micBtn').classList.remove('live');$('micBtn').textContent='🎙';
-  $('railMic').classList.remove('live');$('railMic').textContent='🎙';
-  $('wave').classList.remove('on');
+  wantListen=false;listening=false;
+  if(recog){try{recog.onend=null;recog.stop();}catch(e){}recog=null;}
+  micUI(false);
   cpState('idle');
-  setTimeout(()=>{if(!listening)$('micHint').innerHTML='दबाकर बोलें<small>जैसे: “कितना PPM डालना है?”</small>';},900);
+  setTimeout(()=>{if(!listening)$('micHint').innerHTML='दबाकर बोलें<small>सवाल पूछें — या जवाब बोलें</small>';},900);
 }
+
 
 /* ===================== ESCALATION → CONSOLE (H3/H6) ===================== */
 function escalate(source){
@@ -961,7 +1179,7 @@ function ackSec(){return S.escalatedAt&&S.ackAt?Math.round((S.ackAt-S.escalatedA
 
 /* ===================== FINISH + RESULTS ===================== */
 function finish(){
-  closeStep();clearInterval(elapsedTimer);
+  closeStep();clearInterval(elapsedTimer);stopMic();if('speechSynthesis' in window)speechSynthesis.cancel();
   if(!S.rootCause&&!S.abandoned){S.abandoned=true;S.abandonStep=curStep()?curStep().label:'—';}
   $('doneSub').innerHTML=S.armAck==='on'&&S.escalatedAt
     ? 'आपकी जाँच दर्ज हो गई।<br>इंजीनियर आगे देखेंगे — आपको सूचना मिलेगी।'
@@ -974,6 +1192,8 @@ function snapshot(){
   const dw=S.steps.map(s=>s.dwell);
   return{op:S.op,fault:S.fault,armFrame:S.armFrame,armEsc:S.armEsc,armMedia:S.armMedia,
     armOwn:S.armOwn,armAck:S.armAck,helpOpens:S.helpOpens,voiceAsks:S.voiceAsks,typedAsks:S.typedAsks,
+    voiceAnswers:S.voiceAnswers,bargeIns:S.bargeIns,reprompts:S.reprompts,
+    narrations:S.narrations,voiceFallbacks:S.voiceFallbacks,
     escalated:!!S.escalatedAt,ackSec:ackSec(),abandoned:S.abandoned,abandonStep:S.abandonStep,
     accuracy:S.accuracy,rootCause:S.rootCause,followUpCalls:S.followUpCalls,
     mediaViews:S.mediaViews,mediaCompleted:S.mediaCompleted,ownershipAction:S.ownershipAction,
@@ -1047,6 +1267,7 @@ function autoStart(){
   if(!actualRC)actualRC=SCRIPTS[document.querySelector('#faultSeg .sel').dataset.v].rcList[0];
   startSession();   // sets the arms, starts the clock
   openApp();        // skip the WhatsApp trigger, land on step 1
+  narrateCurrent(); // and read the first check out loud
 }
 autoStart();
 </script>
