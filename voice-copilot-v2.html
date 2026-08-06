@@ -2415,27 +2415,125 @@ snapshot=function(){ensureV2State();return _snapshotGuard();};
    then say so plainly and put the status back to तैयार. The UI never claims to be
    speaking when it isn't.
    ================================================================================== */
+/* ---- 7a · make the text sayable before the voice ever sees it ----------------
+   The screen is Hinglish because that is how the plant floor talks — "seal से
+   leak", "3.4 bar", "DO probe". A hi-IN voice cannot pronounce Latin script: it
+   skips the word, spells it letter by letter, or guesses at it in English
+   phonetics. So the display string and the spoken string are NOT the same
+   string. Everything the voice receives is transliterated into Devanagari first,
+   units are expanded to words, and decimals are read digit by digit the way an
+   operator says them.
+
+   Order matters: longest phrases first, so "discharge pressure" is not eaten by
+   "pressure". \b does not work against Devanagari neighbours, so these are plain
+   case-insensitive replacements. */
+const SAY_MAP=[
+  [/mg\s*\/\s*l/gi,'मिलीग्राम प्रति लीटर'],[/ml\s*\/\s*l/gi,'मिलीलीटर प्रति लीटर'],
+  [/\bmld\b/gi,'एम एल डी'],[/\bppm\b/gi,'पी पी एम'],[/\bbar\b/gi,'बार'],
+  [/\bsop\b/gi,'एस ओ पी'],[/\bhmi\b/gi,'एच एम आई'],
+  /* uppercase only — case-insensitive would swallow the English word "do" */
+  [/\bDO\b/g,'डी ओ'],
+  [/\bmlss\b/gi,'एम एल एस एस'],[/\bsv-?30\b/gi,'एस वी थर्टी'],
+  [/discharge pressure/gi,'डिस्चार्ज प्रेशर'],[/header pressure/gi,'हेडर प्रेशर'],
+  [/mechanical seal/gi,'मेकैनिकल सील'],[/gland packing/gi,'ग्लैंड पैकिंग'],
+  [/feed pump/gi,'फ़ीड पंप'],[/dosing/gi,'डोज़िंग'],[/backwash/gi,'बैकवॉश'],
+  [/tissue paper/gi,'टिश्यू पेपर'],[/lockout-?tagout/gi,'लॉकआउट टैगआउट'],
+  [/normal range/gi,'नॉर्मल रेंज'],[/aeration/gi,'एरेशन'],[/diffuser/gi,'डिफ्यूज़र'],
+  [/pressure/gi,'प्रेशर'],[/discharge/gi,'डिस्चार्ज'],[/blower/gi,'ब्लोअर'],
+  [/pump/gi,'पंप'],[/seal/gi,'सील'],[/leak(age)?/gi,'लीक'],[/valve/gi,'वाल्व'],
+  [/filter/gi,'फ़िल्टर'],[/probe/gi,'प्रोब'],[/sensor/gi,'सेंसर'],[/gland/gi,'ग्लैंड'],
+  [/bearing/gi,'बेयरिंग'],[/strainer/gi,'स्ट्रेनर'],[/trip(ped)?/gi,'ट्रिप'],
+  [/tank/gi,'टैंक'],[/panel/gi,'पैनल'],[/timer/gi,'टाइमर'],[/settings?/gi,'सेटिंग'],
+  [/store/gi,'स्टोर'],[/tool/gi,'टूल'],[/\bcap\b/gi,'कैप'],[/scaling/gi,'स्केलिंग'],
+  [/normal/gi,'नॉर्मल'],[/reading/gi,'रीडिंग'],[/live/gi,'लाइव'],[/plant/gi,'प्लांट'],
+  [/hypo(chlorite)?/gi,'हाइपो'],[/chlorine/gi,'क्लोरीन'],[/residual/gi,'रेसिड्युअल'],
+  [/stroke/gi,'स्ट्रोक'],[/rinse/gi,'रिन्स'],[/drain/gi,'ड्रेन'],[/save/gi,'सेव'],
+  [/supervisor/gi,'सुपरवाइज़र'],[/maintenance/gi,'मेंटेनेंस'],[/electrician/gi,'इलेक्ट्रीशियन'],
+  [/indent/gi,'इंडेंट'],[/spanner/gi,'स्पैनर'],[/kit/gi,'किट'],[/video/gi,'वीडियो'],
+  [/checklist/gi,'चेकलिस्ट'],[/foaming/gi,'फोमिंग'],[/wasting/gi,'वेस्टिंग'],
+  [/sludge/gi,'स्लज'],[/floc/gi,'फ्लॉक'],[/reset/gi,'रीसेट'],[/start/gi,'स्टार्ट'],
+  [/ok\b/gi,'ठीक']
+];
+const DIGIT=['शून्य','एक','दो','तीन','चार','पाँच','छह','सात','आठ','नौ'];
+function sayable(t){
+  let s=String(t||'');
+  s=s.replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu,' ');  // emoji
+  /* decimals as an operator says them: 3.4 → तीन दशमलव चार */
+  s=s.replace(/(\d+)[.](\d+)/g,(m,a,b)=>
+    a.split('').map(d=>DIGIT[+d]).join(' ')+' दशमलव '+b.split('').map(d=>DIGIT[+d]).join(' '));
+  s=s.replace(/(\d)\s*[–—-]\s*(\d)/g,'$1 से $2');   // 2.0–2.5 is a range, not a dash
+  SAY_MAP.forEach(([re,to])=>{s=s.replace(re,to);});
+  s=s.replace(/[—–·|:/=]/g,', ').replace(/["“”()]/g,' ')
+     .replace(/,\s*,+/g,', ').replace(/\s+/g,' ').trim();
+  return s;
+}
+
+/* ---- 7b · speak in sentences, not one long utterance ----
+   Chrome truncates long utterances, and v1 fought that by pausing and resuming
+   every 5 s — which causes its own audible break-ups. Short chunks spoken in
+   sequence remove the need for the hack entirely. */
+let sayToken=0;
+function chunk(s){
+  const out=[];
+  s.split(/(?<=[।?!])\s+/).forEach(part=>{
+    if(part.length<=150){if(part.trim())out.push(part.trim());return;}
+    let buf='';
+    part.split(/,\s*/).forEach(bit=>{
+      if((buf+' '+bit).length>150&&buf){out.push(buf.trim());buf=bit;}
+      else buf=buf?buf+', '+bit:bit;
+    });
+    if(buf.trim())out.push(buf.trim());
+  });
+  return out.length?out:[s];
+}
+function mkUtter(text,rate,pitch){
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='hi-IN';u.rate=rate||.94;u.pitch=pitch||1;
+  if(hiVoice)u.voice=hiVoice;
+  return u;
+}
+function sayQueue(parts,rate,pitch,onFirstStart){
+  const token=++sayToken;
+  let i=0;
+  const next=()=>{
+    if(token!==sayToken||i>=parts.length){
+      if(token===sayToken){stopKeepAlive();cpState(listening?'listening':'idle');}
+      return;
+    }
+    const u=mkUtter(parts[i++],rate,pitch);
+    u.onstart=()=>{if(token===sayToken){cpState('speaking');if(i===1&&onFirstStart)onFirstStart();}};
+    u.onend=()=>{if(token===sayToken)next();};
+    u.onerror=e=>{
+      if(token!==sayToken)return;
+      if(e&&(e.error==='interrupted'||e.error==='canceled'))return;
+      next();                                  // one bad chunk must not kill the rest
+    };
+    try{speechSynthesis.speak(u);}catch(err){next();}
+  };
+  next();
+  return token;
+}
+
 let vFails=0;
-function trySpeak(text,attempt){
+function trySpeak(text,attempt,rate,pitch){
+  const parts=chunk(sayable(text));
+  if(!parts.length)return;
   try{
+    stopKeepAlive();                     // chunking replaces the pause/resume hack
     speechSynthesis.cancel();
     speechSynthesis.resume();
     cpState('speaking');
-    const u=utter(text);
     let started=false;
-    u.addEventListener('start',()=>{started=true;vFails=0;});
-    speechSynthesis.speak(u);
+    const token=sayQueue(parts,rate,pitch,()=>{started=true;vFails=0;});
     setTimeout(()=>{
-      if(started||u.started||speechSynthesis.paused)return;   // real speech, or paused mid-word
-      if(attempt<1){                                          // one hard reset, then honesty
-        try{speechSynthesis.cancel();}catch(e){}
-        trySpeak(text,attempt+1);return;
-      }
-      stopKeepAlive();
+      if(started||token!==sayToken)return;                    // speaking, or superseded
+      if(speechSynthesis.paused)return;
+      if(attempt<1){try{speechSynthesis.cancel();}catch(e){}   // one hard reset
+        trySpeak(text,attempt+1,rate,pitch);return;}
       try{speechSynthesis.cancel();}catch(e){}
       cpState(listening?'listening':'idle');                  // never lie about the state
       speechFailed(text);
-    },1100);
+    },1400);
   }catch(e){cpState('idle');speechFailed(text);}
 }
 speak=function(text){
@@ -2448,6 +2546,8 @@ speak=function(text){
   }
   trySpeak(text,0);
 };
+/* warnings keep their own register — slower and lower, through the same pipeline */
+speakSlow=function(text){trySpeak(text,0,.82,.92);};
 function speechFailed(text){
   vFails++;
   if(S)S.voiceFallbacks=(S.voiceFallbacks||0)+1;
@@ -2461,6 +2561,10 @@ function speechFailed(text){
   /* on the very first failure, say once in text what could not be said aloud */
   if(vFails===1)note('🔇','आवाज़ नहीं चल पाई — नीचे लिखा हुआ पढ़ लीजिए। जाँच रुकी नहीं है।');
 }
+
+/* barge-in must abandon the whole queue, not just the chunk being spoken */
+const _shutUp=shutUp;
+shutUp=function(){sayToken++;stopKeepAlive();_shutUp();cpState(listening?'listening':'idle');};
 
 /* ---- a diagnostic the operator (or you) can run from inside help ---- */
 function voiceReport(){
