@@ -28,6 +28,10 @@
 
   /* ============ RESEARCHER SHELL ============ */
   .shell{max-width:1180px;margin:0 auto;}
+  /* PROTOTYPE ONLY — the researcher shell (Test/Results bar, setup screen and
+     hypothesis readout) is hidden. The phone is the whole thing. */
+  .rbar{display:none !important;}
+  #resultsWrap{display:none !important;}
   .rbar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 16px;flex-wrap:wrap;}
   .rbar .brand{font-size:14px;font-weight:600;line-height:1.2;}
   .rbar .brand span{display:block;font-size:10px;color:var(--teal-light);font-weight:500;}
@@ -41,7 +45,7 @@
   .stage{display:flex;justify-content:center;margin-top:16px;}
 
   /* ============ PHONE ============ */
-  .phone{width:391px;height:min(812px,calc(100vh - 104px));background:var(--paper);
+  .phone{width:391px;height:min(844px,calc(100vh - 26px));background:var(--paper);
     border-radius:36px;border:6px solid #B8B4A8;
     box-shadow:0 24px 60px rgba(26,26,26,.3);overflow:hidden;display:flex;flex-direction:column;position:relative;}
   @media(max-width:1000px){.phone{width:100%;max-width:391px;margin:0 auto;}}
@@ -201,7 +205,10 @@
   .copilot.expanded .cpconvo{display:flex;flex:1;min-height:0;}
   .vprivacy{display:none;}                         /* removed — one less band of chrome */
   /* the stage holds exactly one turn — no transcript, so nothing scrolls */
-  .vbody{flex:1;min-height:0;overflow:hidden;padding:14px 14px 4px;display:flex;flex-direction:column;}
+  /* was overflow:hidden — a tall card then pushed the answer buttons past the
+     bottom edge with no way to reach them. Nothing may be unreachable. */
+  .vbody{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px 4px;
+    display:flex;flex-direction:column;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
   .cpnote{flex-shrink:0;display:none;align-items:center;gap:9px;padding:8px 14px;font-size:12px;
     line-height:1.4;color:var(--muted);background:var(--white);box-shadow:var(--lift-sm);}
   .cpnote.show{display:flex;}
@@ -215,7 +222,14 @@
   .vb.bot.haschecks{max-width:100%;width:100%;}
   .vb{flex-shrink:0;}
   .vb.bot.haschecks{display:flex;flex-direction:column;min-height:0;}
-  .vanswers{overflow:hidden;}
+  /* the answers are the interactive part — they stay in view while the card
+     above them scrolls, so a check can never become un-answerable */
+  /* bottom margin must stay 0 — a negative one extends the sticky range past the
+     card's bottom edge and pushes the answers out of view again */
+  .vanswers{position:sticky;bottom:0;z-index:3;background:var(--white);
+    margin:11px -15px 0;padding:9px 15px 4px;
+    box-shadow:0 -8px 12px -8px rgba(9,36,84,.22);}
+  .vb.haschecks{padding-bottom:4px;}
   .vb.me{background:var(--navy-tint);color:var(--navy);align-self:flex-end;font-weight:600;
     border-bottom-right-radius:6px;}
   .vb .who{display:none;}                          /* the side of the bubble already says who */
@@ -1850,22 +1864,23 @@ function ensureV2State(){
    is one tap away. Evidence should be checkable, not exhausting. */
 function memoryCardHTML(){
   const m=MEMORY[S.fault];if(!m)return '';
-  const lead=m.ev.slice(0,1),rest=m.ev.slice(1);
+  /* Collapsed to the hypothesis alone. The evidence is one tap away, because the
+     check and its answers must own the screen — a card that crowds them out is
+     worse than no card. */
   return `<div class="memcard">
     <div class="mh">🧠 मैंने पहले क्या देखा</div>
     <div class="hyp">${m.hyp}</div>
-    <ul>${lead.map(e=>`<li><i>${e.i}</i><span>${e.t}</span></li>`).join('')}</ul>
-    ${rest.length?`<ul class="memrest" style="display:none;margin-top:5px">
-      ${rest.map(e=>`<li><i>${e.i}</i><span>${e.t}</span></li>`).join('')}</ul>
-      <button class="memmore" onclick="memMore(this)">+${rest.length} और वजह देखें</button>`:''}
-    <div class="src">आपके plant के data से — मैं गलत भी हो सकता हूँ, जाँच आप करेंगे।</div>
+    <ul class="memrest" style="display:none">
+      ${m.ev.map(e=>`<li><i>${e.i}</i><span>${e.t}</span></li>`).join('')}</ul>
+    <button class="memmore" onclick="memMore(this)">क्यों? ${m.ev.length} वजह देखें</button>
+    <div class="src">आपके plant के data से — जाँच आप करेंगे।</div>
   </div>`;
 }
 function memMore(btn){
   const c=btn.closest('.memcard'),r=c.querySelector('.memrest');
   const open=r.style.display!=='none';
   r.style.display=open?'none':'flex';
-  btn.textContent=open?`+${r.children.length} और वजह देखें`:'कम दिखाएँ';
+  btn.textContent=open?`क्यों? ${r.children.length} वजह देखें`:'कम दिखाएँ';
   if(!open)logEvent('MEMORY','Operator opened the full evidence list');
 }
 
