@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Co-pilot v2 — working memory + “मदद चाहिए” help layer</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#092454; --navy-mid:#1a2d5d; --navy-tint:#E8EBF2;
+    --teal:#6AA8B0; --teal-light:#B0C3D6; --teal-tint:#E8F0F2;
+    --sage:#8AB878; --sage-forest:#2E5924; --sage-tint:#F1F8EC;
+    --rust:#C4511E; --rust-tint:#FAF0EB;
+    --amber:#B26B00; --amber-tint:#FBF2E2;
+    --paper:#F7F6F2; --ink:#1A1A1A; --muted:#6F6F6F; --line:#E0DDD3; --white:#FFF;
+    /* soft-UI tokens */
+    --r:14px; --r-lg:20px; --r-pill:999px;
+    --hair:rgba(9,36,84,.09);
+    --lift:0 1px 2px rgba(9,36,84,.05), 0 6px 18px rgba(9,36,84,.06);
+    --lift-sm:0 1px 2px rgba(9,36,84,.05);
+    --canvas:#FBFAF7;
+    --wa-bg:#0B141A; --wa-header:#202C33; --wa-in:#202C33; --wa-out:#005C4B;
+    --wa-accent:#25D366; --wa-text:#E9EDEF; --wa-muted:#8696A0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans','Noto Sans Devanagari',-apple-system,sans-serif;}
+  html,body{overflow:hidden;height:100%;}
+  body{background:#DDDAD2;color:var(--ink);padding:12px;}
+
+  /* ============ RESEARCHER SHELL ============ */
+  .shell{max-width:1180px;margin:0 auto;}
+  .rbar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 16px;flex-wrap:wrap;}
+  .rbar .brand{font-size:14px;font-weight:600;line-height:1.2;}
+  .rbar .brand span{display:block;font-size:10px;color:var(--teal-light);font-weight:500;}
+  .rbar .spacer{margin-left:auto;}
+  .rbar .timer{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .navtoggle{display:flex;border:1px solid rgba(255,255,255,.35);}
+  .navtoggle button{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;cursor:pointer;padding:6px 13px;border:none;background:transparent;}
+  .navtoggle button.sel{background:#fff;color:var(--navy);}
+
+  /* operator flow only — the phone is the whole stage, so centre it */
+  .stage{display:flex;justify-content:center;margin-top:16px;}
+
+  /* ============ PHONE ============ */
+  .phone{width:391px;height:min(812px,calc(100vh - 104px));background:var(--paper);
+    border-radius:36px;border:6px solid #B8B4A8;
+    box-shadow:0 24px 60px rgba(26,26,26,.3);overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  @media(max-width:1000px){.phone{width:100%;max-width:391px;margin:0 auto;}}
+  .statusbar{height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;font-size:12.5px;font-weight:600;background:var(--navy);color:#fff;}
+  .screen{flex:1;overflow:hidden;display:none;min-height:0;}
+  .screen.on{display:flex;flex-direction:column;}
+  .screen::-webkit-scrollbar{width:0;}
+  .pad{padding:20px 16px 40px;}
+
+  h1{font-size:21px;font-weight:600;margin-bottom:4px;letter-spacing:-.2px;}
+  .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+
+  label{font-size:11.5px;color:var(--muted);display:block;margin:14px 0 6px;font-weight:600;letter-spacing:.2px;}
+  input[type=text]{width:100%;background:var(--white);border:none;border-bottom:1px solid #8D8D8D;color:var(--ink);
+    padding:11px 13px;font-size:14px;outline:none;}
+  input:focus{outline:2px solid var(--navy);outline-offset:-2px;}
+  .seg{display:flex;gap:1px;background:var(--line);}
+  .seg button{flex:1;background:var(--white);border:none;color:var(--muted);padding:11px 4px;
+    font-size:11.5px;font-weight:600;cursor:pointer;line-height:1.3;}
+  .seg button.sel{background:var(--navy);color:#fff;}
+  .seg.arm button.sel{background:var(--teal);color:#04212a;}
+  .armnote{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.45;}
+  .armnote b{color:var(--navy);}
+
+  .btn{width:100%;border:none;padding:14px 16px;font-size:14px;font-weight:600;cursor:pointer;
+    margin-top:14px;text-align:left;display:flex;justify-content:space-between;align-items:center;}
+  .btn:after{content:'→';}
+  .btn.center{justify-content:center;} .btn.center:after{content:'';}
+  .btn-primary{background:var(--navy);color:#fff;} .btn-primary:hover{background:var(--navy-mid);}
+  .btn-secondary{background:transparent;color:var(--navy);border:1px solid var(--navy);}
+  .btn-danger{background:transparent;color:var(--rust);border:1px solid var(--rust);}
+
+  /* ---- WhatsApp ---- */
+  #scr-wa{background:var(--wa-bg);}
+  .wa-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--wa-header);color:var(--wa-text);}
+  .wa-header .avatar{width:34px;height:34px;border-radius:50%;background:var(--wa-accent);color:#04160B;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .wa-header .t{font-size:14px;font-weight:600;}
+  .wa-header .t span{display:block;font-size:10.5px;color:var(--wa-muted);font-weight:400;}
+  #waScroll{flex:1;overflow-y:auto;padding:16px 14px 8px;}
+  .wa-bubble{max-width:84%;margin-bottom:8px;padding:9px 12px;font-size:14.5px;line-height:1.6;
+    border-radius:9px;animation:pop .25s ease;color:var(--wa-text);}
+  @keyframes pop{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .wa-in{background:var(--wa-in);border-top-left-radius:0;}
+  .wa-out{background:var(--wa-out);border-top-right-radius:0;margin-left:auto;}
+  .wa-bubble .time{display:block;font-size:10px;color:var(--wa-muted);margin-top:4px;text-align:right;}
+  .wa-link{display:block;margin-top:8px;padding:11px;background:rgba(37,211,102,.12);border:1px solid var(--wa-accent);
+    border-radius:8px;color:var(--wa-accent);font-weight:700;font-size:13.5px;text-align:center;cursor:pointer;}
+  .wa-replybar{flex-shrink:0;padding:10px 14px 16px;background:var(--wa-header);display:flex;flex-direction:column;gap:8px;}
+  .wa-chip{width:100%;background:transparent;border:1px solid var(--wa-accent);color:var(--wa-accent);
+    border-radius:999px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;}
+  .typing{display:inline-flex;gap:4px;padding:13px;}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--wa-muted);animation:blink 1s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s;}.typing i:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{50%{opacity:.25;}}
+
+  /* ---- App flow ---- */
+  .app-header{flex-shrink:0;background:var(--navy);color:#fff;padding:10px 12px;display:flex;align-items:center;gap:9px;}
+  .app-back{height:44px;flex-shrink:0;border:none;background:rgba(9,36,84,.06);border-radius:var(--r-pill);
+    color:var(--navy);font-size:14px;font-weight:600;cursor:pointer;display:none;align-items:center;padding:0 14px;}
+  .app-back.show{display:flex;}
+  .app-restart{order:9;flex-shrink:0;width:44px;height:44px;border:none;border-radius:var(--r-pill);
+    background:rgba(9,36,84,.06);color:var(--navy);font-size:16px;cursor:pointer;}
+  .app-restart:hover{background:rgba(9,36,84,.12);}
+  .app-header .htxt{min-width:0;flex:1;}
+  .app-header{background:var(--white)!important;color:var(--ink)!important;box-shadow:var(--lift-sm);}
+  .app-header .brand{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.2px;}
+  .app-header .fault{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .progress-track{flex-shrink:0;height:3px;background:rgba(9,36,84,.07);display:flex;}
+  .progress-fill{background:var(--teal);transition:width .35s ease;border-radius:var(--r-pill);}
+  #appBody{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+  #appBody::-webkit-scrollbar{width:0;}
+  .step-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:9px;letter-spacing:.3px;}
+  .q{font-size:24px;font-weight:700;line-height:1.4;margin-bottom:8px;}
+  .q-detail{font-size:16.5px;color:var(--muted);line-height:1.55;margin-bottom:18px;}
+  .opts-wrap{margin-top:auto;}
+  .opt{width:100%;background:var(--white);border:1px solid var(--line);color:var(--ink);min-height:62px;
+    padding:16px;font-size:17.5px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:10px;
+    display:flex;align-items:center;gap:13px;}
+  .opt:hover{border-color:var(--navy);} .opt:active{background:var(--navy-tint);}
+  .opt .radio{width:23px;height:23px;border-radius:50%;border:2px solid #8D8D8D;flex-shrink:0;}
+  .opt .oic{width:30px;height:30px;flex-shrink:0;color:var(--navy);} .opt .oic svg{width:100%;height:100%;}
+  .advice{border-left:4px solid var(--teal);background:var(--teal-tint);padding:15px;font-size:16.5px;
+    line-height:1.6;margin-bottom:18px;animation:pop .25s ease;}
+  .advice.warn{border-left-color:var(--rust);background:var(--rust-tint);}
+  .advice b{display:block;font-size:11.5px;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;font-weight:700;}
+  .toolchip{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 13px;font-size:13.5px;
+    font-weight:600;border:1px solid var(--line);align-self:flex-start;background:var(--sage-tint);color:var(--sage-forest);}
+  .toolchip.need{background:var(--rust-tint);color:var(--rust);border-color:var(--rust);}
+  .illus{background:var(--white);border:1px solid var(--line);padding:8px;display:flex;
+    align-items:center;justify-content:center;margin-bottom:14px;}
+  .illus svg{width:100%;height:110px;color:var(--ink);}
+
+  /* ---- H6 · live acknowledgement strip inside operator app ---- */
+  .ackstrip{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:12.5px;
+    font-weight:500;background:var(--white);color:var(--amber);box-shadow:var(--lift-sm);}
+  .ackstrip.seen{background:var(--teal-tint);color:#2C5A63;}
+  .ackstrip.resolved{background:var(--sage-tint);color:var(--sage-forest);}
+  .ackstrip .dotpulse{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 1.4s infinite;flex-shrink:0;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  /* ============================================================
+     VOICE CO-PILOT RAIL — always docked, never covers the question.
+     The rail lives in the app screen's flex column, so expanding it
+     shrinks #appBody (which scrolls) instead of overlaying it.
+     ============================================================ */
+  #scr-app{position:relative;}
+  .copilot{flex-shrink:0;background:var(--canvas);display:flex;flex-direction:column;min-height:0;}
+  /* expanded rail is bounded by the device, never taller than 62% of it */
+  .copilot.expanded{height:62%;}
+  /* full mode: the co-pilot IS the screen — the flow lives in the conversation */
+  .copilot.full{flex:1;height:auto;}
+  .copilot.full .cpconvo{display:flex;flex:1;min-height:0;}
+  body .copilot.full ~ *{}                     /* no-op, keeps specificity honest */
+
+  /* a check, asked by the co-pilot */
+  .vb .eyebrow{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .cqrow{display:flex;align-items:flex-start;gap:10px;}
+  .cqrow .cq,.cqrow .eyebrow{flex:1;min-width:0;margin-bottom:0;}
+  .cqspk{flex-shrink:0;width:44px;height:44px;border:none;border-radius:var(--r-pill);
+    background:var(--teal-tint);color:#22474E;font-size:16px;cursor:pointer;line-height:1;
+    display:flex;align-items:center;justify-content:center;transition:.16s;}
+  .cqspk:hover{background:var(--teal);color:#04212a;}
+  .cqspk:active{transform:scale(.92);}
+  .vb .cq{font-size:18.5px;font-weight:600;line-height:1.35;letter-spacing:-.2px;}
+  .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
+  .vb .ctool{font-size:12.5px;font-weight:500;margin-top:8px;color:var(--muted);}
+  .vb .issuemeta{display:flex;flex-direction:column;gap:7px;margin-top:12px;padding-top:12px;
+    border-top:1px solid var(--hair);}
+  .vb .issuemeta span{font-size:13px;font-weight:600;color:var(--ink);display:flex;gap:8px;}
+  .vb .issuemeta i{font-style:normal;font-size:12px;font-weight:500;color:var(--muted);width:52px;flex-shrink:0;}
+  .vb .ctool.need{color:var(--rust);font-weight:600;}
+  .vanswers{display:flex;flex-direction:column;gap:6px;margin-top:11px;}
+  .vans{background:var(--white);border:1px solid var(--hair);border-radius:var(--r);color:var(--ink);
+    text-align:left;font-size:15px;font-weight:600;padding:10px 14px;cursor:pointer;
+    box-shadow:var(--lift-sm);transition:.16s;min-height:42px;}
+  .vans:hover{border-color:var(--teal);box-shadow:var(--lift);transform:translateY(-1px);}
+  .vans .radio{display:none;}                      /* the card is the target — no radio needed */
+  .vanswers.done .vans{opacity:.32;cursor:default;box-shadow:none;transform:none;}
+  .vanswers.done .vans:hover{border-color:var(--hair);}
+  .vanswers.done .vans.chosen{opacity:1;background:var(--teal-tint);border-color:var(--teal);color:#22474E;}
+  .vanswers.done .vans.chosen::before{content:'✓ ';font-weight:700;color:#2C5A63;}
+
+  /* --- undo strip: a voice answer commits, but stays correctable --- */
+  .cpundo{display:none;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;font-weight:500;
+    background:var(--white);color:var(--muted);box-shadow:var(--lift-sm);}
+  .cpundo.show{display:flex;}
+  .cpundo span{flex:1;}
+  .cpundo b{color:var(--ink);font-weight:600;}
+  .cpundo button{background:transparent;border:1px solid var(--hair);border-radius:var(--r-pill);
+    color:var(--navy);font-weight:600;font-size:12.5px;padding:0 16px;min-height:44px;cursor:pointer;}
+
+  /* --- the conversation, revealed by expanding --- */
+  .cpconvo{display:none;flex-direction:column;min-height:0;}
+  .copilot.expanded .cpconvo{display:flex;flex:1;min-height:0;}
+  .vprivacy{display:none;}                         /* removed — one less band of chrome */
+  /* the stage holds exactly one turn — no transcript, so nothing scrolls */
+  .vbody{flex:1;min-height:0;overflow:hidden;padding:14px 14px 4px;display:flex;flex-direction:column;}
+  .cpnote{flex-shrink:0;display:none;align-items:center;gap:9px;padding:8px 14px;font-size:12px;
+    line-height:1.4;color:var(--muted);background:var(--white);box-shadow:var(--lift-sm);}
+  .cpnote.show{display:flex;}
+  .cpnote .txt{flex:1;min-width:0;}
+  .cpnote b{color:var(--ink);font-weight:600;}
+  .cpnote button{flex-shrink:0;background:var(--navy);color:#fff;border:none;border-radius:var(--r-pill);
+    font-size:11.5px;font-weight:600;padding:6px 12px;cursor:pointer;}
+  .vb{max-width:90%;padding:13px 15px;font-size:15px;line-height:1.55;animation:pop .22s ease;
+    border-radius:var(--r-lg);}
+  .vb.bot{background:var(--white);box-shadow:var(--lift);align-self:flex-start;border-top-left-radius:6px;}
+  .vb.bot.haschecks{max-width:100%;width:100%;}
+  .vb{flex-shrink:0;}
+  .vb.bot.haschecks{display:flex;flex-direction:column;min-height:0;}
+  .vanswers{overflow:hidden;}
+  .vb.me{background:var(--navy-tint);color:var(--navy);align-self:flex-end;font-weight:600;
+    border-bottom-right-radius:6px;}
+  .vb .who{display:none;}                          /* the side of the bubble already says who */
+  .vb .spk{margin-top:10px;font-size:12px;font-weight:600;color:var(--navy);background:rgba(9,36,84,.06);
+    border:none;border-radius:var(--r-pill);padding:7px 13px;cursor:pointer;}
+  .vsteps{margin:8px 0 2px;padding-left:2px;list-style:none;}
+  .vsteps li{display:flex;gap:9px;font-size:14px;line-height:1.5;margin-bottom:5px;}
+  .vsteps li b{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--teal-tint);
+    color:#2C5A63;font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center;
+    margin-top:2px;}
+  .vnum{background:var(--amber-tint);border-radius:var(--r);padding:11px 14px;
+    font-size:15px;font-weight:600;color:#6b4200;margin:10px 0;}
+  .vchips{display:none;}
+  /* co-piloted suggestions — offered when the co-pilot is unsure, never a dead end */
+  .cpsuggest{flex-shrink:0;display:none;padding:8px 14px 4px;}
+  .cpsuggest.show{display:block;}
+  .cpsuggest .lead{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:7px;}
+  .cpsuggest .row{display:flex;flex-wrap:wrap;gap:7px;}
+  .cpsuggest button{background:var(--white);border:1px solid var(--teal);border-radius:var(--r-pill);
+    color:#22474E;font-size:13.5px;font-weight:600;padding:0 16px;min-height:44px;cursor:pointer;
+    box-shadow:var(--lift-sm);}
+  .cpsuggest button.ghost{border-color:var(--hair);color:var(--muted);font-weight:500;box-shadow:none;}
+  /* the supervisor is one tap away on every screen */
+  .callbar{flex-shrink:0;padding:8px 14px 0;}
+  .callbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+    background:var(--rust-tint);border:1px solid rgba(196,81,30,.28);border-radius:var(--r);
+    color:#8F340D;font-size:15px;font-weight:600;min-height:48px;padding:11px;cursor:pointer;}
+  .callbtn:hover{background:#F6E3DA;}
+  .callbtn.ringing{background:var(--rust);color:#fff;border-color:var(--rust);}
+  .callbtn .ic{font-size:15px;}
+  .vchip{background:transparent;border:1px solid var(--hair);border-radius:var(--r-pill);
+    padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);
+    white-space:nowrap;flex-shrink:0;}
+  .vchip:hover{border-color:var(--teal);color:var(--ink);background:var(--white);}
+  .vchip.esc{color:var(--rust);border-color:rgba(196,81,30,.3);}
+
+  .vbar{flex-shrink:0;background:var(--white);padding:10px 14px 16px;box-shadow:0 -1px 2px rgba(9,36,84,.04);}
+  .vhint{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:8px;line-height:1.4;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vhint small{display:none;}
+  #vStatus{font-weight:600;color:var(--ink);}
+  .copilot.listening #vStatus{color:var(--rust);}
+  .copilot.speaking #vStatus{color:#2C5A63;}
+  .vbar-row{display:flex;align-items:center;gap:10px;}
+  .vbar-row input{flex:1;min-width:0;border:1px solid var(--hair);border-radius:var(--r-pill);
+    padding:13px 16px;font-size:15px;background:var(--canvas);}
+  .vbar-row input:focus{outline:none;border-color:var(--teal);background:var(--white);}
+  .micbtn{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+    background:var(--navy);color:#fff;font-size:21px;display:flex;align-items:center;justify-content:center;
+    position:relative;transition:.16s;box-shadow:var(--lift);}
+  .micbtn:hover{background:var(--navy-mid);}
+  .micbtn.live{background:var(--rust);}
+  .micbtn.live::after{content:'';position:absolute;inset:-9px;border-radius:50%;
+    border:2px solid var(--rust);animation:ring 1.2s infinite;}
+  @keyframes ring{0%{transform:scale(.85);opacity:.9;}100%{transform:scale(1.25);opacity:0;}}
+  .micside{flex:1;min-width:0;}
+  .micside .hint{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35;}
+  .micside .hint small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:3px;}
+  .wave{display:none;align-items:flex-end;gap:3px;height:18px;margin-top:10px;justify-content:center;}
+  .wave.on{display:flex;}
+  .wave i{width:4px;background:var(--rust);animation:wv .7s ease-in-out infinite;}
+  .wave i:nth-child(2){animation-delay:.08s;} .wave i:nth-child(3){animation-delay:.16s;}
+  .wave i:nth-child(4){animation-delay:.24s;} .wave i:nth-child(5){animation-delay:.32s;}
+  .wave i:nth-child(6){animation-delay:.4s;} .wave i:nth-child(7){animation-delay:.48s;}
+  @keyframes wv{0%,100%{height:6px;}50%{height:24px;}}
+  .micside{display:none;}
+
+  /* ---- H4 · guidance media ---- */
+  .vidcard{margin-top:9px;border:1px solid var(--line);background:#0c161b;}
+  .vidstage{position:relative;aspect-ratio:16/9;background:radial-gradient(120% 120% at 50% 0,#12242c,#0a1318);overflow:hidden;}
+  .vidstage svg{position:absolute;inset:0;width:100%;height:100%;}
+  .vidplay{position:absolute;inset:0;margin:auto;width:52px;height:52px;border-radius:50%;border:none;
+    background:rgba(106,168,176,.95);color:#04212a;font-size:21px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;}
+  .vidcap{position:absolute;left:0;right:0;bottom:0;padding:9px 11px;font-size:12.5px;color:#EAF1F0;
+    background:linear-gradient(0deg,rgba(6,12,15,.94),transparent);min-height:42px;display:flex;align-items:flex-end;}
+  .vidbar{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.08);}
+  .vidbar .track{flex:1;height:5px;background:rgba(255,255,255,.15);position:relative;}
+  .vidbar .prog{position:absolute;left:0;top:0;bottom:0;background:var(--teal);width:0;}
+  .vidbar .tm{font-size:10.5px;color:#8fa2a6;font-variant-numeric:tabular-nums;}
+  .flowdash{stroke-dasharray:5 7;animation:dash 1s linear infinite;animation-play-state:paused;}
+  .vidcard.playing .flowdash{animation-play-state:running;}
+  @keyframes dash{to{stroke-dashoffset:-24;}}
+
+  /* results */
+  .cempty{padding:26px 16px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7;}
+  .hrow{border:1px solid var(--line);margin-bottom:10px;}
+  .hrow .hh{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--paper);
+    border-bottom:1px solid var(--line);}
+  .hrow .hid{font-size:12px;font-weight:800;background:var(--navy);color:#fff;padding:3px 8px;}
+  .hrow .ht{font-size:12.5px;font-weight:600;flex:1;line-height:1.4;}
+  .hrow .hb{padding:12px 13px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:none;}
+  .hmet{background:var(--white);padding:9px;text-align:center;}
+  .hmet .v{font-size:17px;font-weight:700;} .hmet .k{font-size:9.5px;color:var(--muted);font-weight:700;
+    text-transform:uppercase;letter-spacing:.4px;margin-top:3px;line-height:1.3;}
+  .hnote{padding:0 13px 12px;font-size:11.5px;color:var(--muted);line-height:1.55;}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);opacity:0;
+    background:var(--ink);color:#fff;font-weight:600;font-size:12.5px;padding:11px 20px;transition:.3s;
+    z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  /* keyboard focus must be visible — it was not */
+  :focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px;}
+  .hide{display:none !important;}
+
+  /* ==================================================================
+     V2 ADDITIONS — working memory + "मदद चाहिए" help layer
+     ================================================================== */
+
+  /* ---- working-memory card on the issue screen ---- */
+  .memcard{background:var(--teal-tint);border:1px solid rgba(106,168,176,.45);border-radius:var(--r);
+    padding:11px 12px;margin-top:11px;}
+  .memcard .mh{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    color:#3E7A82;display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+  .memcard .hyp{font-size:14.5px;font-weight:600;line-height:1.45;color:var(--navy);margin-bottom:8px;}
+  .memcard ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .memcard li{font-size:12.5px;line-height:1.45;color:#2F4858;display:flex;gap:7px;}
+  .memcard li i{font-style:normal;flex-shrink:0;opacity:.75;}
+  .memcard .src{font-size:10.5px;color:#5C7A80;margin-top:8px;font-weight:500;}
+  .memcard .memmore{margin-top:7px;font-size:11.5px;font-weight:600;color:#2F5F66;background:var(--white);
+    border:1px solid rgba(106,168,176,.5);border-radius:var(--r-pill);padding:6px 11px;
+    cursor:pointer;font-family:inherit;}
+  .memcard ul.memrest{flex-direction:column;}
+
+  /* ---- live-reading pre-fill on a step ---- */
+  .prefill{margin-top:10px;background:var(--white);border:1px solid var(--hair);border-radius:var(--r);
+    padding:10px 11px;box-shadow:var(--lift-sm);}
+  .prefill .pl{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:5px;}
+  .prefill .pv{font-size:15px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;}
+  .prefill .pv b{font-weight:600;font-size:12.5px;color:var(--muted);margin-left:3px;}
+  .prefill .pt{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;}
+  .prefill .prow{display:flex;gap:7px;margin-top:9px;}
+  .prefill .prow button{flex:1;font-size:12.5px;font-weight:600;padding:9px 8px;border-radius:var(--r-pill);
+    cursor:pointer;border:1px solid var(--hair);background:var(--paper);color:var(--navy);
+    font-family:inherit;min-height:38px;}
+  .prefill .prow button.yes{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .prefill.confirmed{border-color:var(--sage);background:var(--sage-tint);}
+  .prefill.overridden{border-color:var(--amber);background:var(--amber-tint);}
+
+  /* ---- the quiet, always-there help affordance ---- */
+  .helprow{display:flex;flex-direction:column;padding:0 13px;}
+  .helprow:empty,.helprow>.helpoffer:not(.show){margin:0;}
+  .callbar.duo{display:flex;gap:8px;}
+  .callbar.duo .helpbtn,.callbar.duo .callbtn{flex:1;min-width:0;font-size:14px;}
+  .helpbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;
+    min-height:48px;border-radius:var(--r);cursor:pointer;font-family:inherit;
+    font-size:14px;font-weight:600;color:var(--navy);
+    background:var(--white);border:1px dashed rgba(9,36,84,.32);}
+  .helpbtn:active{background:var(--navy-tint);}
+  .helpbtn .ic{font-size:16px;}
+
+  /* ---- proactive offer (fires from confusion telemetry) ---- */
+  .helpoffer{display:none;background:var(--amber-tint);border:1px solid rgba(178,107,0,.35);
+    border-radius:var(--r);padding:8px 10px;margin-top:6px;
+    align-items:center;gap:9px;}
+  .helpoffer.show{display:flex;animation:offerIn .28s ease;}
+  @keyframes offerIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .helpoffer .ol{font-size:13px;font-weight:600;color:#7A4A00;line-height:1.35;flex:1;min-width:0;}
+  .helpoffer .orow{display:flex;gap:6px;flex-shrink:0;}
+  .helpoffer .orow button{font-size:12.5px;font-weight:600;min-height:36px;padding:0 12px;border-radius:var(--r-pill);
+    cursor:pointer;font-family:inherit;border:1px solid rgba(178,107,0,.4);
+    background:var(--white);color:#7A4A00;}
+  .helpoffer .orow button.pri{background:#B26B00;border-color:#B26B00;color:#fff;}
+
+  /* ---- the help sheet — layers OVER the step, never replaces it ---- */
+  .hscrim{position:absolute;inset:0;background:rgba(9,36,84,.42);opacity:0;pointer-events:none;
+    transition:opacity .22s ease;z-index:40;}
+  .hscrim.on{opacity:1;pointer-events:auto;}
+  .hsheet{position:absolute;left:0;right:0;bottom:0;z-index:41;display:flex;flex-direction:column;
+    max-height:88%;background:var(--white);border-radius:var(--r-lg) var(--r-lg) 0 0;
+    box-shadow:0 -8px 32px rgba(9,36,84,.22);
+    transform:translateY(102%);transition:transform .26s cubic-bezier(.22,.9,.3,1);}
+  .hsheet.on{transform:none;}
+  .hsheet .hh{display:flex;align-items:center;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--line);}
+  .hsheet .hh .av{width:32px;height:32px;border-radius:50%;background:var(--teal-tint);
+    border:1px solid rgba(106,168,176,.5);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .hsheet .hh .ht{flex:1;min-width:0;}
+  .hsheet .hh .ht b{display:block;font-size:14.5px;font-weight:700;color:var(--navy);}
+  .hsheet .hh .ht span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hsheet .hh .hx{width:32px;height:32px;border-radius:50%;border:1px solid var(--hair);background:var(--paper);
+    cursor:pointer;font-size:15px;color:var(--muted);flex-shrink:0;}
+  .hgrab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:7px auto 0;}
+
+  .hbody{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:9px;
+    background:var(--canvas);-webkit-overflow-scrolling:touch;}
+  .hmsg{max-width:92%;font-size:14px;line-height:1.5;padding:10px 12px;border-radius:var(--r);}
+  .hmsg.bot{background:var(--white);border:1px solid var(--hair);box-shadow:var(--lift-sm);align-self:flex-start;}
+  .hmsg.me{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:5px;}
+  .hmsg .htitle{font-size:14.5px;font-weight:700;color:var(--navy);margin-bottom:5px;}
+  .hmsg .hnum{font-size:13.5px;font-weight:700;color:var(--navy);background:var(--navy-tint);
+    border-radius:9px;padding:7px 9px;margin:6px 0;font-variant-numeric:tabular-nums;}
+  .hmsg ol{margin:5px 0 2px;padding-left:2px;list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .hmsg ol li{display:flex;gap:8px;font-size:13.5px;line-height:1.45;}
+  .hmsg ol li b{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--teal-tint);
+    color:#3E7A82;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .hmsg .hcite{font-size:10.5px;color:var(--muted);margin-top:7px;font-weight:500;
+    border-top:1px dashed var(--line);padding-top:6px;}
+  .hmsg .hspk{margin-top:8px;font-size:11.5px;font-weight:600;color:var(--navy);background:var(--paper);
+    border:1px solid var(--hair);border-radius:var(--r-pill);padding:6px 11px;cursor:pointer;font-family:inherit;}
+  .htools{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+  .htools button{font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:var(--r-pill);
+    cursor:pointer;font-family:inherit;min-height:36px;
+    background:var(--teal-tint);border:1px solid rgba(106,168,176,.5);color:#2F5F66;}
+  .htools button.warn{background:var(--rust-tint);border-color:rgba(196,81,30,.4);color:var(--rust);}
+  .hthinking{display:flex;gap:4px;align-self:flex-start;padding:12px 14px;}
+  .hthinking i{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:hdot 1s infinite;}
+  .hthinking i:nth-child(2){animation-delay:.15s}.hthinking i:nth-child(3){animation-delay:.3s}
+  @keyframes hdot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+  /* asked-before list — the same question recurs in one session */
+  .hasked{padding:9px 14px 0;background:var(--canvas);}
+  .hasked .al{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:6px;}
+  .hasked .arow{display:flex;gap:6px;overflow-x:auto;padding-bottom:7px;}
+  .hasked .arow button{white-space:nowrap;font-size:12px;font-weight:500;padding:7px 11px;
+    border-radius:var(--r-pill);cursor:pointer;font-family:inherit;flex-shrink:0;
+    background:var(--white);border:1px solid var(--hair);color:var(--navy);}
+
+  /* these rows must never be squeezed by the flexing conversation above them,
+     and a visible scrollbar on a phone-width row reads as broken chrome */
+  .hasked,.hchips,.hbar,.hexits{flex-shrink:0;}
+  .hbody{min-height:96px;}
+  .hasked .arow,.hchips{scrollbar-width:none;}
+  .hasked .arow::-webkit-scrollbar,.hchips::-webkit-scrollbar{display:none;}
+  .hchips{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 10px;background:var(--canvas);
+    border-top:1px solid var(--line);}
+  .hchips button{white-space:nowrap;font-size:12.5px;font-weight:600;padding:8px 12px;
+    border-radius:var(--r-pill);cursor:pointer;font-family:inherit;flex-shrink:0;
+    background:var(--white);border:1px solid var(--hair);color:var(--navy);}
+
+  .hbar{padding:8px 14px 10px;background:var(--canvas);}
+  .hbar-row{display:flex;gap:8px;align-items:center;}
+  .hbar-row input{flex:1;min-height:44px;border-radius:var(--r-pill);border:1px solid var(--hair);
+    background:var(--white);padding:0 15px;font-size:14px;font-family:inherit;color:var(--ink);outline:none;}
+  .hmic{width:46px;height:46px;border-radius:50%;flex-shrink:0;cursor:pointer;font-size:19px;
+    background:var(--navy);border:none;color:#fff;}
+  .hmic.live{background:var(--rust);animation:hpulse 1.1s infinite;}
+  @keyframes hpulse{0%,100%{box-shadow:0 0 0 0 rgba(196,81,30,.45)}70%{box-shadow:0 0 0 11px rgba(196,81,30,0)}}
+  .hstat{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+
+  .hexits{display:flex;flex-direction:column;gap:6px;padding:8px 14px 10px;border-top:1px solid var(--line);
+    background:var(--white);}
+  .hexits button{width:100%;min-height:40px;border-radius:var(--r-pill);cursor:pointer;font-family:inherit;
+    font-size:13.5px;font-weight:600;border:1px solid var(--hair);background:var(--paper);color:var(--navy);}
+  .hexits button.back{background:var(--sage-tint);border-color:var(--sage);color:var(--sage-forest);}
+  .hexits button.esc{background:var(--rust-tint);border-color:rgba(196,81,30,.35);color:var(--rust);}
+  .hexits .note{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.4;}
+
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="rbar">
+    <div class="brand">DigitalPaani<span>Open Alert · Round 2 — Monitoring Loop</span></div>
+    <div class="spacer"></div>
+    <div class="timer" id="elapsed">00:00</div>
+    <div class="navtoggle">
+      <button id="tgTest" class="sel" onclick="goTest()">Test</button>
+      <button id="tgResults" onclick="showResults()">Results</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <!-- ==================== PHONE ==================== -->
+    <div class="phone" id="phone">
+      <div class="statusbar"><span>9:41</span><span>▮▮▮ ▲ ▉</span></div>
+
+      <!-- SETUP -->
+      <div class="screen on" id="scr-setup">
+        <div class="pad">
+          <h1>New Test</h1>
+          <div class="sub">Set the arms, press Start, then hand the phone to the operator and watch them work through the flow.</div>
+
+          <label>Operator</label>
+          <input type="text" id="opCode" placeholder="e.g. Pankaj / OP-04" value="Pankaj (OP-04)">
+
+          <label>Fault</label>
+          <div class="seg" id="faultSeg">
+            <button data-v="A" class="sel">A · Pump Leakage</button>
+            <button data-v="B">B · Low DO</button>
+          </div>
+
+          <label>H1 — Help framing</label>
+          <div class="seg arm" id="armFrame">
+            <button data-v="neutral" class="sel">Neutral</button>
+            <button data-v="reassuring">Reassuring</button>
+          </div>
+          <div class="armnote"><b>Neutral:</b> plain “?” help. <b>Reassuring:</b> states the request is private, is logged as a plant-knowledge gap, and is not shared with the plant head.</div>
+
+          <label>H3 — Escalation channel</label>
+          <div class="seg arm" id="armEsc">
+            <button data-v="queue" class="sel">NEEDS HELP queue</button>
+            <button data-v="call">Phone call</button>
+          </div>
+          <div class="armnote">Measures time-to-engage from the engineer’s side.</div>
+
+          <label>H4 — Guidance media</label>
+          <div class="seg arm" id="armMedia">
+            <button data-v="text" class="sel">Text + image</button>
+            <button data-v="video">30–60s video</button>
+          </div>
+
+          <label>H5 — Ownership</label>
+          <div class="seg arm" id="armOwn">
+            <button data-v="named" class="sel">Named assignment</button>
+            <button data-v="pickup">Free pickup</button>
+          </div>
+
+          <label>H6 — Live acknowledgement to operator</label>
+          <div class="seg arm" id="armAck">
+            <button data-v="on" class="sel">On</button>
+            <button data-v="off">Off</button>
+          </div>
+
+          <label>Actual root cause (staged — auto-scores accuracy)</label>
+          <div id="actualRCList"></div>
+
+          <button class="btn btn-primary" onclick="startSession()">Start — send WhatsApp trigger</button>
+        </div>
+      </div>
+
+      <!-- WHATSAPP -->
+      <div class="screen" id="scr-wa">
+        <div class="wa-header">
+          <div class="avatar">DP</div>
+          <div class="t">डिजिटलपानी सहायक<span>ऑनलाइन</span></div>
+        </div>
+        <div id="waScroll"></div>
+        <div class="wa-replybar" id="waReplybar"></div>
+      </div>
+
+      <!-- APP FLOW -->
+      <div class="screen" id="scr-app">
+        <div class="app-header">
+          <button class="app-back" id="appBack" onclick="stepBack()">‹ पीछे</button>
+          <button class="app-restart" id="narrBtn" onclick="toggleNarration()" title="बोलना बंद करें">🔊</button>
+          <button class="app-restart" id="appRestart" onclick="restartFlow()" title="शुरू से">⟲</button>
+          <div class="htxt">
+            <div class="brand">डिजिटलपानी</div>
+            <div class="fault" id="appFault">—</div>
+          </div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+        <div class="ackstrip hide" id="ackStrip"></div>
+        <div class="pad" id="appBody"></div>
+
+        <!-- ===== VOICE CO-PILOT · persistent rail ===== -->
+        <div class="copilot" id="copilot">
+          <div class="cpundo" id="cpUndo"></div>
+
+          <div class="cpconvo" id="cpConvo">
+            <div class="vprivacy" id="vPrivacy"></div>
+            <div class="cpnote" id="cpNote"></div>
+            <div class="vbody" id="vBody"></div>
+            <div class="cpsuggest" id="cpSuggest"></div>
+            <div class="helprow"><div class="helpoffer" id="helpOffer"></div></div>
+            <!-- two ways out of being stuck, side by side and always in the same
+                 place: ask the co-pilot (free, no social cost) or call a human. -->
+            <div class="callbar duo">
+              <button class="helpbtn" id="helpBtn" onclick="openHelp('button')">
+                <span class="ic">🙋</span>मदद चाहिए</button>
+              <button class="callbtn" id="callBtn" onclick="callSupervisor()">
+                <span class="ic">📞</span>सुपरवाइज़र</button>
+            </div>
+            <div class="vbar">
+              <div class="vhint"><span id="vStatus">तैयार</span> · <span id="micHint">दबाकर बोलिए — या लिखिए</span></div>
+              <div class="vbar-row">
+                <input type="text" id="vInput" placeholder="लिखकर पूछें…" onkeydown="if(event.key==='Enter')sendTyped()">
+                <button class="micbtn" id="micBtn" onclick="toggleMic()" title="बोलें">🎙</button>
+              </div>
+              <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== HELP LAYER · layers OVER the step, never replaces it ===== -->
+      <div class="hscrim" id="hScrim" onclick="closeHelp('scrim')"></div>
+      <div class="hsheet" id="hSheet" role="dialog" aria-label="मदद">
+        <div class="hgrab"></div>
+        <div class="hh">
+          <div class="av">💧</div>
+          <div class="ht"><b>डॉ. पानी — मदद</b><span id="hCtx">—</span></div>
+          <button class="hx" onclick="closeHelp('x')" aria-label="बंद करें">✕</button>
+        </div>
+        <div class="hbody" id="hBody"></div>
+        <div class="hasked" id="hAsked" style="display:none"></div>
+        <div class="hchips" id="hChips"></div>
+        <div class="hbar">
+          <div class="hstat" id="hStat"></div>
+          <div class="hbar-row">
+            <input type="text" id="hInput" placeholder="हिंदी में लिखकर पूछिए…"
+              onkeydown="if(event.key==='Enter')helpSendTyped()">
+            <button class="hmic" id="hMic" onclick="helpMic()" aria-label="बोलें">🎙</button>
+          </div>
+        </div>
+        <div class="hexits">
+          <button class="back" onclick="helpBackToFlow()">✓ समझ गया — जाँच पर वापस</button>
+          <button class="esc" onclick="helpEscalate()">📨 इंजीनियर को भेजें — यह बातचीत साथ जाएगी</button>
+          <div class="note">इंजीनियर को आपकी पूरी बातचीत दिखेगी, इसलिए उन्हें दोबारा नहीं पूछना पड़ेगा।</div>
+        </div>
+      </div>
+
+      <!-- DONE -->
+      <div class="screen" id="scr-done">
+        <div class="pad" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+          <div style="width:70px;height:70px;border-radius:50%;background:var(--sage-tint);border:2px solid var(--sage);
+            display:flex;align-items:center;justify-content:center;font-size:31px;color:var(--sage-forest);margin-bottom:16px;">✓</div>
+          <h1>धन्यवाद!</h1>
+          <div class="sub" id="doneSub">आपकी जाँच पूरी हो गई।<br>फ़ोन वापस दे दें।</div>
+          <button class="btn btn-primary center" style="max-width:250px" onclick="restartFlow()">फिर से शुरू करें</button>
+          <button class="btn center" style="max-width:250px;margin-top:10px;background:transparent;border:1px solid var(--hair)" onclick="showResults()">परिणाम देखें</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- ==================== RESULTS ==================== -->
+  <div id="resultsWrap" class="hide" style="background:var(--white);border:1px solid var(--line);padding:20px;margin-top:16px;">
+    <h1>Round 2 — Hypothesis Readout</h1>
+    <div class="sub">Auto-scored from this session. Run both arms of each hypothesis to compare.</div>
+    <div id="resBody"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary center" style="max-width:200px" onclick="newTest()">New Test</button>
+      <button class="btn btn-secondary center" style="max-width:200px" onclick="window.print()">Download PDF</button>
+      <button class="btn btn-danger center" style="max-width:200px" onclick="resetAll()">Clear saved runs</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+/* ===================== ICONS ===================== */
+const A='viewBox="0 0 160 120" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS={
+ valve:`<svg ${A}><rect x="8" y="50" width="52" height="20"/><rect x="100" y="50" width="52" height="20"/><rect x="60" y="40" width="40" height="40"/><line x1="80" y1="40" x2="80" y2="18"/><circle cx="80" cy="14" r="11"/><line x1="69" y1="14" x2="91" y2="14"/></svg>`,
+ filter:`<svg ${A}><rect x="8" y="50" width="32" height="20"/><rect x="120" y="50" width="32" height="20"/><rect x="40" y="28" width="80" height="64" rx="6"/><line x1="55" y1="28" x2="55" y2="92"/><line x1="70" y1="28" x2="70" y2="92"/><line x1="90" y1="28" x2="90" y2="92"/><line x1="105" y1="28" x2="105" y2="92"/></svg>`,
+ seal:`<svg ${A}><circle cx="52" cy="60" r="36"/><circle cx="52" cy="60" r="10" fill="currentColor" stroke="none"/><rect x="88" y="48" width="52" height="24"/><rect x="100" y="42" width="16" height="36"/><path d="M108 78 q4 9 0 16" stroke-dasharray="2 4"/></svg>`,
+ gland:`<svg ${A}><rect x="14" y="45" width="64" height="30"/><line x1="26" y1="45" x2="26" y2="75"/><line x1="38" y1="45" x2="38" y2="75"/><line x1="50" y1="45" x2="50" y2="75"/><line x1="62" y1="45" x2="62" y2="75"/><rect x="82" y="52" width="60" height="16"/><path d="M88 75 q4 10 0 18" stroke-dasharray="2 4"/></svg>`,
+ bearing:`<svg ${A}><rect x="14" y="50" width="40" height="20"/><rect x="106" y="50" width="40" height="20"/><circle cx="80" cy="60" r="34"/><circle cx="80" cy="60" r="17"/><circle cx="80" cy="27" r="5"/><circle cx="109" cy="45" r="5"/><circle cx="109" cy="75" r="5"/><circle cx="51" cy="45" r="5"/><circle cx="51" cy="75" r="5"/><circle cx="80" cy="93" r="5"/></svg>`,
+ pump:`<svg ${A}><rect x="8" y="35" width="66" height="48" rx="4"/><line x1="21" y1="35" x2="21" y2="83"/><line x1="34" y1="35" x2="34" y2="83"/><line x1="47" y1="35" x2="47" y2="83"/><line x1="60" y1="35" x2="60" y2="83"/><rect x="78" y="50" width="18" height="18"/><circle cx="132" cy="59" r="34"/><circle cx="132" cy="59" r="7" fill="currentColor" stroke="none"/></svg>`,
+ blower:`<svg ${A}><rect x="10" y="35" width="58" height="48" rx="4"/><line x1="22" y1="35" x2="22" y2="83"/><line x1="34" y1="35" x2="34" y2="83"/><line x1="46" y1="35" x2="46" y2="83"/><circle cx="116" cy="59" r="30"/><line x1="116" y1="32" x2="116" y2="86"/><line x1="89" y1="59" x2="143" y2="59"/><line x1="97" y1="40" x2="135" y2="78"/><line x1="97" y1="78" x2="135" y2="40"/></svg>`,
+ airvalve:`<svg ${A}><rect x="8" y="52" width="48" height="16"/><rect x="104" y="52" width="48" height="16"/><circle cx="80" cy="60" r="24"/><line x1="80" y1="60" x2="107" y2="33" stroke-width="4.5"/></svg>`,
+ diffuser:`<svg ${A}><rect x="14" y="18" width="132" height="82" rx="4"/><line x1="14" y1="76" x2="146" y2="76" stroke-dasharray="4 3"/><ellipse cx="80" cy="91" rx="32" ry="6"/><circle cx="64" cy="68" r="4"/><circle cx="80" cy="52" r="5"/><circle cx="97" cy="38" r="4"/></svg>`,
+ sludge:`<svg ${A}><rect x="14" y="18" width="132" height="82" rx="4"/><line x1="14" y1="76" x2="146" y2="76" stroke-dasharray="4 3"/><path d="M14 92 q22 -12 44 0 t44 0 t44 0"/></svg>`,
+ probe:`<svg ${A}><rect x="14" y="18" width="132" height="82" rx="4"/><line x1="14" y1="72" x2="146" y2="72" stroke-dasharray="4 3"/><line x1="100" y1="8" x2="100" y2="88"/><rect x="91" y="2" width="18" height="14"/><circle cx="100" cy="88" r="6"/></svg>`,
+ none:`<svg ${A}><circle cx="80" cy="60" r="30"/><line x1="60" y1="40" x2="100" y2="80"/><line x1="100" y1="40" x2="60" y2="80"/></svg>`
+};
+const illusBox=k=>k&&ICONS[k]?`<div class="illus">${ICONS[k]}</div>`:'';
+const illusSvg=k=>k&&ICONS[k]?ICONS[k]:'';
+const optIcon=k=>k&&ICONS[k]?`<span class="oic">${ICONS[k]}</span>`:'<span class="radio"></span>';
+
+/* ===================== DIAGNOSTIC SCRIPTS (Hindi, Yes/No) ===================== */
+const SCRIPTS={
+ A:{nameEn:"Pump Leak",nameHi:"फ़िल्टर फ़ीड पंप — लीक जाँच",
+  trigger:"⚠️ फ़िल्टर फ़ीड पंप में लीक मिला है। जाँच शुरू करें?",
+  toolOptions:["कोई टूल नहीं","मैकेनिकल सील","ग्लैंड","बेयरिंग"],
+  rcList:["प्रेशर बहुत ज़्यादा है","मैकेनिकल सील ख़राब है","पंप के पुर्ज़े ढीले हैं","बेयरिंग ख़राब है — बदलना पड़ेगा"],
+  steps:[
+   {q:"डिस्चार्ज वाल्व देखें।",detail:"वाल्व बंद है या खुला?",illus:"valve",
+    opts:[{label:"बंद है",advice:"प्रेशर कम करने के लिए वाल्व खोलें।",next:2},{label:"खुला है",next:2}]},
+   {q:"फ़िल्टर देखें।",detail:"क्या उसमें चोकिंग है?",illus:"filter",
+    opts:[{label:"हाँ, चोकिंग है",advice:"फ़िल्टर बैकवॉश करें।",next:3},{label:"नहीं",next:3}]},
+   {q:"सील एरिया में लीकेज देखें।",detail:"क्या लगातार पानी बह रहा है?",tool:"मैकेनिकल सील — मेंटेनेंस द्वारा",illus:"seal",
+    opts:[{label:"हाँ",advice:"मेंटेनेंस को मैकेनिकल सील लगानी पड़ेगी। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:6},{label:"नहीं",next:4}]},
+   {q:"ग्लैंड बॉक्स में देखें।",detail:"क्या ड्रिपिंग हो रही है?",tool:"ग्लैंड — मेंटेनेंस द्वारा",illus:"gland",
+    opts:[{label:"हाँ, ज़्यादा है",advice:"मेंटेनेंस को बुलाएं। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:6},
+          {label:"हाँ, पर कम है",advice:"नज़र रखें — ड्रिपिंग बढ़े तो मेंटेनेंस को बुलाएं।",next:5},{label:"नहीं",next:5}]},
+   {q:"बेयरिंग जाँचें।",detail:"क्या कंपन या तापमान ज़्यादा है?",tool:"बेयरिंग — मेंटेनेंस द्वारा",illus:"bearing",
+    opts:[{label:"हाँ",advice:"मेंटेनेंस को बुलाएं — बेयरिंग बदलनी पड़ेगी।",warn:true,escalate:true,next:6},{label:"नहीं",next:6}]},
+   {q:"लीक का सबसे संभावित कारण क्या है?",illus:"pump",rc:true}
+  ]},
+ B:{nameEn:"Low Dissolved Oxygen",nameHi:"एरेशन टैंक — कम डिज़ॉल्व्ड ऑक्सीजन जाँच",
+  trigger:"⚠️ एरेशन टैंक में डिज़ॉल्व्ड ऑक्सीजन 0.8 mg/L है (सामान्य 2–4)। जाँच शुरू करें?",
+  toolOptions:["कोई टूल नहीं","डिज़ॉल्व्ड ऑक्सीजन प्रोब किट","डिफ्यूज़र स्पैनर"],
+  rcList:["ब्लोअर बंद/ट्रिप","एयर वाल्व बंद","डिफ्यूज़र ख़राब","ज़्यादा लोड","डिज़ॉल्व्ड ऑक्सीजन प्रोब ख़राब"],
+  steps:[
+   {q:"क्या ब्लोअर चल रहा है?",detail:"पैनल पर कोई ट्रिप/अलार्म है?",illus:"blower",
+    opts:[{label:"चल रहा है",next:2},{label:"बंद है / ट्रिप",advice:"ब्लोअर फिर से शुरू करें। ट्रिप दोबारा हो तो इलेक्ट्रीशियन को बुलाएं।",next:2}]},
+   {q:"एयर वाल्व देखें।",detail:"क्या पूरा खुला है?",illus:"airvalve",
+    opts:[{label:"खुला है",next:3},{label:"बंद / आधा",advice:"वाल्व पूरा खोलें, 15 मिनट बाद डिज़ॉल्व्ड ऑक्सीजन फिर देखें।",next:3}]},
+   {q:"टैंक की सतह देखें।",detail:"क्या बुलबुले एक जैसे उठ रहे हैं?",illus:"diffuser",
+    opts:[{label:"एक जैसे",next:4},{label:"असमान",advice:"डिफ्यूज़र बंद या ख़राब हो सकता है। मेंटेनेंस को बुलाएं।",warn:true,escalate:true,next:5}]},
+   {q:"लोड और स्लज देखें।",detail:"क्या आज लोड ज़्यादा है या स्लज बहुत गाढ़ा/काला है?",illus:"sludge",
+    opts:[{label:"हाँ",advice:"ज़्यादा स्लज निकालें और सुपरवाइज़र को बताएं।",next:5},
+          {label:"नहीं",advice:"डिज़ॉल्व्ड ऑक्सीजन प्रोब साफ़ करके रीडिंग दोबारा लें।",illus:"probe",next:5}]},
+   {q:"डिज़ॉल्व्ड ऑक्सीजन कम होने का सबसे संभावित कारण क्या है?",illus:"diffuser",rc:true}
+  ]}
+};
+
+/* ===================== VOICE ASSISTANT KNOWLEDGE ===================== */
+/* Procedural (HOW), not observational (WHAT) — per Priyanka's interview. */
+const KB=[
+ {id:'ppm',match:['ppm','पीपीएम','डोज','dose','कितना','क्लोरीन','chlorine','मात्रा'],
+  title:'क्लोरीन डोज़िंग — कितना डालना है',
+  say:'बारह एम एल डी प्रवाह पर दो पी पी एम के लिए, एक घंटे में लगभग एक किलो सोडियम हाइपोक्लोराइट चाहिए।',
+  num:'2 PPM × 12 MLD ÷ 24 = लगभग 1.0 kg/घंटा',
+  steps:['डोज़िंग टैंक में 1.0 kg हाइपो प्रति घंटा सेट करें।','पंप स्ट्रोक 60% पर रखें।','30 मिनट बाद रेसिड्युअल क्लोरीन नापें — 0.5 mg/L आना चाहिए।'],
+  video:'डोज़िंग पंप स्ट्रोक सेट करना — 42 सेकंड'},
+ {id:'backwash',match:['backwash','बैकवॉश','बैक वाश','फ़िल्टर','filter','धोना'],
+  title:'फ़िल्टर बैकवॉश — कैसे करें',
+  say:'फ़ीड वाल्प बंद करें, बैकवॉश वाल्व खोलें, आठ से दस मिनट चलाएँ, फिर दो मिनट रिन्स करें।',
+  num:'बैकवॉश 8–10 मिनट · रिन्स 2 मिनट',
+  steps:['फ़ीड वाल्व बंद करें, पंप बंद करें।','बैकवॉश और ड्रेन वाल्व खोलें।','पंप चालू करें — 8–10 मिनट, जब तक पानी साफ़ न दिखे।','2 मिनट रिन्स करके नॉर्मल लाइन-अप पर लौटें।'],
+  video:'बैकवॉश वाल्व सीक्वेंस — 55 सेकंड'},
+ {id:'hmi',match:['hmi','एचएमआई','पैनल','panel','सेटिंग','टाइमर','timer','configure'],
+  title:'HMI पर टाइमर सेट करना',
+  say:'एच एम आई पर सेटिंग्स, फिर बैकवॉश टाइमर चुनें, मान बदलें और सेव दबाएँ।',
+  num:'Settings → Backwash → Timer → Save',
+  steps:['HMI होम पर “Settings” दबाएँ।','“Backwash” चुनें।','Timer में नया मान डालें।','“Save” दबाएँ — हरी लाइट जलेगी।'],
+  video:'HMI टाइमर बदलना — 38 सेकंड'},
+ {id:'step',match:['यह','इस','क्या','चरण','step','समझ','देखना','कहाँ'],
+  title:'इस चरण में क्या देखना है',
+  say:null,num:null,steps:null,video:'इस चेक को करते हुए — 30 सेकंड'},
+ {id:'tool',match:['टूल','tool','औज़ार','सामान','कहाँ मिलेगा'],
+  title:'टूल कहाँ से मिलेगा',
+  say:'ज़रूरी टूल मेंटेनेंस स्टोर में रहता है। मैं आपके लिए मॉनिटरिंग इंजीनियर को बता सकता हूँ।',
+  num:null,steps:['मेंटेनेंस स्टोर से इंडेंट पर्ची लें।','टूल न हो तो नीचे “इंजीनियर को भेजें” दबाएँ।'],video:null}
+];
+const CHIPS=[
+ {t:'कितना PPM डालना है?',q:'कितना PPM डालना है'},
+ {t:'बैकवॉश कैसे करें?',q:'बैकवॉश कैसे करें'},
+ {t:'HMI पर टाइमर कैसे सेट करें?',q:'HMI पर टाइमर कैसे सेट करें'},
+ {t:'इस चरण में क्या देखना है?',q:'इस चरण में क्या देखना है'},
+ {t:'टूल कहाँ मिलेगा?',q:'टूल कहाँ मिलेगा'}
+];
+
+/* ===================== STATE ===================== */
+let S=null, EVENTS=[], navStack=[], actualRC='', elapsedTimer=null, sessionStart=null;
+let stepEnter=null, curStepKey=null, recog=null, listening=false, cTabCur='queue';
+const $=id=>document.getElementById(id);
+const now=()=>new Date();
+const hhmm=d=>d.toTimeString().slice(0,5);
+const hhmmss=d=>d.toTimeString().slice(0,8);
+const fmt=s=>s<60?s+'s':Math.floor(s/60)+'m '+(s%60)+'s';
+const arm=id=>document.querySelector('#'+id+' .sel').dataset.v;
+
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');}
+function logEvent(kw,text,cls){EVENTS.push({t:hhmmss(now()),kw,text,cls:cls||''});if(cTabCur==='feed')renderConsole();}
+
+document.querySelectorAll('.seg').forEach(seg=>seg.addEventListener('click',e=>{
+  if(e.target.tagName!=='BUTTON')return;
+  seg.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));
+  e.target.classList.add('sel');
+  if(seg.id==='faultSeg')renderActualRC();
+}));
+
+function renderActualRC(){
+  const f=document.querySelector('#faultSeg .sel').dataset.v;
+  actualRC='';
+  $('actualRCList').innerHTML=SCRIPTS[f].rcList.map(r=>
+    `<button class="opt" style="min-height:0;padding:11px 13px;font-size:13.5px;" onclick="pickActual(this,'${r.replace(/'/g,"\\'")}')"><span class="radio"></span>${r}</button>`).join('');
+}
+function pickActual(el,r){
+  actualRC=r;
+  el.parentNode.querySelectorAll('.opt').forEach(b=>{b.style.background='';b.style.borderColor='';});
+  el.style.background='var(--navy-tint)';el.style.borderColor='var(--navy)';
+}
+renderActualRC();
+
+/* ===================== SESSION ===================== */
+function startSession(){
+  const op=$('opCode').value.trim();
+  if(!op){toast('Enter operator name');return;}
+  if(!actualRC){toast('Select the staged root cause');return;}
+  S={op,fault:document.querySelector('#faultSeg .sel').dataset.v,
+     armFrame:arm('armFrame'),armEsc:arm('armEsc'),armMedia:arm('armMedia'),
+     armOwn:arm('armOwn'),armAck:arm('armAck'),
+     start:now().toISOString(),
+     steps:[],            // {key,label,dwell,taps,repeatTaps,scroll,backs}
+     helpOpens:0, helpAsks:[], voiceAsks:0, typedAsks:0,
+     voiceAnswers:0, bargeIns:0, reprompts:0, voiceFallbacks:0, narrations:0,
+     suggestions:0, supervisorCalls:0, replays:0,
+     escalatedAt:null, ackAt:null, resolvedAt:null, pickedUpBy:null,
+     ownershipAction:null, followUpCalls:0, mediaViews:0, mediaCompleted:0,
+     rootCause:'', accuracy:'', actualRC, abandoned:false, abandonStep:null,
+     queue:[], replied:null};
+  EVENTS=[];
+  logEvent('CONTEXT',`${op} · Fault ${S.fault} · arms: frame=${S.armFrame}, esc=${S.armEsc}, media=${S.armMedia}, own=${S.armOwn}, ack=${S.armAck}`);
+  $('resultsWrap').classList.add('hide');
+  startElapsed(); renderConsole(); openWhatsApp();
+}
+function startElapsed(){
+  sessionStart=now(); clearInterval(elapsedTimer);
+  elapsedTimer=setInterval(()=>{
+    const s=Math.floor((now()-sessionStart)/1000);
+    $('elapsed').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    if(S&&S.escalatedAt&&!S.ackAt&&cTabCur==='queue')renderConsole();
+  },1000);
+}
+
+/* ===================== WHATSAPP TRIGGER (H5) ===================== */
+function openWhatsApp(){
+  $('waScroll').innerHTML='';$('waReplybar').innerHTML='';
+  show('scr-wa');
+  const own=S.armOwn==='named'
+    ? `👤 ${S.op} — यह अलर्ट आपको सौंपा गया है।`
+    : `📣 सभी ऑपरेटर — जो पहले उठाए, वही करे।`;
+  waBot(own,()=>waBot(SCRIPTS[S.fault].trigger,()=>{
+    waChips([{l:S.armOwn==='named'?'1 · मैं देखता हूँ':'1 · मैं उठाता हूँ',fn:onAccept},{l:'0 · अभी नहीं',fn:onDecline}]);
+  }));
+}
+function waBot(text,after){
+  const sc=$('waScroll');const tp=document.createElement('div');
+  tp.className='wa-bubble wa-in typing';tp.innerHTML='<i></i><i></i><i></i>';
+  sc.appendChild(tp);sc.scrollTop=sc.scrollHeight;
+  setTimeout(()=>{tp.classList.remove('typing');tp.innerHTML=text+`<span class="time">${hhmm(now())}</span>`;
+    sc.scrollTop=sc.scrollHeight;logEvent('SENT',text);if(after)after();},650);
+}
+function waMe(text){const sc=$('waScroll');const b=document.createElement('div');
+  b.className='wa-bubble wa-out';b.innerHTML=text+`<span class="time">${hhmm(now())}</span>`;
+  sc.appendChild(b);sc.scrollTop=sc.scrollHeight;}
+function waChips(opts){
+  const bar=$('waReplybar');bar.innerHTML='';
+  opts.forEach(o=>{const c=document.createElement('button');c.className='wa-chip';c.textContent=o.l;
+    c.onclick=()=>{bar.innerHTML='';waMe(o.l);o.fn();};bar.appendChild(c);});
+}
+function onDecline(){
+  S.replied='Declined';S.abandoned=true;S.abandonStep='Trigger';
+  S.ownershipAction='declined';
+  logEvent('DROPOUT','Declined at trigger','hi');
+  waBot("ठीक है। ज़रूरत पड़ने पर message करें।",()=>setTimeout(finish,900));
+}
+function onAccept(){
+  S.replied='Accepted';
+  S.ownershipAction=S.armOwn==='named'?'accepted-named':'picked-up';
+  logEvent('OWNERSHIP',S.armOwn==='named'?'Accepted named assignment':'Picked up from broadcast','ok');
+  waBot("ऐप में जाँच तैयार है। नीचे टैप करें 👇",()=>{
+    const sc=$('waScroll');const l=document.createElement('div');l.className='wa-bubble wa-in';
+    l.innerHTML=`डिजिटलपानी ऐप<div class="wa-link" onclick="openApp()">🔗 जाँच शुरू करें — ऐप खोलें</div><span class="time">${hhmm(now())}</span>`;
+    sc.appendChild(l);sc.scrollTop=sc.scrollHeight;
+  });
+}
+function openApp(){
+  logEvent('DEEPLINK','Opened app via deeplink');
+  $('copilot').classList.add('full');   // the co-pilot is the screen, end to end
+  $('appBody').style.display='none';
+  $('appFault').textContent=SCRIPTS[S.fault].nameHi;
+  renderHelpFraming();
+  navStack=[];show('scr-app');navGo({t:'issue'});
+}
+
+/* ===================== H1 · HELP FRAMING ===================== */
+function renderHelpFraming(){
+  if(S.armFrame==='reassuring'){
+    $('vPrivacy').innerHTML='🔒 <b>पूछना काम का हिस्सा है।</b> यह बातचीत निजी है — सिर्फ़ मॉनिटरिंग इंजीनियर देख सकते हैं, प्लांट हेड नहीं। यह आपके प्रदर्शन के मूल्यांकन में नहीं जाती।';
+  }else{
+    $('vPrivacy').innerHTML='डॉ. पानी · प्लांट सहायक';
+  }
+}
+
+/* ===================== H2 · BEHAVIOURAL TELEMETRY ===================== */
+function stepKey(desc){return desc.t==='step'?('S'+desc.n):desc.t.toUpperCase();}
+function stepLabel(desc){
+  if(desc.t==='issue')return 'Issue card';
+  if(desc.t!=='step')return desc.t==='tool'?'Tool pick':'Wrap-up';
+  const st=SCRIPTS[S.fault].steps[desc.n-1];
+  return st.rc?'Root cause':('चरण '+desc.n);
+}
+function beginStep(desc){
+  closeStep();
+  curStepKey=stepKey(desc);stepEnter=now();
+  S.steps.push({key:curStepKey,label:stepLabel(desc),dwell:0,taps:0,repeatTaps:0,scroll:0,backs:0,helped:false});
+}
+function curStep(){return S?S.steps[S.steps.length-1]:null;}
+function closeStep(){
+  const c=curStep();
+  if(c&&stepEnter)c.dwell=Math.round((now()-stepEnter)/1000);
+}
+/* scroll depth is no longer a signal — nothing scrolls */
+$('vBody').addEventListener('click',e=>{
+  const c=curStep();if(!c)return;
+  c.taps++;
+  if(!e.target.closest('button'))c.repeatTaps++;   // taps that hit nothing = hesitation
+  if(cTabCur==='tel')renderConsole();
+});
+function riskScore(){
+  const c=curStep();if(!c)return 0;
+  const dw=stepEnter?Math.round((now()-stepEnter)/1000):c.dwell;
+  let r=0;
+  r+=Math.min(40,Math.max(0,(dw-25)*1.6));          // long dwell
+  r+=Math.min(25,c.repeatTaps*8);                    // dead taps
+  r+=Math.min(15,c.backs*8);                         // back-tracking
+  r+=(c.scroll>85?10:0);                             // scroll-hunting
+  r+=(S.helpOpens>0&&!S.escalatedAt?10:0);
+  return Math.min(100,Math.round(r));
+}
+
+/* ===================== APP FLOW ===================== */
+function navGo(desc){navStack.push(desc);beginStep(desc);navRender(desc);updateBack();narrateCurrent();if(cTabCur==='tel')renderConsole();}
+function navRender(d){
+  d.t==='issue'?cpIssue():d.t==='step'?cpStep(d.n):d.t==='tool'?cpTool():cpWrap();
+}
+
+/* the alert the operator was sent, before any checking begins */
+function cpIssue(){
+  redrawCurrent=cpIssue;
+  $('progFill').style.width='0%';
+  const sc=SCRIPTS[S.fault];
+  const b=cpBubble(`<div class="eyebrow">नया अलर्ट · ${hhmm(now())}</div>
+    <div class="cqrow"><div class="cq">${sc.nameHi}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
+    <div class="cd">${sc.trigger.replace(/^⚠️\s*/,'').replace(/\s*जाँच शुरू करें\?$/,'')}</div>
+    <div class="issuemeta">
+      <span><i>प्लांट</i>गंगा विहार STP · 12 MLD</span>
+      <span><i>जाँच</i>${checkCount()} चरण · ${sc.nameEn}</span>
+    </div>`);
+  attach(b,answerBlock(['जाँच शुरू करें'],()=>navGo({t:'step',n:1})));
+  logEvent('SENT','Issue card shown');
+  narrateCurrent();
+}
+
+/* ============================================================
+   THE FLOW, ASKED BY THE CO-PILOT
+   Every check is a message from डॉ. पानी with its answers attached.
+   There is no separate form to tap through — this is the whole screen.
+   ============================================================ */
+function cpBubble(html){
+  openVoice();
+  clearSuggest();
+  return stageSet(html,'bot');
+}
+function answerBlock(labels,onPick){
+  const wrap=document.createElement('div');
+  wrap.className='vanswers';
+  labels.forEach((l,i)=>{
+    const btn=document.createElement('button');
+    btn.className='vans';
+    btn.innerHTML=`<span class="radio"></span>${l}`;
+    btn.onclick=()=>{
+      if(wrap.classList.contains('done'))return;
+      wrap.classList.add('done');btn.classList.add('chosen');
+      onPick(i,l);
+    };
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+function attach(bubble,block){
+  bubble.classList.add('haschecks');   // a check needs the full width for its answers
+  bubble.appendChild(block);
+  $('vBody').scrollTop=$('vBody').scrollHeight;
+}
+function cpStep(n){
+  const sc=SCRIPTS[S.fault],st=sc.steps[n-1],total=checkCount();
+  redrawCurrent=()=>cpStep(n);
+  if(st.rc){
+    $('progFill').style.width='100%';
+    const b=cpBubble(`<div class="eyebrow">निदान</div><div class="cqrow"><div class="cq">${st.q}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
+`);
+    attach(b,answerBlock(sc.rcList,(i,l)=>pickRC(l)));
+    logEvent('SENT','RC asked by co-pilot');
+    narrateCurrent();return;
+  }
+  $('progFill').style.width=((n-1)/total*100)+'%';
+  const toolNeeded=st.tool&&st.tool!=='';
+  const b=cpBubble(`<div class="eyebrow">चरण ${n} / ${total}</div>
+    <div class="cqrow"><div class="cq">${st.q}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>${st.detail?`<div class="cd">${st.detail}</div>`:''}
+    <div class="ctool ${toolNeeded?'need':''}">${toolNeeded?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`);
+  attach(b,answerBlock(st.opts.map(o=>o.label),(i)=>{
+    const o=st.opts[i];
+    closeStep();
+    logEvent('REPLY',`चरण ${n} → "${o.label}" · ${fmt(curStep().dwell)}`);
+    if(o.escalate)S.escalationNeeded=true;
+    if(o.advice){
+      redrawCurrent=()=>{
+        const ab=cpBubble(`<div class="cqrow"><div class="eyebrow">सलाह</div>`+
+          `<button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`+
+          `<div class="cq" style="font-size:16.5px;font-weight:600">${o.advice}</div>`);
+        attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
+      };
+      redrawCurrent();lastNarrated='';narrateCurrent();
+    }else navGo({t:'step',n:o.next});
+  }));
+  logEvent('SENT','चरण '+n+': '+st.q);
+  narrateCurrent();
+}
+function cpTool(){
+  redrawCurrent=cpTool;
+  $('progFill').style.width='100%';
+  const b=cpBubble(`<div class="eyebrow">टूल की पहचान</div><div class="cqrow"><div class="cq">कौन सा टूल चाहिए?</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`);
+  attach(b,answerBlock(SCRIPTS[S.fault].toolOptions,(i,l)=>pickTool(l)));
+  narrateCurrent();
+}
+function cpWrap(){
+  redrawCurrent=cpWrap;
+  const esc=S.escalationNeeded;
+  const b=cpBubble(`<div class="eyebrow">आख़िरी क़दम</div>
+    <div class="cqrow"><div class="cq">${esc?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
+    <div class="cd">${esc?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>`);
+  const labels=esc?['हाँ, इंजीनियर को भेजें','पूरा हुआ']:['पूरा हुआ'];
+  attach(b,answerBlock(labels,(i,l)=>{l.includes('इंजीनियर')?escalate('flow'):finish();}));
+  narrateCurrent();
+}
+function stepBack(){
+  if(navStack.length<2)return;
+  closeStep();
+  const c=curStep();if(c)c.backs++;
+  navStack.pop();
+  logEvent('BACK','Operator went back a step');
+  const d=navStack[navStack.length-1];beginStep(d);navRender(d);updateBack();
+  lastNarrated='';narrateCurrent();
+}
+function updateBack(){$('appBack').classList.toggle('show',navStack.length>1);}
+function checkCount(){return SCRIPTS[S.fault].steps.filter(s=>!s.rc).length;}
+function toolChip(st){
+  const n=st.tool&&st.tool!=='';
+  return `<div class="toolchip ${n?'need':''}">${n?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`;
+}
+/* The old tap-through form renderers are gone — cpStep/cpTool/cpWrap
+   above ask everything through the co-pilot instead. These two commit
+   the answer and move the flow on, so they stay. */
+function pickRC(label){
+  closeStep();
+  S.rootCause=label;
+  S.accuracy=label===S.actualRC?'Match':'No match';
+  logEvent('ACCURACY',`Picked "${label}" vs staged "${S.actualRC}" → ${S.accuracy}`,S.accuracy==='Match'?'ok':'hi');
+  navGo({t:'tool'});
+}
+function pickTool(t){
+  closeStep();S.toolPicked=t;logEvent('REPLY','Tool → '+t);
+  navGo({t:'wrap'});
+}
+
+/* ===================== VOICE CO-PILOT RAIL =====================
+   The rail is always docked. openVoice() expands the conversation,
+   closeVoice() collapses it back to the status bar — the co-pilot
+   itself never goes away, so the operator never has to summon it. */
+function cpState(state){          // 'idle' | 'listening' | 'speaking' | 'thinking'
+  const el=$('copilot');
+  el.classList.remove('listening','speaking','thinking');
+  if(state!=='idle')el.classList.add(state);
+  const labels={idle:'तैयार',listening:'🔴 सुन रहा हूँ',speaking:'बोल रहा हूँ',thinking:'देख रहा हूँ'};
+  const st=$('vStatus');if(st)st.textContent=labels[state]||labels.idle;
+}
+function toggleConvo(){}   /* the rail that hosted this is gone */
+function openVoice(){
+  if(!S)return;
+  S.helpOpens++;
+  const c=curStep();if(c)c.helped=true;
+  logEvent('HELP','Expanded co-pilot conversation'+(c?' at '+c.label:''),'hi');
+  renderChips();
+  $('copilot').classList.add('expanded');
+  renderConsole();
+}
+function closeVoice(){        // collapse only — the mic keeps listening across steps
+  const el=$('copilot');
+  if(!el)return;
+  el.classList.remove('expanded');
+}
+function renderChips(){}   /* the chip row was removed — suggestions appear only when useful */
+/* ---------- one turn on screen, nothing scrolls ----------
+   The stage holds the current card (a check, or an answer). Short
+   conversational lines go to the note strip above it, so a question
+   or a clarification never wipes the check the operator is on. */
+let redrawCurrent=()=>{};
+function stageSet(html,cls){
+  const b=document.createElement('div');
+  b.className='vb '+(cls||'bot');b.innerHTML=html;
+  $('vBody').innerHTML='';$('vBody').appendChild(b);
+  return b;
+}
+function note(label,text,btn){
+  const el=$('cpNote');
+  el.innerHTML=`<span class="txt">${label?`<b>${label}</b> `:''}${text}</span>${btn||''}`;
+  el.classList.add('show');
+}
+function clearNote(){$('cpNote').classList.remove('show');$('cpNote').innerHTML='';}
+function bubble(html,who){return stageSet(html,who);}
+function meSay(t){note('आपने कहा —',t);}
+function botSay(t,extra){                  // a short spoken line, not a card
+  note('',t,extra||'');
+  cpState(listening?'listening':'idle');
+  return $('cpNote');
+}
+function sendTyped(){
+  const v=$('vInput').value.trim();if(!v)return;
+  $('vInput').value='';S.typedAsks++;ask(v,'typed');
+}
+function ask(text,mode){
+  meSay(text);
+  S.helpAsks.push({q:text,mode,at:hhmm(now()),step:curStep()?curStep().label:'—'});
+  if(mode==='voice')S.voiceAsks++;
+  logEvent('HELP',`${mode==='voice'?'🎙 Voice':'⌨ Typed'} question: “${text}”`,'hi');
+  renderConsole();
+  cpState('thinking');
+  setTimeout(()=>answer(text),450);
+}
+function matchKB(text){
+  const t=text.toLowerCase();
+  let best=null,score=0;
+  KB.forEach(k=>{const s=k.match.filter(m=>t.includes(m.toLowerCase())).length;if(s>score){score=s;best=k;}});
+  return score?best:null;
+}
+function answer(text){
+  const k=matchKB(text);
+  if(!k){
+    const near=CHIPS.map(c=>({label:c.t,ask:c.q,score:scoreOption(text,c.q)}))
+                    .sort((a,b)=>b.score-a.score).slice(0,2);
+    note('','यह मेरे पास दर्ज नहीं है — शायद आपका मतलब:');
+    suggest('इनमें से कुछ?',[...near,{label:'सुपरवाइज़र को कॉल करें',call:true}]);
+    speak('यह मेरे पास दर्ज नहीं है। सुपरवाइज़र को कॉल कर सकते हैं।');
+    logEvent('HELP','No KB match — offered suggestions + supervisor');
+    return;
+  }
+  // step-context answer
+  if(k.id==='step'){
+    const d=navStack[navStack.length-1];
+    const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
+    const line=st?`${st.q} ${st.detail||''}`:'जो स्क्रीन पर दिखे वही चुनें।';
+    note('',line);speak(line);
+    return;
+  }
+  let html=`<div class="eyebrow">जवाब</div><div class="cqrow"><div class="cq">${k.title}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`;
+  if(k.num)html+=`<div class="vnum">${k.num}</div>`;
+  if(k.steps)html+=`<ul class="vsteps">${k.steps.slice(0,4).map((x,i)=>`<li><b>${i+1}</b><span>${x}</span></li>`).join('')}</ul>`;
+  const b=stageSet(html,'bot');
+  attach(b,answerBlock(['ठीक — जाँच पर वापस'],()=>{clearNote();lastNarrated='';redrawCurrent();narrateCurrent();}));
+  if(k.say)speak(k.say);
+}
+function speakBtn(t){return `<button class="spk" onclick="speak(${JSON.stringify(t).replace(/"/g,'&quot;')})">🔊 दोबारा सुनें</button>`;}
+
+/* --- H4 · simulated 30–60s video card --- */
+function videoCard(caption){
+  S.mediaViews++;
+  return `<div class="vidcard">
+    <div class="vidstage">
+      <svg viewBox="0 0 320 180" fill="none" stroke="#6AA8B0" stroke-width="3" stroke-linecap="round">
+        <rect x="24" y="70" width="76" height="46" rx="4"/><circle cx="200" cy="93" r="34"/>
+        <circle cx="200" cy="93" r="7" fill="#6AA8B0" stroke="none"/>
+        <line x1="100" y1="93" x2="166" y2="93" class="flowdash"/>
+        <line x1="234" y1="93" x2="296" y2="93" class="flowdash"/>
+        <rect x="20" y="130" width="280" height="5" fill="#1a2d5d" stroke="none"/>
+      </svg>
+      <button class="vidplay">▶</button>
+      <div class="vidcap">${caption}</div>
+    </div>
+    <div class="vidbar"><span class="tm">0:00</span><div class="track"><div class="prog"></div></div><span class="tm dur">0:45</span></div>
+  </div>`;
+}
+function bindVideo(container){
+  const card=container.querySelector('.vidcard');if(!card)return;
+  const play=card.querySelector('.vidplay'),prog=card.querySelector('.prog'),cur=card.querySelector('.tm');
+  let t=0,iv=null;
+  play.onclick=()=>{
+    if(iv){clearInterval(iv);iv=null;card.classList.remove('playing');play.textContent='▶';return;}
+    card.classList.add('playing');play.textContent='❚❚';
+    logEvent('MEDIA','Played guidance video');
+    iv=setInterval(()=>{
+      t+=1;prog.style.width=(t/45*100)+'%';
+      cur.textContent='0:'+String(t).padStart(2,'0');
+      if(t>=45){clearInterval(iv);iv=null;card.classList.remove('playing');play.textContent='↻';t=0;
+        S.mediaCompleted++;logEvent('MEDIA','Video watched to end','ok');renderConsole();}
+    },1000);
+  };
+}
+
+/* ==================================================================
+   CO-PILOT SPEECH ENGINE
+   Three behaviours make this a co-pilot rather than a help desk:
+   1. it listens continuously and can be interrupted mid-sentence
+   2. it speaks each step first, unprompted
+   3. what the operator says can answer the step, not just ask about it
+   ================================================================== */
+let narrateOn=true, lastNarrated='', wantListen=false, srFatal=false, undoTimer=null;
+
+/* ---------- speaking (with barge-in) ---------- */
+/* Browsers refuse speech until the user has interacted, and Chrome
+   wedges speechSynthesis if you call it before that — after which
+   every later call is silently swallowed. So: nothing is spoken until
+   the first gesture, the first line is held and played then, and the
+   engine is un-wedged before each utterance. */
+let hiVoice=null, audioReady=false, heldLine=null, keepAlive=null;
+function pickVoice(){
+  const v=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  return v.find(x=>/^hi-IN/i.test(x.lang))||v.find(x=>/^hi/i.test(x.lang))
+       ||v.find(x=>/^en-IN/i.test(x.lang))||null;
+}
+if('speechSynthesis' in window){
+  hiVoice=pickVoice();
+  speechSynthesis.onvoiceschanged=()=>{hiVoice=pickVoice();};
+}
+function unlockAudio(){
+  if(audioReady)return;
+  audioReady=true;
+  try{speechSynthesis.cancel();speechSynthesis.resume();}catch(e){}
+  if(!hiVoice)hiVoice=pickVoice();
+  const hint=$('micHint');
+  if(hint&&/दबाएँ/.test(hint.textContent))hint.textContent='दबाकर बोलिए — या लिखिए';
+  if(heldLine){const l=heldLine;heldLine=null;speak(l);}
+}
+['pointerdown','keydown','touchstart'].forEach(ev=>
+  window.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
+
+function voiceTrouble(){
+  const hint=$('micHint');
+  const hindiVoice=hiVoice&&/^hi/i.test(hiVoice.lang);
+  if(hint)hint.innerHTML='<span style="color:var(--rust)">'+
+    (hindiVoice?'आवाज़ नहीं चली — 🔊 दोबारा दबाएँ':'इस डिवाइस में हिंदी आवाज़ नहीं है')+'</span>';
+  logEvent('VOICE','Speech did not start','hi');
+}
+function stopKeepAlive(){if(keepAlive){clearInterval(keepAlive);keepAlive=null;}}
+function speak(text){
+  if(!('speechSynthesis' in window)||!text)return;
+  if(!audioReady){                       // hold it until the operator touches the screen
+    heldLine=text;
+    const hint=$('micHint');
+    if(hint)hint.textContent='सुनने के लिए स्क्रीन पर कहीं भी दबाएँ';
+    return;
+  }
+  try{
+    speechSynthesis.cancel();
+    speechSynthesis.resume();            // clears Chrome's wedged state
+    cpState('speaking');
+    const u=utter(text);
+    speechSynthesis.speak(u);            // SYNCHRONOUS — Safari drops it otherwise
+    setTimeout(()=>{                     // Chrome sometimes swallows the one right after cancel()
+      if(u.started||speechSynthesis.speaking||speechSynthesis.pending)return;
+      const u2=utter(text);
+      speechSynthesis.speak(u2);
+      setTimeout(()=>{
+        if(u2.started||speechSynthesis.speaking||speechSynthesis.pending)return;
+        cpState(listening?'listening':'idle');voiceTrouble();
+      },1200);
+    },260);
+  }catch(e){voiceTrouble();}
+}
+function utter(text){
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='hi-IN';u.rate=.92;
+  if(hiVoice)u.voice=hiVoice;
+  u.started=false;
+  u.onstart=()=>{u.started=true;cpState('speaking');
+    stopKeepAlive();                     // Chrome truncates long speech unless nudged
+    keepAlive=setInterval(()=>{if(speechSynthesis.speaking){speechSynthesis.pause();speechSynthesis.resume();}},5000);};
+  u.onend=()=>{stopKeepAlive();cpState(listening?'listening':'idle');};
+  u.onerror=e=>{stopKeepAlive();cpState(listening?'listening':'idle');
+    if(e&&e.error!=='interrupted'&&e.error!=='canceled')voiceTrouble();};
+  return u;
+}
+function shutUp(){                      // barge-in: operator talks, co-pilot yields
+  if('speechSynthesis' in window&&speechSynthesis.speaking){
+    speechSynthesis.cancel();
+    if(S)S.bargeIns++;
+    logEvent('VOICE','Operator interrupted the co-pilot (barge-in)');
+  }
+}
+
+/* ---------- narration: the co-pilot speaks first ---------- */
+function stageLine(){                 // what is on screen, as something sayable
+  const bubbles=[...$('vBody').querySelectorAll('.vb.bot')];
+  const last=bubbles[bubbles.length-1];if(!last)return '';
+  const q=last.querySelector('.cq'),d=last.querySelector('.cd'),tool=last.querySelector('.ctool');
+  const num=last.querySelector('.vnum'),steps=[...last.querySelectorAll('.vsteps li span')];
+  const opts=visibleOptions().map(b=>b.textContent.trim()).filter(Boolean);
+  let line=(q?q.textContent.trim():last.textContent.trim());
+  if(d)line+=' '+d.textContent.trim();
+  if(num)line+=' '+num.textContent.trim()+'।';
+  if(steps.length)line+=' '+steps.map(x=>x.textContent.trim()).join(' ');
+  if(tool)line+=' '+tool.textContent.replace(/[🔧✅]/g,'').trim()+'।';
+  if(opts.length)line+=' विकल्प: '+opts.join(', या ')+'।';
+  return line;
+}
+/* the operator asked to hear it — say it even if narration is muted */
+function speakStage(){
+  const line=stageLine();
+  if(!line)return;
+  if(S)S.replays++;
+  logEvent('VOICE','Operator replayed the question');
+  speak(line);
+}
+function narrateCurrent(){
+  if(!narrateOn||!S)return;
+  let line=stageLine();
+  if(!line)return;
+  if(line===lastNarrated)return;         // don't repeat on a re-render
+  lastNarrated=line;
+  S.narrations++;
+  speak(line);
+}
+function toggleNarration(){
+  narrateOn=!narrateOn;
+  const nb=$('narrBtn');
+  if(nb){nb.textContent=narrateOn?'🔊':'🔇';nb.title=narrateOn?'बोलना बंद करें':'बोलना चालू करें';}
+  if(!narrateOn)speechSynthesis.cancel();
+  logEvent('VOICE','Step narration '+(narrateOn?'on':'off'));
+  toast(narrateOn?'डॉ. पानी हर चरण पढ़कर बताएँगे':'अब चुप रहेंगे');
+}
+
+/* ---------- intent routing ---------- */
+const YES=['हाँ','हां','हा','जी','ठीक','सही','है','यस','yes','ok'];
+const NO =['नहीं','नही','ना','नो','no','नहि'];
+const ORDINAL={'पहला':0,'पहले':0,'एक':0,'दूसरा':1,'दूसरे':1,'दो':1,'तीसरा':2,'तीन':2,'चौथा':3,'चार':3};
+const norm=t=>t.toLowerCase().replace(/[।,.?!"“”]/g,' ').replace(/\s+/g,' ').trim();
+
+function visibleOptions(){
+  const blocks=[...$('vBody').querySelectorAll('.vanswers')].filter(w=>!w.classList.contains('done'));
+  const live=blocks[blocks.length-1];
+  return live?[...live.querySelectorAll('.vans')]:[];
+}
+/* Hindi speech comes back loose — spellings vary, words get dropped, the
+   operator paraphrases. Scoring is deliberately forgiving: exact and
+   substring first, then content-word overlap, then character bigrams so
+   "डिफ्यूजर" still finds "डिफ्यूज़र". */
+const STOP=['है','हैं','का','की','के','को','में','से','पर','और','या','यह','वह','कुछ','लग','रहा','रही','हो','कर'];
+/* Devanagari skeleton: nukta and virama dropped, anusvara resolved to न,
+   so बंद / बन्द / बंद़ all collapse to the same string before comparison. */
+function skel(t){
+  return norm(t)
+    .replace(/[\u093C\u094D]/g,'')        // nukta, virama
+    .replace(/[\u0901\u0902\u0903]/g,'न'); // chandrabindu, anusvara, visarga
+}
+function bigrams(t){const g=[];for(let i=0;i<t.length-1;i++)if(t[i]!==' '&&t[i+1]!==' ')g.push(t.slice(i,i+2));return g;}
+function dice(a,b){                       // 0..1 character-bigram similarity
+  const A=bigrams(a),B=bigrams(b);
+  if(!A.length||!B.length)return 0;
+  const pool=B.slice();let hit=0;
+  A.forEach(g=>{const i=pool.indexOf(g);if(i>-1){hit++;pool.splice(i,1);}});
+  return 2*hit/(A.length+B.length);
+}
+function scoreOption(said,label){
+  const s=norm(said),l=norm(label);
+  if(!l||!s)return 0;
+  if(s===l)return 100;
+  if(s.includes(l)||l.includes(s))return 88;
+  const lw=l.split(' ').filter(w=>w.length>2&&!STOP.includes(w));
+  const sw=s.split(' ').filter(w=>w.length>2&&!STOP.includes(w));
+  let overlap=0;
+  if(lw.length){
+    const hit=lw.filter(w=>sw.some(x=>x===w||x.includes(w)||w.includes(x)||dice(x,w)>.7)).length;
+    overlap=hit/lw.length*100;
+  }
+  const ks=skel(said),kl=skel(label);     // spelling-insensitive comparison
+  if(ks===kl)return 100;
+  if(ks.includes(kl)||kl.includes(ks))return 88;
+  const fuzzy=Math.max(dice(s,l),dice(ks,kl))*100;
+  let skelOverlap=0;
+  const klw=kl.split(' ').filter(w=>w.length>2);
+  if(klw.length){
+    const ksw=ks.split(' ');
+    skelOverlap=klw.filter(w=>ksw.some(x=>x.includes(w)||w.includes(x)||dice(x,w)>.7)).length/klw.length*100;
+  }
+  return Math.min(100,Math.round(Math.max(overlap,skelOverlap,fuzzy*1.15)));
+}
+function rankOptions(said){
+  return visibleOptions()
+    .map(b=>({btn:b,label:b.textContent.trim(),score:scoreOption(said,b.textContent)}))
+    .sort((a,b)=>b.score-a.score);
+}
+function matchOption(said){
+  const btns=visibleOptions();
+  if(!btns.length)return null;
+  const s=norm(said);
+  for(const k in ORDINAL) if(s.split(' ').includes(k)&&btns[ORDINAL[k]])return {btn:btns[ORDINAL[k]],why:'ordinal',score:80};
+  // bare yes / no first, when the options are a yes/no pair
+  const words=s.split(' ');
+  const saidYes=words.some(w=>YES.includes(w)),saidNo=words.some(w=>NO.includes(w));
+  if(saidYes!==saidNo){
+    const hit=btns.find(b=>{const t=norm(b.textContent);
+      return saidNo?NO.some(n=>t.startsWith(n)):YES.some(y=>t.startsWith(y));});
+    if(hit)return {btn:hit,why:'yes/no',score:80};
+  }
+  const ranked=rankOptions(said);
+  const best=ranked[0];
+  if(!best||!best.score)return null;
+  if(best.score>=45)return best;                    // confident enough to just do it
+  return {...best,weak:true,ranked};                // otherwise offer choices
+}
+function matchCommand(said){
+  const s=norm(said);
+  const has=arr=>arr.some(w=>s.includes(w));
+  if(has(['पीछे','वापस','पिछला','back']))return 'back';
+  if(has(['दोहरा','दोबारा','फिर बोल','फिर से बोल','repeat']))return 'repeat';
+  if(has(['चुप','बंद कर','रुको','stop']))return 'stop';
+  if(has(['सुपरवाइज़र','सुपरवाइजर','supervisor','कॉल कर']))return 'call';
+  if(has(['इंजीनियर','एस्केलेट','escalate','मदद भेज']))return 'escalate';
+  return null;
+}
+
+/* ---------- what happens when the operator speaks ---------- */
+function routeUtterance(said){
+  if(!S)return;
+  const cmd=matchCommand(said);
+  if(cmd){
+    meSay(said);logEvent('VOICE','Command: '+cmd);
+    if(cmd==='back'){ navStack.length>1?stepBack():botSay('यह पहला चरण है — पीछे कुछ नहीं है।'); return; }
+    if(cmd==='repeat'){ lastNarrated='';narrateCurrent(); return; }
+    if(cmd==='stop'){ stopMic();botSay('ठीक है, माइक बंद कर दिया। ज़रूरत हो तो दबा दीजिए।'); return; }
+    if(cmd==='call'){ callSupervisor(); return; }
+    if(cmd==='escalate'){ escalate('voice'); return; }
+  }
+  clearSuggest();
+  const m=matchOption(said);
+  if(m&&!m.weak){ voiceAnswer(m.btn,said); return; }
+  if(m&&m.weak){                       // close, but not certain — propose, don't refuse
+    S.reprompts++;
+    meSay(said);
+    const top=(m.ranked||[m]).slice(0,2).map(o=>({label:o.label,btn:o.btn}));
+    suggest('मैंने पूरा नहीं पकड़ा — क्या इनमें से कुछ?',top);
+    const line='मैंने पूरा नहीं पकड़ा। '+top.map(t=>t.label).join(', या ')+'?';
+    speak(line);
+    logEvent('VOICE','Low confidence — offered '+top.length+' suggestions');
+    return;
+  }
+  // a bare "हाँ"/"नहीं" where the options are not yes/no — show what they are
+  const words=norm(said).split(' ');
+  if(words.length<=3&&words.some(w=>YES.includes(w)||NO.includes(w))&&visibleOptions().length){
+    S.reprompts++;
+    meSay(said);
+    suggestForCurrent('इस जाँच में हाँ/नहीं नहीं — इनमें से चुनिए:');
+    speak('इस जाँच में हाँ या नहीं नहीं है। चुनिए।');
+    logEvent('VOICE','Yes/no where options differ — offered the options');
+    return;
+  }
+  ask(said,'voice');                   // not an answer or a command → treat as a question
+}
+function confirmWeak(){
+  if(window.__weak){const b=window.__weak;window.__weak=null;voiceAnswer(b,'(पुष्टि)');}
+}
+
+/* ---------- co-piloted suggestions ----------
+   Whenever the co-pilot is unsure it proposes the likeliest answers
+   instead of refusing. Nothing the operator says is a dead end. */
+let SUGG=[];
+function suggest(lead,items){
+  SUGG=items;
+  $('cpSuggest').innerHTML=`<div class="lead">${lead}</div><div class="row">`+
+    items.map((it,i)=>`<button onclick="takeSuggestion(${i})">${it.label}</button>`).join('')+
+    `<button class="ghost" onclick="clearSuggest()">फिर से बोलिए</button></div>`;
+  $('cpSuggest').classList.add('show');
+  if(S)S.suggestions++;
+}
+function clearSuggest(){SUGG=[];$('cpSuggest').classList.remove('show');$('cpSuggest').innerHTML='';}
+function takeSuggestion(i){
+  const it=SUGG[i];if(!it)return;
+  clearSuggest();
+  if(it.btn)voiceAnswer(it.btn,'(सुझाव)');
+  else if(it.ask)ask(it.ask,'suggestion');
+  else if(it.call)callSupervisor();
+}
+function suggestForCurrent(lead){
+  const opts=rankOptions('').slice(0,3).map(o=>({label:o.label,btn:o.btn}));
+  const items=opts.length?opts:[{label:'सुपरवाइज़र को कॉल करें',call:true}];
+  suggest(lead,items);
+}
+
+/* ---------- committing an answer by voice, with an undo ---------- */
+function voiceAnswer(btn,said){
+  const label=btn.textContent.trim();
+  if(said&&said!=='(पुष्टि)')meSay(said);
+  S.voiceAnswers++;
+  logEvent('VOICE',`Answered by voice: “${label}”`,'ok');
+  clearNote();
+  const before=navStack.length;
+  btn.click();
+  showUndo(label,before);
+}
+function showUndo(label,before){
+  const el=$('cpUndo');
+  el.innerHTML=`<span>दर्ज: <b>${label}</b></span><button onclick="undoVoice(${before})">बदलें</button>`;
+  el.classList.add('show');
+  clearTimeout(undoTimer);
+  undoTimer=setTimeout(()=>el.classList.remove('show'),5000);
+}
+function undoVoice(before){
+  $('cpUndo').classList.remove('show');
+  logEvent('VOICE','Operator corrected a voice answer','hi');
+  if(navStack.length>before)stepBack();
+  else{lastNarrated='';navRender(navStack[navStack.length-1]);narrateCurrent();}
+  toast('ठीक — दोबारा चुनिए');
+}
+
+/* ---------- the microphone: continuous, restarting, interruptible ---------- */
+function toggleMic(){listening?stopMic():startMic();}
+function micUI(on){
+  ['micBtn'].forEach(id=>{
+    const b=$(id);if(!b)return;
+    b.classList.toggle('live',on);b.textContent=on?'■':'🎙';
+  });
+  $('wave').classList.toggle('on',on);
+}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    micFail('इस ब्राउज़र में आवाज़ नहीं चलती','Chrome या Safari में खोलें — या नीचे दबाकर चुनें');
+    return;
+  }
+  if(srFatal){
+    micFail('माइक की अनुमति नहीं है','ब्राउज़र की सेटिंग में माइक चालू करें');
+    return;
+  }
+  wantListen=true;listening=true;
+  micUI(true);cpState('listening');
+  $('micHint').innerHTML='सुन रहा हूँ… बोलिए';
+  spinRecog();
+}
+function spinRecog(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();
+  recog.lang='hi-IN';recog.interimResults=true;recog.continuous=true;
+  let saidFinal='';
+  recog.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal)saidFinal+=r[0].transcript+' ';else interim+=r[0].transcript;
+    }
+    if(interim||saidFinal)shutUp();                   // barge-in the moment we hear anything
+    const live=(saidFinal+interim).trim();
+    $('micHint').innerHTML=`<span style="color:var(--rust)">${live||'…'}</span><small>सुन रहा हूँ</small>`;
+    if(saidFinal.trim()){
+      const utt=saidFinal.trim();saidFinal='';
+      openVoice();
+      routeUtterance(utt);
+    }
+  };
+  recog.onerror=ev=>{
+    const err=ev.error||'';
+    if(err==='no-speech')return;                      // silence is fine, keep listening
+    if(err==='not-allowed'||err==='service-not-allowed'){
+      srFatal=true;wantListen=false;
+      micFail('माइक की अनुमति नहीं मिली','ब्राउज़र में माइक चालू करें — तब तक दबाकर चुनें');
+      logEvent('VOICE','Mic permission denied','hi');return;
+    }
+    if(err==='audio-capture'){
+      srFatal=true;wantListen=false;
+      micFail('माइक नहीं मिला','हेडसेट जोड़ें या दबाकर चुनें');return;
+    }
+    if(err==='network'){micFail('इंटरनेट नहीं है','आवाज़ पहचान के लिए इंटरनेट चाहिए');
+      logEvent('VOICE','Speech recognition offline','hi');}
+  };
+  recog.onend=()=>{                                   // continuous mode still ends — restart it
+    if(wantListen&&!srFatal){try{spinRecog();}catch(e){stopMic();}}
+    else stopMic();
+  };
+  try{recog.start();}catch(e){/* already running */}
+}
+function micFail(head,sub){
+  if(S)S.voiceFallbacks++;
+  wantListen=false;listening=false;
+  micUI(false);
+  $('copilot').classList.remove('listening','speaking','thinking');
+  $('vStatus').textContent='आवाज़ उपलब्ध नहीं';
+  $('micHint').innerHTML=`<span style="color:var(--rust)">${head}</span><small>${sub}</small>`;
+  openVoice();
+}
+function stopMic(){
+  wantListen=false;listening=false;
+  if(recog){try{recog.onend=null;recog.stop();}catch(e){}recog=null;}
+  micUI(false);
+  cpState('idle');
+  setTimeout(()=>{if(!listening)$('micHint').innerHTML='दबाकर बोलिए — या लिखिए';},900);
+}
+
+
+/* ===================== SUPERVISOR CALL (always available) ===================== */
+function callSupervisor(){
+  if(!S)return;
+  S.supervisorCalls++;
+  const btn=$('callBtn');
+  btn.classList.add('ringing');
+  btn.innerHTML='<span class="ic">📞</span>कॉल जा रही है… सुपरवाइज़र';
+  logEvent('CALL',`Operator called the supervisor from ${curStep()?curStep().label:'—'}`,'hi');
+  note('','सुपरवाइज़र को कॉल की जा रही है — जाँच वहीं रुकी है।');
+  speak('सुपरवाइज़र को कॉल की जा रही है।');
+  setTimeout(()=>{
+    btn.classList.remove('ringing');
+    btn.innerHTML='<span class="ic">📞</span>सुपरवाइज़र को कॉल करें';
+  },3200);
+}
+
+/* ===================== ESCALATION → CONSOLE (H3/H6) ===================== */
+function escalate(source){
+  if(S.escalatedAt){toast('Already in the queue');cTab('queue');return;}
+  S.escalatedAt=now();
+  const last=S.helpAsks.length?S.helpAsks[S.helpAsks.length-1].q:'(कोई सवाल नहीं — फ़्लो से एस्केलेट)';
+  S.queue.push({q:last,step:curStep()?curStep().label:'—',at:hhmm(now()),src:source});
+  logEvent('ESCALATE',`Escalated via ${source==='voice'?'voice assistant':'diagnostic flow'} — channel: ${S.armEsc==='queue'?'NEEDS HELP queue':'phone call'}`,'hi');
+  if(source==='voice')botSay('ठीक है — मैंने मॉनिटरिंग इंजीनियर को भेज दिया है। जवाब आते ही यहाँ दिखेगा।');
+  setAck('sent');
+  cTab('queue');renderConsole();
+  toast(S.armEsc==='queue'?'Sent to the engineer — NEEDS HELP raised':'Sent to the engineer — phone call placed');
+}
+function setAck(state){
+  const el=$('ackStrip');
+  if(S.armAck==='off'){el.classList.add('hide');return;}   // H6 control arm — operator sees nothing
+  el.className='ackstrip';el.classList.remove('hide');
+  if(state==='sent')el.innerHTML=`<span class="dotpulse"></span>आपका सवाल भेजा गया — इंजीनियर के जवाब का इंतज़ार`;
+  if(state==='seen'){el.classList.add('seen');el.innerHTML=`👁 इंजीनियर प्रियंका ने देख लिया · ${hhmm(now())} — वे देख रही हैं`;}
+  if(state==='replied'){el.classList.add('seen');el.innerHTML=`💬 इंजीनियर ने जवाब भेजा · ${hhmm(now())}`;}
+  if(state==='resolved'){el.classList.add('resolved');el.innerHTML=`✅ इंजीनियर ने इस मुद्दे को बंद किया · ${hhmm(now())}`;}
+}
+
+/* The monitoring-engineer console was removed — this prototype is the
+   operator diagnostic flow only. Stubs keep the flow's call sites safe. */
+function renderConsole(){}
+function cTab(){}
+/* session timing maths — used by the saved-run snapshot, not by any UI */
+function waitSec(){return S.escalatedAt?Math.round((now()-S.escalatedAt)/1000):0;}
+function ackSec(){return S.escalatedAt&&S.ackAt?Math.round((S.ackAt-S.escalatedAt)/1000):null;}
+
+/* ===================== FINISH + RESULTS ===================== */
+function finish(){
+  closeStep();clearInterval(elapsedTimer);stopMic();if('speechSynthesis' in window)speechSynthesis.cancel();
+  if(!S.rootCause&&!S.abandoned){S.abandoned=true;S.abandonStep=curStep()?curStep().label:'—';}
+  $('doneSub').innerHTML=S.armAck==='on'&&S.escalatedAt
+    ? 'आपकी जाँच दर्ज हो गई।<br>इंजीनियर आगे देखेंगे — आपको सूचना मिलेगी।'
+    : 'आपकी जाँच पूरी हो गई।<br>फ़ोन वापस दे दें।';
+  show('scr-done');
+  const runs=load();runs.push(snapshot());save(runs);
+  logEvent('SAVED','Run saved');
+}
+function snapshot(){
+  const dw=S.steps.map(s=>s.dwell);
+  return{op:S.op,fault:S.fault,armFrame:S.armFrame,armEsc:S.armEsc,armMedia:S.armMedia,
+    armOwn:S.armOwn,armAck:S.armAck,helpOpens:S.helpOpens,voiceAsks:S.voiceAsks,typedAsks:S.typedAsks,
+    voiceAnswers:S.voiceAnswers,bargeIns:S.bargeIns,reprompts:S.reprompts,
+    suggestions:S.suggestions,supervisorCalls:S.supervisorCalls,replays:S.replays,
+    narrations:S.narrations,voiceFallbacks:S.voiceFallbacks,
+    escalated:!!S.escalatedAt,ackSec:ackSec(),abandoned:S.abandoned,abandonStep:S.abandonStep,
+    accuracy:S.accuracy,rootCause:S.rootCause,followUpCalls:S.followUpCalls,
+    mediaViews:S.mediaViews,mediaCompleted:S.mediaCompleted,ownershipAction:S.ownershipAction,
+    maxDwell:dw.length?Math.max(...dw):0,totalTaps:S.steps.reduce((a,s)=>a+s.taps,0),
+    deadTaps:S.steps.reduce((a,s)=>a+s.repeatTaps,0),
+    closedByEngineer:!!S.resolvedAt,at:new Date().toISOString()};
+}
+const KEY='dp_round2_runs';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||[];}catch(e){return[];}}
+function save(r){try{localStorage.setItem(KEY,JSON.stringify(r));}catch(e){}}
+function resetAll(){save([]);toast('Cleared');showResults();}
+function newTest(){S=null;$('resultsWrap').classList.add('hide');show('scr-setup');renderConsole();
+  document.querySelector('#tgTest').classList.add('sel');document.querySelector('#tgResults').classList.remove('sel');}
+function goTest(){$('resultsWrap').classList.add('hide');
+  document.querySelector('#tgTest').classList.add('sel');document.querySelector('#tgResults').classList.remove('sel');}
+
+function showResults(){
+  document.querySelector('#tgResults').classList.add('sel');document.querySelector('#tgTest').classList.remove('sel');
+  const runs=load();
+  const cur=S?[snapshot()]:[];
+  const all=runs.length?runs:cur;
+  $('resultsWrap').classList.remove('hide');
+  if(!all.length){$('resBody').innerHTML='<div class="cempty">No runs saved yet.</div>';return;}
+  const by=(f,v)=>all.filter(r=>r[f]===v);
+  const avg=(a,f)=>a.length?Math.round(a.reduce((x,r)=>x+(r[f]||0),0)/a.length*10)/10:0;
+  const pct=(a,f)=>a.length?Math.round(a.filter(r=>r[f]).length/a.length*100):0;
+
+  const H=[
+   {id:'H1',t:'Operators use Request Help only if it will not read as incompetence.',
+    m:[['Neutral framing',avg(by('armFrame','neutral'),'helpOpens')+' opens/run'],
+       ['Reassuring framing',avg(by('armFrame','reassuring'),'helpOpens')+' opens/run'],
+       ['Escalation rate',pct(all,'escalated')+'%']],
+    n:'If reassuring framing lifts opens without lifting escalations, the barrier was social, not informational.'},
+   {id:'H2',t:'Abandonment leaves detectable behavioural signals.',
+    m:[['Abandoned runs',pct(all,'abandoned')+'%'],
+       ['Avg max dwell',avg(all,'maxDwell')+'s'],
+       ['Avg dead taps',avg(all,'deadTaps')]],
+    n:'Compare dwell and dead-tap counts between abandoned and completed runs. A gap means the signal is real.'},
+   {id:'H3',t:'A queue notification beats a phone call for engineer engagement speed.',
+    m:[['Queue — time to ack',avg(by('armEsc','queue').filter(r=>r.ackSec!=null),'ackSec')+'s'],
+       ['Call — time to ack',avg(by('armEsc','call').filter(r=>r.ackSec!=null),'ackSec')+'s'],
+       ['Escalations',all.filter(r=>r.escalated).length]],
+    n:'The queue also arrives with fault, step and risk attached; the call arrives with nothing.'},
+   {id:'H4',t:'Video guidance outperforms text + image for procedural tasks.',
+    m:[['Video — completion',pct(by('armMedia','video'),'mediaCompleted')+'%'],
+       ['Video runs · accuracy',by('armMedia','video').filter(r=>r.accuracy==='Match').length+'/'+by('armMedia','video').length],
+       ['Text runs · accuracy',by('armMedia','text').filter(r=>r.accuracy==='Match').length+'/'+by('armMedia','text').length]],
+    n:'Accuracy is scored against the staged root cause; procedural questions (PPM, backwash, HMI) are the ones to watch.'},
+   {id:'H5',t:'Named assignment creates more reliable ownership than free pickup.',
+    m:[['Named — accepted',by('armOwn','named').filter(r=>r.ownershipAction==='accepted-named').length+'/'+by('armOwn','named').length],
+       ['Pickup — claimed',by('armOwn','pickup').filter(r=>r.ownershipAction==='picked-up').length+'/'+by('armOwn','pickup').length],
+       ['Declined at trigger',all.filter(r=>r.ownershipAction==='declined').length]],
+    n:'Watch declines and time-to-accept, not just eventual completion.'},
+   {id:'H6',t:'Real-time acknowledgement reduces engineer follow-up calls.',
+    m:[['Ack ON — calls/run',avg(by('armAck','on'),'followUpCalls')],
+       ['Ack OFF — calls/run',avg(by('armAck','off'),'followUpCalls')],
+       ['Closed by engineer',pct(all,'closedByEngineer')+'%']],
+    n:'Loop closure is an engineer action by design — operators almost never report back.'}
+  ];
+  $('resBody').innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${all.length} run(s) in this dataset.</div>`+
+    H.map(h=>`<div class="hrow"><div class="hh"><span class="hid">${h.id}</span><span class="ht">${h.t}</span></div>
+      <div class="hb">${h.m.map(m=>`<div class="hmet"><div class="v">${m[1]}</div><div class="k">${m[0]}</div></div>`).join('')}</div>
+      <div class="hnote">${h.n}</div></div>`).join('');
+}
+renderConsole();
+
+/* ===================== OPEN STRAIGHT INTO THE FLOW =====================
+   The page lands on चरण 1 with the default arms. The setup screen is
+   still there for changing arms — press "Test" in the top bar. */
+function restartFlow(){
+  stopMic();
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+  clearInterval(elapsedTimer);
+  $('cpUndo').classList.remove('show');
+  clearNote();clearSuggest();
+  $('vBody').innerHTML='';
+  $('ackStrip').classList.add('hide');
+  lastNarrated='';srFatal=false;window.__weak=null;
+  S=null;navStack=[];
+  $('resultsWrap').classList.add('hide');
+  logEvent('RESTART','Flow restarted from the issue card');
+  autoStart();
+  toast('शुरू से — नया अलर्ट');
+}
+function autoStart(){
+  if(!actualRC)actualRC=SCRIPTS[document.querySelector('#faultSeg .sel').dataset.v].rcList[0];
+  startSession();   // sets the arms, starts the clock
+  openApp();        // skip the WhatsApp trigger, land on step 1
+  openVoice();      // the co-pilot is present and interactive from the start
+  narrateCurrent(); // and reads the first check out loud
+}
+autoStart();
+
+/* ==================================================================================
+   V2 — WORKING MEMORY + "मदद चाहिए" HELP LAYER
+   ----------------------------------------------------------------------------------
+   Two additions sit on top of the v1 flow, and nothing in the diagnostic spine
+   changes: the SCRIPTS tree still decides what must be checked and what escalates.
+
+   1. WORKING MEMORY (PLANT)
+      Assembled at session start from what Digital Paani already has — live tags,
+      7-day trends, this plant's own event history, the asset/SOP register, and the
+      operator's own past sessions. It arrives with a HYPOTHESIS, not a questionnaire.
+      Hard rule: memory informs and pre-fills, it never decides. Every remembered
+      fact enters as a claim the operator can reject in one word, and the rejection
+      is logged as evidence — not as an error.
+
+   2. THE HELP LAYER
+      The generative co-pilot lives here and only here. Three doors in (button,
+      mic, proactive offer from confusion telemetry), one destination, and it layers
+      OVER the step so the operator never loses their place. It can explain, retrieve
+      and PROPOSE an answer — it can never commit one. Numbers come from the KB or
+      from a live tag, never generated. It is allowed to say "मुझे नहीं पता".
+
+   Language: Hindi with English kept for the words the plant floor actually says in
+   English — pump, seal, blower, valve, filter, probe, backwash, HMI, bar, mg/L.
+   ================================================================================== */
+
+/* ============================== 1 · WORKING MEMORY ============================== */
+/* In production these five blocks are five reads: live tags, trend store, event
+   log, asset register, and your own session telemetry. Fixture for the prototype. */
+const PLANT={
+  name:'गंगा विहार STP', cap:'12 MLD',
+  /* (a) live telemetry — the config engine already binds steps to named sensors */
+  live:{
+    'DO — Aeration Tank'        :{v:0.8, u:'mg/L', safe:[2,4],    at:'2 मिनट पहले'},
+    'Blower Header Pressure'    :{v:0.52,u:'bar',  safe:[0.4,0.7],at:'2 मिनट पहले'},
+    'Pump Discharge Pressure'   :{v:3.4, u:'bar',  safe:[2.0,2.5],at:'1 मिनट पहले'},
+    'MLSS'                      :{v:3200,u:'mg/L', safe:[2500,4000],at:'आज सुबह'},
+    'Residual Chlorine'         :{v:0.4, u:'mg/L', safe:[0.5,1.0],at:'1 घंटा पहले'}
+  },
+  /* (b) trend — the same tags over time. This is what says "6 दिन", not "आज". */
+  trend:{
+    'DO — Aeration Tank':{d:[2.6,2.4,2.2,1.9,1.5,1.1,0.8],
+      line:'DO छह दिन से लगातार गिर रही है — 2.6 से 0.8 mg/L। एक झटके में नहीं गिरी, धीरे-धीरे गिरी है।'},
+    'Pump Discharge Pressure':{d:[2.2,2.3,2.2,2.4,2.9,3.2,3.4],
+      line:'Pump discharge pressure तीन दिन से बढ़ रही है — 2.2 से 3.4 bar। Normal range 2.0–2.5 bar है।'}
+  },
+  /* (c) this plant's own event history — the prior for what to check first */
+  events:{
+    B:[{when:'4 महीने पहले',what:'यही DO dip',rc:'DO probe पर scaling',fix:'Probe साफ़ किया — 20 मिनट में ठीक'},
+       {when:'पिछले हफ़्ते',what:'Aeration में foaming',rc:'ज़्यादा wasting',fix:'Wasting घटाई — 2 दिन में ठीक'}],
+    A:[{when:'4 महीने पहले',what:'Pump 2 में कम discharge',rc:'Strainer चोक',fix:'साफ़ किया — 25 मिनट'},
+       {when:'2 महीने पहले',what:'इसी pump में leak',rc:'Gland packing ढीली',fix:'Packing कसी — 40 मिनट'}]
+  },
+  /* (d) asset + SOP register — gives "94 दिन हो गए, SOP कहता है 60" */
+  assets:{
+    B:[{a:'Diffuser — Aeration Tank',last:'94 दिन पहले साफ़ हुआ',sop:'SOP: हर 60 दिन',overdue:true},
+       {a:'DO Probe',last:'41 दिन पहले साफ़ हुआ',sop:'SOP: हर 15 दिन',overdue:true},
+       {a:'Blower 2',last:'पिछले 30 दिन में 2 बार trip',sop:'—',overdue:false}],
+    A:[{a:'Filter Feed Pump — Mechanical Seal',last:'7 महीने पहले बदली',sop:'SOP: हर 6 महीने',overdue:true},
+       {a:'Gland Packing',last:'2 महीने पहले कसी',sop:'—',overdue:false}]
+  },
+  /* (e) operator competence — from your own S.steps telemetry, across sessions */
+  operators:{'__default':{sessions:3,level:'नया',avgBacks:2.4,verbose:true}}
+};
+
+/* The hypothesis the co-pilot opens with. Built from (b)+(c)+(d), never generated. */
+const MEMORY={
+  B:{hyp:'मेरा अनुमान — DO probe गंदा है, blower ठीक चल रहा है।',
+     ev:[{i:'📉',t:PLANT.trend['DO — Aeration Tank'].line,src:'7-दिन trend'},
+         {i:'✅',t:'Blower header pressure 0.52 bar है — normal range में। Blower चल रहा है।',src:'Live tag'},
+         {i:'🕘',t:'4 महीने पहले बिलकुल यही dip हुई थी — कारण था DO probe पर scaling। 20 मिनट में ठीक हुआ।',src:'Plant history'},
+         {i:'🔧',t:'DO probe 41 दिन से साफ़ नहीं हुआ — SOP हर 15 दिन कहता है।',src:'Asset register'}],
+     jump:{n:4,label:'पहले probe जाँचें — चरण 4 पर जाएँ'}},
+  A:{hyp:'मेरा अनुमान — pressure ज़्यादा है, इसलिए seal से leak हो रहा है।',
+     ev:[{i:'📈',t:PLANT.trend['Pump Discharge Pressure'].line,src:'7-दिन trend'},
+         {i:'🔧',t:'Mechanical seal 7 महीने पहले बदली थी — SOP हर 6 महीने कहता है।',src:'Asset register'},
+         {i:'🕘',t:'2 महीने पहले इसी pump में leak हुआ था — कारण था ढीली gland packing। 40 मिनट में ठीक हुआ।',src:'Plant history'}],
+     jump:null}
+};
+
+/* pre-fill: step → live tag. Confirm-don't-collect. The operator standing next to
+   the tank is ground truth, so this is always a claim with a reject button. */
+const PREFILL={
+  A:{1:{tag:'Pump Discharge Pressure',
+        read:r=>`${r.v} ${r.u} — normal ${r.safe[0]}–${r.safe[1]} ${r.u} से ज़्यादा`,
+        claim:'Pressure ज़्यादा है — हो सकता है discharge valve बंद हो।',opt:0}},
+  B:{1:{tag:'Blower Header Pressure',
+        read:r=>`${r.v} ${r.u} — normal ${r.safe[0]}–${r.safe[1]} ${r.u} के अंदर`,
+        claim:'Blower चल रहा है — मुझे कोई trip नहीं दिख रहा।',opt:0}}
+};
+
+function opProfile(){return PLANT.operators['__default'];}
+
+/* ---- the issue card opens with the hypothesis, not a blank questionnaire ---- */
+/* The phone never scrolls in this prototype — one turn on screen, end to end.
+   So the card shows the hypothesis and its two strongest reasons, and the rest
+   is one tap away. Evidence should be checkable, not exhausting. */
+function memoryCardHTML(){
+  const m=MEMORY[S.fault];if(!m)return '';
+  const lead=m.ev.slice(0,1),rest=m.ev.slice(1);
+  return `<div class="memcard">
+    <div class="mh">🧠 मैंने पहले क्या देखा</div>
+    <div class="hyp">${m.hyp}</div>
+    <ul>${lead.map(e=>`<li><i>${e.i}</i><span>${e.t}</span></li>`).join('')}</ul>
+    ${rest.length?`<ul class="memrest" style="display:none;margin-top:5px">
+      ${rest.map(e=>`<li><i>${e.i}</i><span>${e.t}</span></li>`).join('')}</ul>
+      <button class="memmore" onclick="memMore(this)">+${rest.length} और वजह देखें</button>`:''}
+    <div class="src">आपके plant के data से — मैं गलत भी हो सकता हूँ, जाँच आप करेंगे।</div>
+  </div>`;
+}
+function memMore(btn){
+  const c=btn.closest('.memcard'),r=c.querySelector('.memrest');
+  const open=r.style.display!=='none';
+  r.style.display=open?'none':'flex';
+  btn.textContent=open?`+${r.children.length} और वजह देखें`:'कम दिखाएँ';
+  if(!open)logEvent('MEMORY','Operator opened the full evidence list');
+}
+
+/* ---- live-reading pre-fill, injected under the step's question ---- */
+function injectPrefill(n){
+  const pf=(PREFILL[S.fault]||{})[n];if(!pf)return;
+  const r=PLANT.live[pf.tag];if(!r)return;
+  const host=$('vBody').querySelector('.vb.bot');if(!host)return;
+  const box=document.createElement('div');
+  box.className='prefill';
+  /* compact on purpose — the check itself must stay on screen beside this */
+  box.innerHTML=`<div class="pl">🛰 Live · ${pf.tag} · ${r.at}</div>
+    <div class="pv">${r.v}<b>${r.u}</b> <b style="font-weight:500">(normal ${r.safe[0]}–${r.safe[1]})</b></div>
+    <div class="pt" style="color:var(--navy);font-weight:600">${pf.claim}</div>
+    <div class="prow">
+      <button class="yes">सही है</button>
+      <button>नहीं — मैं देखता हूँ</button>
+    </div>`;
+  const btns=box.querySelectorAll('.prow button');
+  btns[0].onclick=()=>{
+    box.classList.add('confirmed');
+    box.querySelector('.prow').innerHTML='<div class="pt" style="font-weight:600;color:var(--sage-forest)">✓ Operator ने live reading confirm की</div>';
+    earcon('ok');
+    logEvent('MEMORY',`Live ${pf.tag} = ${r.v}${r.u} confirmed by operator`,'ok');
+    S.prefillConfirmed++;
+    const opts=visibleOptions();
+    if(opts[pf.opt])suggest('तो यह जवाब भर दूँ?',[{label:opts[pf.opt].textContent.trim(),btn:opts[pf.opt]}]);
+  };
+  btns[1].onclick=()=>{
+    box.classList.add('overridden');
+    box.querySelector('.prow').innerHTML='<div class="pt" style="font-weight:600;color:#7A4A00">आप जो देखें वही सही — sensor गलत भी हो सकता है।</div>';
+    /* an override is evidence, not an error — this is the sensor-drift signal */
+    S.prefillOverrides++;
+    logEvent('MEMORY',`Operator OVERRODE live ${pf.tag} — logged as sensor-drift evidence`,'hi');
+  };
+  host.insertBefore(box,host.querySelector('.vanswers')||null);
+}
+
+/* ============================== 2 · EARCONS ==============================
+   A 200 ms tone beats "मैंने दर्ज कर लिया" — it survives 85 dB of blower and
+   saves two seconds, thirty times a session. */
+let AC=null;
+function earcon(kind){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const seq={ok:[[660,0,.07],[880,.08,.09]], warn:[[300,0,.16],[240,.18,.22]],
+                listen:[[520,0,.06]], help:[[760,0,.06],[620,.07,.08]]}[kind]||[[660,0,.07]];
+    seq.forEach(([f,t,d])=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,AC.currentTime+t);
+      g.gain.linearRampToValueAtTime(.13,AC.currentTime+t+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+t+d);
+      o.connect(g);g.connect(AC.destination);
+      o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d+.02);
+    });
+  }catch(e){}
+}
+
+/* ====================== 3 · HELP KNOWLEDGE (retrieval corpus) ======================
+   Everything the help layer says about a number comes from here or from a live tag.
+   `cite` is shown to the operator — an answer they can't trace is an answer they
+   won't trust. `tools` are what the model may PROPOSE; the operator commits. */
+const HELP_KB=[
+ {id:'seal-normal',match:['seal','सील','कितना','normal','ठीक','drip','टपक','बूँद','leak','लीक','रिस'],
+  title:'Seal से कितना पानी normal है',
+  say:'मेकैनिकल सील से हल्की बूँद-बूँद normal है। लगातार धार बहे तो सील ख़राब है।',
+  num:'Normal: 30–60 बूँद प्रति मिनट · ख़राब: लगातार धार',
+  steps:['एक मिनट गिनिए — कितनी बूँदें गिरती हैं।','60 से कम बूँदें हों तो चलेगा — निगरानी रखें।','धार बह रही हो तो seal बदलनी पड़ेगी।'],
+  cite:'Pump SOP · Mechanical Seal section',
+  tools:[{k:'answer',opt:0,label:'धार बह रही है → यह जवाब भर दें'},
+         {k:'answer',opt:1,label:'सिर्फ़ बूँदें हैं → यह जवाब भर दें'}]},
+ {id:'probe',match:['probe','प्रोब','सेंसर','sensor','साफ़','clean','calibrat','कैलिब','do probe'],
+  title:'DO probe कैसे साफ़ करें',
+  say:'प्रोब निकालिए, साफ़ पानी से धोइए, टिश्यू से पोंछिए। साफ़ पानी में सात से आठ पी पी एम दिखना चाहिए।',
+  num:'साफ़ पानी में सही probe = 7–8 mg/L',
+  steps:['Probe को tank से निकालें।','साफ़ पानी से धोएँ — tissue paper से पोंछें, रगड़ें नहीं।','Cap पर scaling या काली परत देखें।','साफ़ पानी में डालकर पढ़ें — 7–8 mg/L आना चाहिए।','कम आए तो cap बदलनी है — supervisor को बताएँ।'],
+  cite:'DO Sensor checklist · config engine node 10',
+  tools:[{k:'video'},{k:'goto',n:4,label:'Probe वाले चरण पर जाएँ'}]},
+ {id:'diffuser',match:['diffuser','डिफ्यूज़र','डिफ्यूजर','बुलबुले','bubble','हवा','air','असमान'],
+  title:'Diffuser ठीक है या नहीं — कैसे देखें',
+  say:'टैंक की सतह देखिए। बुलबुले पूरे टैंक में एक जैसे उठें तो ठीक है। एक जगह ज़्यादा और दूसरी जगह कुछ नहीं, तो diffuser चोक है।',
+  num:'आपका diffuser 94 दिन से साफ़ नहीं हुआ · SOP: हर 60 दिन',
+  steps:['Blower चालू रखकर सतह देखें।','पूरे टैंक में बुलबुले एक जैसे हैं?','एक कोना शांत है तो वहाँ diffuser चोक है।','असमान दिखे तो maintenance को बुलाएँ।'],
+  cite:'Asset register + Aeration SOP',
+  tools:[{k:'answer',opt:1,label:'असमान हैं → यह जवाब भर दें'}]},
+ {id:'ppm',match:['ppm','पीपीएम','डोज','dose','क्लोरीन','chlorine','hypo','हाइपो','मात्रा','कितना डालना'],
+  title:'Chlorine dosing — कितना डालना है',
+  say:'बारह एम एल डी पर दो पी पी एम के लिए, एक घंटे में लगभग एक किलो सोडियम हाइपोक्लोराइट चाहिए।',
+  num:'2 PPM × 12 MLD ÷ 24 = लगभग 1.0 kg/घंटा',
+  steps:['Dosing tank में 1.0 kg hypo प्रति घंटा सेट करें।','Pump stroke 60% पर रखें।','30 मिनट बाद residual chlorine नापें — 0.5 mg/L आना चाहिए।'],
+  cite:'Dosing SOP · आपका current residual 0.4 mg/L है',
+  tools:[{k:'video'}]},
+ {id:'backwash',match:['backwash','बैकवॉश','बैक वाश','filter','फ़िल्टर','फिल्टर','धोना','चोक'],
+  title:'Filter backwash — कैसे करें',
+  say:'फीड वाल्व बंद करें, बैकवॉश वाल्व खोलें, आठ से दस मिनट चलाएँ, फिर दो मिनट रिन्स करें।',
+  num:'Backwash 8–10 मिनट · Rinse 2 मिनट',
+  steps:['Feed valve बंद करें, pump बंद करें।','Backwash और drain valve खोलें।','Pump चालू करें — 8–10 मिनट, पानी साफ़ दिखने तक।','2 मिनट rinse करके normal line-up पर लौटें।'],
+  cite:'Filter SOP · Backwash sequence',
+  tools:[{k:'video'}]},
+ {id:'hmi',match:['hmi','एचएमआई','पैनल','panel','सेटिंग','setting','टाइमर','timer','screen'],
+  title:'HMI पर timer कैसे सेट करें',
+  say:'एच एम आई पर सेटिंग्स, फिर बैकवॉश टाइमर चुनें, मान बदलें और सेव दबाएँ।',
+  num:'Settings → Backwash → Timer → Save',
+  steps:['HMI home पर “Settings” दबाएँ।','“Backwash” चुनें।','Timer में नया मान डालें।','“Save” दबाएँ — हरी light जलेगी।'],
+  cite:'HMI operating guide',
+  tools:[{k:'video'}]},
+ {id:'blower',match:['blower','ब्लोअर','trip','ट्रिप','बंद','चालू','start','restart'],
+  title:'Blower trip हो गया तो क्या करें',
+  say:'पैनल पर ट्रिप इंडिकेटर देखिए, रीसेट दबाइए, फिर स्टार्ट कीजिए। दोबारा ट्रिप हो तो इलेक्ट्रीशियन को बुलाइए।',
+  num:'आपका Blower 2 पिछले 30 दिन में 2 बार trip हुआ है',
+  steps:['Panel पर trip indicator देखें।','Reset दबाएँ, फिर Start।','15 मिनट बाद DO दोबारा पढ़ें।','दोबारा trip हो तो electrician — ख़ुद बार-बार reset न करें।'],
+  cite:'Plant history + Blower SOP',
+  tools:[{k:'escalate'}]},
+ /* no bare 'kit' — it matches "kitni" and steals every "कितना" question */
+ {id:'tool',match:['टूल','tool','औज़ार','सामान','कहाँ मिलेगा','spanner','किट','kit kaha','probe kit'],
+  title:'Tool कहाँ से मिलेगा',
+  say:'ज़रूरी टूल मेंटेनेंस स्टोर में रहता है। न मिले तो मैं मॉनिटरिंग इंजीनियर को बता सकता हूँ।',
+  num:null,
+  steps:['Maintenance store से indent पर्ची लें।','Store में न हो तो नीचे “इंजीनियर को भेजें” दबाएँ।'],
+  cite:'Maintenance store process',
+  tools:[{k:'escalate'}]},
+ {id:'safety',match:['safety','सुरक्षा','खतरा','ppe','दस्ताने','glove','बिजली','shock','करंट'],
+  title:'पहले safety',
+  say:'बिजली या करंट का शक हो तो हाथ न लगाइए। पंप बंद कीजिए, लॉकआउट टैगआउट कीजिए, और सुपरवाइज़र को बुलाइए।',
+  num:'Lockout-tagout — हर electrical काम से पहले',
+  steps:['किसी भी शक पर pump/blower बंद करें।','Lockout-tagout लगाएँ।','PPE पहनें — gloves, boots।','Supervisor को बुलाएँ — अकेले न खोलें।'],
+  cite:'Remedial safety guardrails · config engine',
+  tools:[{k:'escalate'}],warn:true}
+];
+
+const HELP_CHIPS=[
+ {t:'यह चरण समझ नहीं आया',q:'यह चरण समझ नहीं आया'},
+ {t:'Seal से कितना पानी normal है?',q:'seal से कितना पानी normal है'},
+ {t:'DO probe कैसे साफ़ करें?',q:'DO probe कैसे साफ़ करें'},
+ {t:'कितना PPM डालना है?',q:'कितना ppm डालना है'},
+ {t:'Blower trip हो गया',q:'blower trip हो गया'},
+ {t:'Tool कहाँ मिलेगा?',q:'tool कहाँ मिलेगा'},
+ {t:'क्या यह safe है?',q:'क्या यह safe है'}
+];
+
+/* ============================== 4 · THE HELP SHEET ============================== */
+let helpOpen=false, helpAsked=[], helpTranscript=[], offeredStep=null, riskWatch=null, helpMicOn=false;
+
+function helpContextLine(){
+  const d=navStack[navStack.length-1];
+  const c=curStep();
+  const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
+  return (c?c.label:'—')+(st?' · '+st.q.replace(/[।?]$/,''):'');
+}
+function openHelp(src){
+  if(!S||helpOpen)return;
+  helpOpen=true;
+  S.helpLayerOpens++;S.helpOpenSources.push(src);
+  earcon('help');
+  shutUp();                                  /* help interrupts narration, always */
+  hideOffer();
+  $('hCtx').textContent=helpContextLine();
+  $('hScrim').classList.add('on');
+  $('hSheet').classList.add('on');
+  renderHelpChips();renderAsked();
+  if(!helpTranscript.length){
+    const p=opProfile();
+    /* the co-pilot opens knowing where the operator is and who they are */
+    hBot({title:'पूछिए — यह जाँच रुकी नहीं है।',
+      body:`आप <b>${helpContextLine()}</b> पर हैं। मुझे आपका plant data दिख रहा है, तो सवाल सीधा पूछिए — हिंदी में बोलिए या लिखिए।`
+        +(p.level==='नया'?'<br><br>ज़्यादा तेज़ नहीं बोलूँगा, और हर चीज़ पूरी बताऊँगा।':''),
+      cite:'पूछना काम का हिस्सा है — यह आपके मूल्यांकन में नहीं जाता।'});
+  }
+  logEvent('HELP',`Help layer opened via ${src} at ${helpContextLine()}`,'hi');
+}
+function closeHelp(reason){
+  if(!helpOpen)return;
+  helpOpen=false;stopHelpMic();
+  $('hScrim').classList.remove('on');
+  $('hSheet').classList.remove('on');
+  logEvent('HELP','Help layer closed — '+(reason||'closed'));
+  /* the step is exactly where they left it — help never took it away */
+}
+function helpBackToFlow(){
+  closeHelp('resolved — back to the check');
+  earcon('ok');
+  botSay('ठीक — जहाँ थे वहीं से आगे।');
+  lastNarrated='';narrateCurrent();
+}
+function helpEscalate(){
+  const t=helpTranscript.filter(x=>x.who==='me').map(x=>x.text);
+  S.helpEscalated=true;
+  logEvent('ESCALATE',`Escalated FROM help — transcript attached (${t.length} सवाल): ${t.join(' | ')||'—'}`,'hi');
+  closeHelp('escalated with transcript');
+  escalate('help');
+  botSay('मैंने आपकी पूरी बातचीत इंजीनियर को भेज दी है — उन्हें दोबारा नहीं पूछना पड़ेगा।');
+}
+
+/* ---- rendering ---- */
+function hScroll(){const b=$('hBody');b.scrollTop=b.scrollHeight;}
+function hMe(text){
+  helpTranscript.push({who:'me',text});
+  const d=document.createElement('div');d.className='hmsg me';d.textContent=text;
+  $('hBody').appendChild(d);hScroll();
+}
+function hBot(o){
+  helpTranscript.push({who:'bot',text:o.say||o.title||''});
+  const d=document.createElement('div');d.className='hmsg bot';
+  let h='';
+  if(o.title)h+=`<div class="htitle">${o.title}</div>`;
+  if(o.body)h+=`<div>${o.body}</div>`;
+  if(o.num)h+=`<div class="hnum">${o.num}</div>`;
+  if(o.steps)h+=`<ol>${o.steps.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ol>`;
+  if(o.cite)h+=`<div class="hcite">📄 ${o.cite}</div>`;
+  d.innerHTML=h;
+  if(o.say){
+    const sp=document.createElement('button');sp.className='hspk';sp.textContent='🔊 दोबारा सुनें';
+    sp.onclick=()=>speak(o.say);d.appendChild(sp);
+  }
+  if(o.tools&&o.tools.length){
+    const tw=document.createElement('div');tw.className='htools';
+    o.tools.forEach(t=>{
+      const b=toolButton(t);if(b)tw.appendChild(b);
+    });
+    if(tw.children.length)d.appendChild(tw);
+  }
+  $('hBody').appendChild(d);hScroll();
+  return d;
+}
+function hThinking(on){
+  const ex=$('hBody').querySelector('.hthinking');
+  if(!on){if(ex)ex.remove();return;}
+  if(ex)return;
+  const d=document.createElement('div');d.className='hthinking';d.innerHTML='<i></i><i></i><i></i>';
+  $('hBody').appendChild(d);hScroll();
+}
+
+/* ---- TOOLS the model may PROPOSE. Every one needs one more human tap. ----
+   answerStep / gotoStep / lookupVideo / escalate / logObservation.
+   Nothing here writes state without the operator pressing it. */
+function toolButton(t){
+  const b=document.createElement('button');
+  if(t.k==='answer'){
+    const opts=visibleOptions();
+    if(!opts[t.opt])return null;
+    const label=opts[t.opt].textContent.trim();
+    b.textContent=t.label||`✍ जवाब भर दें — “${label}”`;
+    b.onclick=()=>{
+      closeHelp('answered from help');
+      logEvent('HELP','answerStep() proposed in help, confirmed by operator: '+label,'ok');
+      earcon('ok');
+      S.helpResolved++;
+      voiceAnswer(opts[t.opt],'(help से)');
+    };
+    return b;
+  }
+  if(t.k==='goto'){
+    b.textContent=t.label||`चरण ${t.n} पर जाएँ`;
+    b.onclick=()=>{
+      closeHelp('jumped from help');
+      logEvent('HELP','gotoStep('+t.n+') confirmed by operator','ok');
+      earcon('ok');
+      navGo({t:'step',n:t.n});
+    };
+    return b;
+  }
+  if(t.k==='video'){
+    b.textContent='▶ 30 सेकंड का वीडियो देखें';
+    b.onclick=()=>{
+      const d=document.createElement('div');d.className='hmsg bot';
+      d.innerHTML=videoCard('यह काम करते हुए — 45 सेकंड');
+      $('hBody').appendChild(d);bindVideo(d);hScroll();
+      b.disabled=true;b.style.opacity=.5;
+      logEvent('MEDIA','Video opened from help layer');
+    };
+    return b;
+  }
+  if(t.k==='escalate'){
+    b.className='warn';b.textContent='📨 इंजीनियर को भेजें';
+    b.onclick=helpEscalate;
+    return b;
+  }
+  if(t.k==='call'){
+    b.className='warn';b.textContent='📞 सुपरवाइज़र को कॉल करें';
+    b.onclick=()=>{closeHelp('called supervisor');callSupervisor();};
+    return b;
+  }
+  return null;
+}
+
+/* ---- the model turn. Mocked here; the shape is what a real call returns. ----
+   A real implementation swaps helpRespond() for a Claude call with these tools
+   and this system rule: numbers, doses and safety actions come only from tool
+   results. If retrieval is empty, say "मुझे नहीं पता" and offer the engineer. */
+function helpAsk(text,mode){
+  if(!text)return;
+  hMe(text);
+  helpAsked.push(text);
+  S.helpAsks.push({q:text,mode:mode||'typed',at:hhmm(now()),step:curStep()?curStep().label:'—',layer:'help'});
+  if(mode==='voice')S.voiceAsks++;else S.typedAsks++;
+  logEvent('HELP',`${mode==='voice'?'🎙':'⌨'} help question: “${text}”`,'hi');
+  renderAsked();
+  hThinking(true);
+  $('hStat').textContent='देख रहा हूँ — आपका plant data और SOP…';
+  setTimeout(()=>{hThinking(false);$('hStat').textContent='';helpRespond(text);},620);
+}
+function helpRespond(text){
+  const t=text.toLowerCase();
+  const d=navStack[navStack.length-1];
+  const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
+
+  /* (i) "this step, in simpler words" — answered from the step + working memory */
+  /* deliberately tight — a bare "kya" is not a request to re-explain the step */
+  if(/समझ नहीं|समझा नहीं|समझाइए|मतलब क्या|क्या देखना|कहाँ देख|यह चरण|इस चरण|कैसे देख|फिर से बताओ|samajh nahi|samjha nahi|samjhaiye|yeh step|is step|step samajh/.test(t)&&st){
+    const m=MEMORY[S.fault];
+    const tools=[{k:'video'}];
+    (st.opts||[]).slice(0,2).forEach((o,i)=>tools.push({k:'answer',opt:i,label:`✍ “${o.label}” भर दें`}));
+    hBot({title:'इस चरण में क्या देखना है',
+      say:`${st.q} ${st.detail||''} ${m?m.hyp:''}`,
+      body:`<b>${st.q}</b> ${st.detail?'<br>'+st.detail:''}`
+        +(st.tool?`<br><br>🔧 इसके लिए चाहिए: <b>${st.tool}</b>`:'<br><br>✅ कोई tool नहीं चाहिए।')
+        +(m?`<br><br>${m.hyp} — पर जो आप आँख से देखें, वही सही माना जाएगा।`:''),
+      steps:['जो चीज़ लिखी है उसके पास जाएँ।','ऊपर लिखी बात आँख से देखें — जल्दी न करें।','जो दिखे वही चुनें — अंदाज़ा न लगाएँ।'],
+      cite:'Diagnostic SOP · '+(curStep()?curStep().label:'—'),
+      tools});
+    speak(`${st.q} ${st.detail||''}`);
+    return;
+  }
+
+  /* (ii) live-value questions answered from the tag, never from the model */
+  const tagHit=Object.keys(PLANT.live).find(k=>{
+    const words=k.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2);
+    return words.some(w=>t.includes(w))||(/do|डी ओ|ऑक्सीजन/.test(t)&&/DO/.test(k));
+  });
+  if(tagHit&&/कितन|reading|रीडिंग|अभी|now|value|मान|दिख|kitn|abhi|dikh|batao|बताओ/.test(t)){
+    const r=PLANT.live[tagHit],tr=PLANT.trend[tagHit];
+    hBot({title:tagHit,
+      say:`अभी ${r.v} ${r.u} है। ${tr?tr.line:''}`,
+      body:`अभी <b>${r.v} ${r.u}</b> है — normal range ${r.safe[0]}–${r.safe[1]} ${r.u}। पढ़ा गया ${r.at}।`
+        +(tr?`<br><br>${tr.line}`:''),
+      num:`${r.v} ${r.u} · normal ${r.safe[0]}–${r.safe[1]}`,
+      cite:'Live SCADA tag'+(tr?' + 7-दिन trend':''),
+      tools:[]});
+    speak(`अभी ${r.v} ${r.u} है।`);
+    return;
+  }
+
+  /* (iii) history questions — "पहले भी हुआ था?" */
+  if(/पहले|पिछल|history|इतिहास|दोबारा|फिर से हुआ|last time|कब हुआ|pehle|pichl|pichhl|hua tha|kab hua|dobara/.test(t)){
+    const ev=PLANT.events[S.fault]||[];
+    const j=MEMORY[S.fault]&&MEMORY[S.fault].jump;
+    hBot({title:'हाँ — पहले भी हुआ है',
+      say:`${ev.length} बार ऐसा हुआ है। सबसे पास वाला ${ev[0]?ev[0].when:''} — कारण था ${ev[0]?ev[0].rc:''}।`,
+      body:ev.map(e=>`<b>${e.when}</b> — ${e.what}<br>कारण: <b>${e.rc}</b> · ${e.fix}`).join('<br><br>'),
+      cite:'इस plant का event log',
+      tools:j?[{k:'goto',n:j.n,label:j.label}]:[]});
+    return;
+  }
+
+  /* (iv) the retrieval corpus */
+  let best=null,score=0;
+  HELP_KB.forEach(k=>{
+    const s=k.match.filter(m=>t.includes(m.toLowerCase())).length;
+    if(s>score){score=s;best=k;}
+  });
+  if(best){
+    hBot({title:best.title,say:best.say,num:best.num,steps:best.steps,cite:best.cite,
+      tools:(best.tools||[]).concat(best.warn?[]:[])});
+    if(best.warn){earcon('warn');speakSlow(best.say);}else speak(best.say);
+    S.helpResolved++;
+    return;
+  }
+
+  /* (v) the honest dead end. This is what makes the confident answers credible. */
+  const near=HELP_CHIPS.map(c=>({label:c.t,q:c.q,s:scoreOption(text,c.q)}))
+                       .sort((a,b)=>b.s-a.s).slice(0,2);
+  const d2=hBot({title:'मुझे यह नहीं पता',
+    say:'यह मेरे पास दर्ज नहीं है। मैं अंदाज़ा नहीं लगाऊँगा — इंजीनियर से पूछ लेते हैं।',
+    body:'यह मेरे पास दर्ज नहीं है, और मैं अंदाज़ा नहीं लगाऊँगा — dose या safety में अंदाज़ा ख़तरनाक है।<br><br>शायद आपका मतलब इनमें से कुछ था?',
+    cite:'कोई SOP या tag नहीं मिला',
+    tools:[{k:'escalate'},{k:'call'}]});
+  const tw=document.createElement('div');tw.className='htools';
+  near.forEach(n=>{
+    const b=document.createElement('button');b.textContent=n.label;
+    b.onclick=()=>helpAsk(n.q,'suggestion');tw.appendChild(b);
+  });
+  d2.insertBefore(tw,d2.querySelector('.htools'));
+  logEvent('HELP','No retrieval match — said "मुझे नहीं पता", offered engineer','hi');
+  S.helpUnanswered++;
+  speak('यह मेरे पास दर्ज नहीं है। इंजीनियर से पूछ लेते हैं।');
+}
+/* warnings get their own register — slower, lower, after a tone */
+function speakSlow(text){
+  if(!('speechSynthesis' in window)||!text)return;
+  try{
+    speechSynthesis.cancel();speechSynthesis.resume();
+    const u=utter(text);u.rate=.82;u.pitch=.92;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function renderHelpChips(){
+  $('hChips').innerHTML=HELP_CHIPS.map((c,i)=>`<button onclick="helpAsk(HELP_CHIPS[${i}].q,'chip')">${c.t}</button>`).join('');
+}
+function renderAsked(){
+  const el=$('hAsked');
+  if(!helpAsked.length){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML='<div class="al">जो मैंने पूछा</div><div class="arow">'+
+    helpAsked.slice(-6).map(q=>`<button onclick="helpAsk(${JSON.stringify(q).replace(/"/g,'&quot;')},'again')">↻ ${q.length>34?q.slice(0,34)+'…':q}</button>`).join('')+
+    '</div>';
+}
+function helpSendTyped(){
+  const v=$('hInput').value.trim();if(!v)return;
+  $('hInput').value='';helpAsk(v,'typed');
+}
+/* one recognizer, routed by which layer is open */
+function helpMic(){
+  if(helpMicOn){stopHelpMic();return;}
+  helpMicOn=true;$('hMic').classList.add('live');
+  $('hStat').textContent='🔴 सुन रहा हूँ — बोलिए';
+  earcon('listen');shutUp();
+  startMic();
+}
+function stopHelpMic(){
+  helpMicOn=false;
+  const m=$('hMic');if(m)m.classList.remove('live');
+  const s=$('hStat');if(s&&/सुन रहा/.test(s.textContent))s.textContent='';
+  if(listening)stopMic();
+}
+
+/* ============ 5 · THE PROACTIVE DOOR — wired to the confusion telemetry ============
+   The operators who most need help are the least likely to ask. riskScore() already
+   watches dwell, dead taps and back-tracking; when it fires we offer once, quietly,
+   and never nag again on the same step. */
+function showOffer(){
+  const c=curStep();if(!c||helpOpen||offeredStep===curStepKey)return;
+  offeredStep=curStepKey;
+  S.proactiveOffers++;
+  const el=$('helpOffer');
+  /* one line, inline buttons — an offer that pushes the check off screen is
+     not help. The offer must cost less room than the thing it interrupts. */
+  el.innerHTML=`<div class="ol">अटक गए? मैं दूसरे तरीके से समझाऊँ?</div>
+    <div class="orow"><button class="pri" onclick="acceptOffer()">हाँ</button>
+    <button onclick="hideOffer(true)">नहीं, ठीक हूँ</button></div>`;
+  el.classList.add('show');
+  $('vBody').scrollTop=0;          // keep the question the offer is about in view
+  earcon('help');
+  speak('अटक गए? मैं समझा सकता हूँ।');
+  logEvent('HELP',`Proactive offer at ${c.label} — risk ${riskScore()}`,'hi');
+}
+function hideOffer(declined){
+  const el=$('helpOffer');if(!el)return;
+  el.classList.remove('show');el.innerHTML='';
+  if(declined){S.offersDeclined++;logEvent('HELP','Operator declined the offer — will not ask again on this step');}
+}
+function acceptOffer(){
+  S.offersAccepted++;
+  hideOffer();
+  openHelp('proactive');
+  helpAsk('यह चरण समझ नहीं आया','proactive');
+}
+function startRiskWatch(){
+  clearInterval(riskWatch);
+  riskWatch=setInterval(()=>{
+    if(!S||helpOpen)return;
+    if(offeredStep===curStepKey)return;
+    if(riskScore()>=45)showOffer();
+  },3500);
+}
+
+/* ================= 6 · WIRING INTO THE v1 FLOW (spine untouched) ================= */
+const _beginStep=beginStep;
+beginStep=function(desc){_beginStep(desc);offeredStep=null;hideOffer();startRiskWatch();};
+
+const _cpStep=cpStep;
+cpStep=function(n){_cpStep(n);injectPrefill(n);};
+
+const _cpIssue=cpIssue;
+cpIssue=function(){
+  _cpIssue();
+  const host=$('vBody').querySelector('.vb.bot');
+  if(!host)return;
+  const box=document.createElement('div');box.innerHTML=memoryCardHTML();
+  const card=box.firstElementChild;
+  if(card)host.insertBefore(card,host.querySelector('.vanswers')||null);
+  const m=MEMORY[S.fault];
+  if(m&&m.jump){
+    const opts=visibleOptions();
+    if(opts.length)suggest('या सीधे मेरे अनुमान से शुरू करें:',
+      [{label:m.jump.label,btn:null,jump:m.jump.n},{label:'नहीं, शुरू से जाँचें',btn:opts[0]}]);
+  }
+};
+const _takeSuggestion=takeSuggestion;
+takeSuggestion=function(i){
+  const it=SUGG[i];
+  if(it&&it.jump){clearSuggest();logEvent('MEMORY','Operator took the memory hypothesis — jumped to step '+it.jump,'ok');earcon('ok');navGo({t:'step',n:it.jump});return;}
+  _takeSuggestion(i);
+};
+
+/* the mic is shared — route by which layer is listening */
+const _routeUtterance=routeUtterance;
+routeUtterance=function(said){
+  if(helpOpen){meSayHelp(said);return;}
+  _routeUtterance(said);
+};
+function meSayHelp(said){
+  const t=said.toLowerCase();
+  if(/बंद करो|बंद कर|वापस|जाँच पर|close|समझ गया/.test(t)){helpBackToFlow();return;}
+  helpAsk(said,'voice');
+}
+
+const _finish=finish;
+finish=function(){clearInterval(riskWatch);closeHelp('session finished');_finish();};
+
+const _restartFlow=restartFlow;
+restartFlow=function(){clearInterval(riskWatch);closeHelp('restart');helpAsked=[];helpTranscript=[];$('hBody').innerHTML='';_restartFlow();};
+
+const _snapshot=snapshot;
+snapshot=function(){
+  const s=_snapshot();
+  s.helpLayerOpens=S.helpLayerOpens;s.helpOpenSources=S.helpOpenSources.join('+');
+  s.proactiveOffers=S.proactiveOffers;s.offersAccepted=S.offersAccepted;s.offersDeclined=S.offersDeclined;
+  s.helpResolved=S.helpResolved;s.helpUnanswered=S.helpUnanswered;s.helpEscalated=!!S.helpEscalated;
+  s.prefillConfirmed=S.prefillConfirmed;s.prefillOverrides=S.prefillOverrides;
+  return s;
+};
+
+const _startSession=startSession;
+startSession=function(){
+  _startSession();
+  if(!S)return;
+  S.helpLayerOpens=0;S.helpOpenSources=[];S.proactiveOffers=0;S.offersAccepted=0;S.offersDeclined=0;
+  S.helpResolved=0;S.helpUnanswered=0;S.helpEscalated=false;
+  S.prefillConfirmed=0;S.prefillOverrides=0;
+  helpAsked=[];helpTranscript=[];$('hBody').innerHTML='';
+};
+
+/* Escape closes the sheet; the step is untouched underneath. */
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpOpen)closeHelp('escape');});
+
+</script>
+</body>
+</html>

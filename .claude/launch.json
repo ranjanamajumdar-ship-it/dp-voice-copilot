@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "config-builder",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/Users/ranjanamajumdar/Desktop/Digital Paani New App - (Issues + Tasks)", "-l", "8097", "--no-clipboard"],
+      "port": 8097
+    },
+    {
+      "name": "voice-copilot-v2",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/Users/ranjanamajumdar/Desktop/Digital Paani New App - (Issues + Tasks)", "-l", "8112", "--no-clipboard"],
+      "port": 8112
+    }
+  ]
+}
