@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voice Co-pilot v2 — working memory + “मदद चाहिए” help layer</title>
+<title>Voice-assisted Co-pilot — डॉ. पानी बोलकर बताते हैं</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -263,6 +263,10 @@
   .vbar-row input{flex:1;min-width:0;border:1px solid var(--hair);border-radius:var(--r-pill);
     padding:13px 16px;font-size:15px;background:var(--canvas);}
   .vbar-row input:focus{outline:none;border-color:var(--teal);background:var(--white);}
+  .sendbtn{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+    background:var(--navy);color:#fff;font-size:19px;display:flex;align-items:center;
+    justify-content:center;box-shadow:var(--lift-sm);}
+  .sendbtn:active{background:var(--navy-mid);}
   .micbtn{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
     background:var(--navy);color:#fff;font-size:21px;display:flex;align-items:center;justify-content:center;
     position:relative;transition:.16s;box-shadow:var(--lift);}
@@ -583,12 +587,12 @@
                 <span class="ic">📞</span>सुपरवाइज़र</button>
             </div>
             <div class="vbar">
-              <div class="vhint"><span id="vStatus">तैयार</span> · <span id="micHint">दबाकर बोलिए — या लिखिए</span></div>
+              <div class="vhint"><span id="vStatus">तैयार</span> · <span id="micHint">लिखकर जवाब दें या पूछें — या ऊपर से चुनें</span></div>
+              <!-- listening removed — the co-pilot speaks, the operator types or taps -->
               <div class="vbar-row">
-                <input type="text" id="vInput" placeholder="लिखकर पूछें…" onkeydown="if(event.key==='Enter')sendTyped()">
-                <button class="micbtn" id="micBtn" onclick="toggleMic()" title="बोलें">🎙</button>
+                <input type="text" id="vInput" placeholder="लिखकर पूछें या जवाब दें…" onkeydown="if(event.key==='Enter')sendTyped()">
+                <button class="sendbtn" id="sendBtn" onclick="sendTyped()" title="भेजें" aria-label="भेजें">➤</button>
               </div>
-              <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
             </div>
           </div>
         </div>
@@ -611,7 +615,7 @@
           <div class="hbar-row">
             <input type="text" id="hInput" placeholder="हिंदी में लिखकर पूछिए…"
               onkeydown="if(event.key==='Enter')helpSendTyped()">
-            <button class="hmic" id="hMic" onclick="helpMic()" aria-label="बोलें">🎙</button>
+            <button class="hmic" id="hSend" onclick="helpSendTyped()" aria-label="भेजें">➤</button>
           </div>
         </div>
         <div class="hexits">
@@ -1998,7 +2002,6 @@ const HELP_KB=[
 const HELP_CHIPS=[
  {t:'यह चरण समझ नहीं आया',q:'यह चरण समझ नहीं आया'},
  {t:'🔊 आवाज़ जाँचें',q:'__voicecheck'},
- {t:'🎙 माइक जाँचें',q:'__miccheck'},
  {t:'Seal से कितना पानी normal है?',q:'seal से कितना पानी normal है'},
  {t:'DO probe कैसे साफ़ करें?',q:'DO probe कैसे साफ़ करें'},
  {t:'कितना PPM डालना है?',q:'कितना ppm डालना है'},
@@ -2852,6 +2855,54 @@ function voiceReport(){
   tw.appendChild(b);d.appendChild(tw);
   logEvent('VOICE','Ran the voice diagnostic — hindi voices: '+(hi.length||0));
 }
+
+/* ==================================================================================
+   9 · VOICE-ASSISTED CO-PILOT — it speaks, it does not listen
+   ----------------------------------------------------------------------------------
+   Listening is removed on purpose. Speech recognition was the least reliable part
+   of this prototype and the part least under our control: it needs a secure
+   context, a permission grant, an OS dictation service, and a network round trip,
+   and it fails differently in every browser. Speaking needs none of that.
+
+   So the co-pilot keeps its voice — it reads every check aloud, explains, warns,
+   and confirms — and the operator answers by tapping or typing. Nothing is lost
+   from the flow: typed text now goes through the same router the microphone used,
+   so "खुला है" still ANSWERS a check and "सील से कितना पानी नॉर्मल है" still asks
+   a question. The mic was one of two ways in; the remaining one is the reliable one.
+   ================================================================================== */
+const MIC_OFF=true;
+startMic=function(){};                       // nothing listens any more
+stopMic=function(){listening=false;wantListen=false;clearTimeout(micWatch);clearTimeout(micCap);};
+toggleMic=function(){};
+spinRecog=function(){};
+micReport=function(){voiceReport();};        // the mic diagnostic no longer applies
+helpMic=function(){$('hInput').focus();};    // the button in the sheet now sends
+stopHelpMic=function(){helpMicOn=false;};
+
+/* the typed line is now the input channel, so it must be able to answer a check
+   and not only ask about one — this is what routeUtterance() already does well */
+sendTyped=function(){
+  const el=$('vInput');
+  const v=(el.value||'').trim();
+  if(!v)return;
+  el.value='';
+  if(!S)return;
+  S.typedAsks++;
+  routeUtterance(v);                          // answer, command, or question
+};
+
+/* honest, quiet resting state — no red mic, no "सुन रहा हूँ" that never happens */
+function restHint(){
+  const h=$('micHint');
+  if(h)h.innerHTML='लिखकर जवाब दें या पूछें — या ऊपर से चुनें';
+}
+const _cpStateV1=cpState;
+cpState=function(state){
+  if(state==='listening')state='idle';        // there is no listening state now
+  _cpStateV1(state);
+};
+const _navGoV1=navGo;
+navGo=function(desc){_navGoV1(desc);restHint();};
 
 /* Escape closes the sheet; the step is untouched underneath. */
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpOpen)closeHelp('escape');});
