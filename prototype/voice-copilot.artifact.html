@@ -1023,14 +1023,16 @@ function unlockAudio(){
   if(!hiVoice)hiVoice=pickVoice();
   const hint=$('micHint');
   if(hint&&/दबाएँ/.test(hint.textContent))hint.textContent='दबाकर बोलिए — या लिखिए';
-  if(heldLine){const l=heldLine;heldLine=null;setTimeout(()=>speak(l),80);}
+  if(heldLine){const l=heldLine;heldLine=null;speak(l);}
 }
 ['pointerdown','keydown','touchstart'].forEach(ev=>
   window.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
 
 function voiceTrouble(){
   const hint=$('micHint');
-  if(hint)hint.innerHTML='<span style="color:var(--rust)">आवाज़ नहीं चली — 🔊 दोबारा दबाएँ</span>';
+  const hindiVoice=hiVoice&&/^hi/i.test(hiVoice.lang);
+  if(hint)hint.innerHTML='<span style="color:var(--rust)">'+
+    (hindiVoice?'आवाज़ नहीं चली — 🔊 दोबारा दबाएँ':'इस डिवाइस में हिंदी आवाज़ नहीं है')+'</span>';
   logEvent('VOICE','Speech did not start','hi');
 }
 function stopKeepAlive(){if(keepAlive){clearInterval(keepAlive);keepAlive=null;}}
@@ -1044,25 +1046,33 @@ function speak(text){
   }
   try{
     speechSynthesis.cancel();
-    speechSynthesis.resume();            // clears the wedged state
+    speechSynthesis.resume();            // clears Chrome's wedged state
     cpState('speaking');
-    setTimeout(()=>{
-      const u=new SpeechSynthesisUtterance(text);
-      u.lang='hi-IN';u.rate=.92;
-      if(hiVoice)u.voice=hiVoice;
-      let started=false;
-      u.onstart=()=>{started=true;cpState('speaking');
-        stopKeepAlive();                 // Chrome cuts long speech unless nudged
-        keepAlive=setInterval(()=>{if(speechSynthesis.speaking){speechSynthesis.pause();speechSynthesis.resume();}},5000);};
-      u.onend=()=>{stopKeepAlive();cpState(listening?'listening':'idle');};
-      u.onerror=()=>{stopKeepAlive();cpState(listening?'listening':'idle');voiceTrouble();};
-      speechSynthesis.speak(u);
-      // only complain if nothing started AND the engine is not busy — a slow
-      // voice load must not be reported as a failure
-      setTimeout(()=>{if(!started&&!speechSynthesis.speaking&&!speechSynthesis.pending){
-        cpState(listening?'listening':'idle');voiceTrouble();}},1400);
-    },70);
+    const u=utter(text);
+    speechSynthesis.speak(u);            // SYNCHRONOUS — Safari drops it otherwise
+    setTimeout(()=>{                     // Chrome sometimes swallows the one right after cancel()
+      if(u.started||speechSynthesis.speaking||speechSynthesis.pending)return;
+      const u2=utter(text);
+      speechSynthesis.speak(u2);
+      setTimeout(()=>{
+        if(u2.started||speechSynthesis.speaking||speechSynthesis.pending)return;
+        cpState(listening?'listening':'idle');voiceTrouble();
+      },1200);
+    },260);
   }catch(e){voiceTrouble();}
+}
+function utter(text){
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='hi-IN';u.rate=.92;
+  if(hiVoice)u.voice=hiVoice;
+  u.started=false;
+  u.onstart=()=>{u.started=true;cpState('speaking');
+    stopKeepAlive();                     // Chrome truncates long speech unless nudged
+    keepAlive=setInterval(()=>{if(speechSynthesis.speaking){speechSynthesis.pause();speechSynthesis.resume();}},5000);};
+  u.onend=()=>{stopKeepAlive();cpState(listening?'listening':'idle');};
+  u.onerror=e=>{stopKeepAlive();cpState(listening?'listening':'idle');
+    if(e&&e.error!=='interrupted'&&e.error!=='canceled')voiceTrouble();};
+  return u;
 }
 function shutUp(){                      // barge-in: operator talks, co-pilot yields
   if('speechSynthesis' in window&&speechSynthesis.speaking){
