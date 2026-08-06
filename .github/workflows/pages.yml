@@ -1,0 +1,56 @@
+name: Deploy prototype to Pages
+
+# Replaces GitHub's legacy Pages builder, which runs Jekyll against the branch.
+# Nothing here is a Jekyll site, so there is nothing to build — this uploads the
+# files as they are. Fewer moving parts, and no Jekyll failure mode.
+on:
+  push:
+    branches: [feat/voice-copilot-v2]
+    paths:
+      - 'prototype/voice-copilot-v2.html'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false      # never cancel a deploy half-way
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp prototype/voice-copilot-v2.html _site/
+          # keep v1 alongside it so the old shared link keeps working
+          if [ -f prototype/voice-copilot.html ]; then
+            cp prototype/voice-copilot.html _site/
+          fi
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html><meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=voice-copilot-v2.html">
+          <title>Digital Paani — Voice-assisted Co-pilot</title>
+          <a href="voice-copilot-v2.html">Digital Paani — Voice-assisted Co-pilot</a>
+          HTML
+          touch _site/.nojekyll
+          test -s _site/voice-copilot-v2.html   # fail loudly rather than deploy an empty site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
