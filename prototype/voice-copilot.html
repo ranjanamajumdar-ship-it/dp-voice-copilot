@@ -161,6 +161,13 @@
 
   /* a check, asked by the co-pilot */
   .vb .eyebrow{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .cqrow{display:flex;align-items:flex-start;gap:10px;}
+  .cqrow .cq,.cqrow .eyebrow{flex:1;min-width:0;margin-bottom:0;}
+  .cqspk{flex-shrink:0;width:34px;height:34px;border:none;border-radius:var(--r-pill);
+    background:var(--teal-tint);color:#22474E;font-size:15px;cursor:pointer;line-height:1;
+    display:flex;align-items:center;justify-content:center;transition:.16s;}
+  .cqspk:hover{background:var(--teal);color:#04212a;}
+  .cqspk:active{transform:scale(.92);}
   .vb .cq{font-size:18.5px;font-weight:600;line-height:1.35;letter-spacing:-.2px;}
   .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
   .vb .ctool{font-size:12px;font-weight:500;margin-top:8px;color:var(--muted);}
@@ -634,7 +641,7 @@ function startSession(){
      steps:[],            // {key,label,dwell,taps,repeatTaps,scroll,backs}
      helpOpens:0, helpAsks:[], voiceAsks:0, typedAsks:0,
      voiceAnswers:0, bargeIns:0, reprompts:0, voiceFallbacks:0, narrations:0,
-     suggestions:0, supervisorCalls:0,
+     suggestions:0, supervisorCalls:0, replays:0,
      escalatedAt:null, ackAt:null, resolvedAt:null, pickedUpBy:null,
      ownershipAction:null, followUpCalls:0, mediaViews:0, mediaCompleted:0,
      rootCause:'', accuracy:'', actualRC, abandoned:false, abandonStep:null,
@@ -762,7 +769,7 @@ function cpIssue(){
   $('progFill').style.width='0%';
   const sc=SCRIPTS[S.fault];
   const b=cpBubble(`<div class="eyebrow">नया अलर्ट · ${hhmm(now())}</div>
-    <div class="cq">${sc.nameHi}</div>
+    <div class="cqrow"><div class="cq">${sc.nameHi}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
     <div class="cd">${sc.trigger.replace(/^⚠️\s*/,'').replace(/\s*जाँच शुरू करें\?$/,'')}</div>
     <div class="issuemeta">
       <span><i>प्लांट</i>गंगा विहार STP · 12 MLD</span>
@@ -809,7 +816,7 @@ function cpStep(n){
   redrawCurrent=()=>cpStep(n);
   if(st.rc){
     $('progFill').style.width='100%';
-    const b=cpBubble(`<div class="eyebrow">निदान</div><div class="cq">${st.q}</div>
+    const b=cpBubble(`<div class="eyebrow">निदान</div><div class="cqrow"><div class="cq">${st.q}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
 `);
     attach(b,answerBlock(sc.rcList,(i,l)=>pickRC(l)));
     logEvent('SENT','RC asked by co-pilot');
@@ -818,7 +825,7 @@ function cpStep(n){
   $('progFill').style.width=((n-1)/total*100)+'%';
   const toolNeeded=st.tool&&st.tool!=='';
   const b=cpBubble(`<div class="eyebrow">चरण ${n} / ${total}</div>
-    <div class="cq">${st.q}</div>${st.detail?`<div class="cd">${st.detail}</div>`:''}
+    <div class="cqrow"><div class="cq">${st.q}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>${st.detail?`<div class="cd">${st.detail}</div>`:''}
     <div class="ctool ${toolNeeded?'need':''}">${toolNeeded?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`);
   attach(b,answerBlock(st.opts.map(o=>o.label),(i)=>{
     const o=st.opts[i];
@@ -827,7 +834,9 @@ function cpStep(n){
     if(o.escalate)S.escalationNeeded=true;
     if(o.advice){
       redrawCurrent=()=>{
-        const ab=cpBubble(`<div class="eyebrow">सलाह</div><div class="cd" style="color:var(--ink);font-size:16px">${o.advice}</div>`);
+        const ab=cpBubble(`<div class="cqrow"><div class="eyebrow">सलाह</div>`+
+          `<button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`+
+          `<div class="cq" style="font-size:16.5px;font-weight:600">${o.advice}</div>`);
         attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
       };
       redrawCurrent();lastNarrated='';narrateCurrent();
@@ -839,7 +848,7 @@ function cpStep(n){
 function cpTool(){
   redrawCurrent=cpTool;
   $('progFill').style.width='100%';
-  const b=cpBubble(`<div class="eyebrow">टूल की पहचान</div><div class="cq">कौन सा टूल चाहिए?</div>`);
+  const b=cpBubble(`<div class="eyebrow">टूल की पहचान</div><div class="cqrow"><div class="cq">कौन सा टूल चाहिए?</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`);
   attach(b,answerBlock(SCRIPTS[S.fault].toolOptions,(i,l)=>pickTool(l)));
   narrateCurrent();
 }
@@ -847,7 +856,7 @@ function cpWrap(){
   redrawCurrent=cpWrap;
   const esc=S.escalationNeeded;
   const b=cpBubble(`<div class="eyebrow">आख़िरी क़दम</div>
-    <div class="cq">${esc?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div>
+    <div class="cqrow"><div class="cq">${esc?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
     <div class="cd">${esc?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>`);
   const labels=esc?['हाँ, इंजीनियर को भेजें','पूरा हुआ']:['पूरा हुआ'];
   attach(b,answerBlock(labels,(i,l)=>{l.includes('इंजीनियर')?escalate('flow'):finish();}));
@@ -980,7 +989,7 @@ function answer(text){
     note('',line);speak(line);
     return;
   }
-  let html=`<div class="eyebrow">जवाब</div><div class="cq">${k.title}</div>`;
+  let html=`<div class="eyebrow">जवाब</div><div class="cqrow"><div class="cq">${k.title}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`;
   if(k.num)html+=`<div class="vnum">${k.num}</div>`;
   if(k.steps)html+=`<ul class="vsteps">${k.steps.slice(0,4).map((x,i)=>`<li><b>${i+1}</b><span>${x}</span></li>`).join('')}</ul>`;
   const b=stageSet(html,'bot');
@@ -1054,16 +1063,32 @@ function shutUp(){                      // barge-in: operator talks, co-pilot yi
 }
 
 /* ---------- narration: the co-pilot speaks first ---------- */
-function narrateCurrent(){
-  if(!narrateOn||!S)return;
+function stageLine(){                 // what is on screen, as something sayable
   const bubbles=[...$('vBody').querySelectorAll('.vb.bot')];
-  const last=bubbles[bubbles.length-1];if(!last)return;
+  const last=bubbles[bubbles.length-1];if(!last)return '';
   const q=last.querySelector('.cq'),d=last.querySelector('.cd'),tool=last.querySelector('.ctool');
+  const num=last.querySelector('.vnum'),steps=[...last.querySelectorAll('.vsteps li span')];
   const opts=visibleOptions().map(b=>b.textContent.trim()).filter(Boolean);
-  let line=(q?q.textContent.trim():last.textContent.replace(/^डॉ\. पानी/,'').trim());
+  let line=(q?q.textContent.trim():last.textContent.trim());
   if(d)line+=' '+d.textContent.trim();
+  if(num)line+=' '+num.textContent.trim()+'।';
+  if(steps.length)line+=' '+steps.map(x=>x.textContent.trim()).join(' ');
   if(tool)line+=' '+tool.textContent.replace(/[🔧✅]/g,'').trim()+'।';
   if(opts.length)line+=' विकल्प: '+opts.join(', या ')+'।';
+  return line;
+}
+/* the operator asked to hear it — say it even if narration is muted */
+function speakStage(){
+  const line=stageLine();
+  if(!line)return;
+  if(S)S.replays++;
+  logEvent('VOICE','Operator replayed the question');
+  speak(line);
+}
+function narrateCurrent(){
+  if(!narrateOn||!S)return;
+  let line=stageLine();
+  if(!line)return;
   if(line===lastNarrated)return;         // don't repeat on a re-render
   lastNarrated=line;
   S.narrations++;
@@ -1408,7 +1433,7 @@ function snapshot(){
   return{op:S.op,fault:S.fault,armFrame:S.armFrame,armEsc:S.armEsc,armMedia:S.armMedia,
     armOwn:S.armOwn,armAck:S.armAck,helpOpens:S.helpOpens,voiceAsks:S.voiceAsks,typedAsks:S.typedAsks,
     voiceAnswers:S.voiceAnswers,bargeIns:S.bargeIns,reprompts:S.reprompts,
-    suggestions:S.suggestions,supervisorCalls:S.supervisorCalls,
+    suggestions:S.suggestions,supervisorCalls:S.supervisorCalls,replays:S.replays,
     narrations:S.narrations,voiceFallbacks:S.voiceFallbacks,
     escalated:!!S.escalatedAt,ackSec:ackSec(),abandoned:S.abandoned,abandonStep:S.abandonStep,
     accuracy:S.accuracy,rootCause:S.rootCause,followUpCalls:S.followUpCalls,
