@@ -110,8 +110,8 @@
   .app-header .htxt{min-width:0;flex:1;}
   .app-header{background:var(--white)!important;color:var(--ink)!important;box-shadow:var(--lift-sm);}
   .app-header .brand{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.2px;}
-  .app-header .fault{font-size:15px;font-weight:600;color:var(--ink);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .app-header .fault{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   .progress-track{flex-shrink:0;height:3px;background:rgba(9,36,84,.07);display:flex;}
   .progress-fill{background:var(--teal);transition:width .35s ease;border-radius:var(--r-pill);}
   #appBody{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
@@ -495,8 +495,8 @@ const optIcon=k=>k&&ICONS[k]?`<span class="oic">${ICONS[k]}</span>`:'<span class
 
 /* ===================== DIAGNOSTIC SCRIPTS (Hindi, Yes/No) ===================== */
 const SCRIPTS={
- A:{nameEn:"Pump Leakage",nameHi:"फ़िल्टर फ़ीड पंप — रिसाव जाँच",
-  trigger:"⚠️ फ़िल्टर फ़ीड पंप में रिसाव मिला है। जाँच शुरू करें?",
+ A:{nameEn:"Pump Leak",nameHi:"फ़िल्टर फ़ीड पंप — लीक जाँच",
+  trigger:"⚠️ फ़िल्टर फ़ीड पंप में लीक मिला है। जाँच शुरू करें?",
   toolOptions:["कोई टूल नहीं","मैकेनिकल सील","ग्लैंड","बेयरिंग"],
   rcList:["प्रेशर बहुत ज़्यादा है","मैकेनिकल सील ख़राब है","पंप के पुर्ज़े ढीले हैं","बेयरिंग ख़राब है — बदलना पड़ेगा"],
   steps:[
@@ -511,23 +511,23 @@ const SCRIPTS={
           {label:"हाँ, पर कम है",advice:"नज़र रखें — ड्रिपिंग बढ़े तो मेंटेनेंस को बुलाएं।",next:5},{label:"नहीं",next:5}]},
    {q:"बेयरिंग जाँचें।",detail:"क्या कंपन या तापमान ज़्यादा है?",tool:"बेयरिंग — मेंटेनेंस द्वारा",illus:"bearing",
     opts:[{label:"हाँ",advice:"मेंटेनेंस को बुलाएं — बेयरिंग बदलनी पड़ेगी।",warn:true,escalate:true,next:6},{label:"नहीं",next:6}]},
-   {q:"रिसाव का सबसे संभावित कारण क्या है?",illus:"pump",rc:true}
+   {q:"लीक का सबसे संभावित कारण क्या है?",illus:"pump",rc:true}
   ]},
- B:{nameEn:"Low DO",nameHi:"एरेशन टैंक — कम डी.ओ. जाँच",
-  trigger:"⚠️ एरेशन टैंक में डी.ओ. 0.8 mg/L है (सामान्य 2–4)। जाँच शुरू करें?",
-  toolOptions:["कोई टूल नहीं","डी.ओ. प्रोब किट","डिफ्यूज़र स्पैनर"],
-  rcList:["ब्लोअर बंद/ट्रिप","एयर वाल्व बंद","डिफ्यूज़र ख़राब","ज़्यादा लोड","डी.ओ. प्रोब ख़राब"],
+ B:{nameEn:"Low Dissolved Oxygen",nameHi:"एरेशन टैंक — कम डिज़ॉल्व्ड ऑक्सीजन जाँच",
+  trigger:"⚠️ एरेशन टैंक में डिज़ॉल्व्ड ऑक्सीजन 0.8 mg/L है (सामान्य 2–4)। जाँच शुरू करें?",
+  toolOptions:["कोई टूल नहीं","डिज़ॉल्व्ड ऑक्सीजन प्रोब किट","डिफ्यूज़र स्पैनर"],
+  rcList:["ब्लोअर बंद/ट्रिप","एयर वाल्व बंद","डिफ्यूज़र ख़राब","ज़्यादा लोड","डिज़ॉल्व्ड ऑक्सीजन प्रोब ख़राब"],
   steps:[
    {q:"क्या ब्लोअर चल रहा है?",detail:"पैनल पर कोई ट्रिप/अलार्म है?",illus:"blower",
     opts:[{label:"चल रहा है",next:2},{label:"बंद है / ट्रिप",advice:"ब्लोअर फिर से शुरू करें। ट्रिप दोबारा हो तो इलेक्ट्रीशियन को बुलाएं।",next:2}]},
    {q:"एयर वाल्व देखें।",detail:"क्या पूरा खुला है?",illus:"airvalve",
-    opts:[{label:"खुला है",next:3},{label:"बंद / आधा",advice:"वाल्व पूरा खोलें, 15 मिनट बाद डी.ओ. फिर देखें।",next:3}]},
+    opts:[{label:"खुला है",next:3},{label:"बंद / आधा",advice:"वाल्व पूरा खोलें, 15 मिनट बाद डिज़ॉल्व्ड ऑक्सीजन फिर देखें।",next:3}]},
    {q:"टैंक की सतह देखें।",detail:"क्या बुलबुले एक जैसे उठ रहे हैं?",illus:"diffuser",
     opts:[{label:"एक जैसे",next:4},{label:"असमान",advice:"डिफ्यूज़र बंद या ख़राब हो सकता है। मेंटेनेंस को बुलाएं।",warn:true,escalate:true,next:5}]},
    {q:"लोड और स्लज देखें।",detail:"क्या आज लोड ज़्यादा है या स्लज बहुत गाढ़ा/काला है?",illus:"sludge",
     opts:[{label:"हाँ",advice:"ज़्यादा स्लज निकालें और सुपरवाइज़र को बताएं।",next:5},
-          {label:"नहीं",advice:"डी.ओ. प्रोब साफ़ करके रीडिंग दोबारा लें।",illus:"probe",next:5}]},
-   {q:"कम डी.ओ. का सबसे संभावित कारण क्या है?",illus:"diffuser",rc:true}
+          {label:"नहीं",advice:"डिज़ॉल्व्ड ऑक्सीजन प्रोब साफ़ करके रीडिंग दोबारा लें।",illus:"probe",next:5}]},
+   {q:"डिज़ॉल्व्ड ऑक्सीजन कम होने का सबसे संभावित कारण क्या है?",illus:"diffuser",rc:true}
   ]}
 };
 
@@ -1008,16 +1008,68 @@ function bindVideo(container){
 let narrateOn=true, lastNarrated='', wantListen=false, srFatal=false, undoTimer=null;
 
 /* ---------- speaking (with barge-in) ---------- */
+/* Browsers refuse speech until the user has interacted, and Chrome
+   wedges speechSynthesis if you call it before that — after which
+   every later call is silently swallowed. So: nothing is spoken until
+   the first gesture, the first line is held and played then, and the
+   engine is un-wedged before each utterance. */
+let hiVoice=null, audioReady=false, heldLine=null, keepAlive=null;
+function pickVoice(){
+  const v=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  return v.find(x=>/^hi-IN/i.test(x.lang))||v.find(x=>/^hi/i.test(x.lang))
+       ||v.find(x=>/^en-IN/i.test(x.lang))||null;
+}
+if('speechSynthesis' in window){
+  hiVoice=pickVoice();
+  speechSynthesis.onvoiceschanged=()=>{hiVoice=pickVoice();};
+}
+function unlockAudio(){
+  if(audioReady)return;
+  audioReady=true;
+  try{speechSynthesis.cancel();speechSynthesis.resume();}catch(e){}
+  if(!hiVoice)hiVoice=pickVoice();
+  const hint=$('micHint');
+  if(hint&&/दबाएँ/.test(hint.textContent))hint.textContent='दबाकर बोलिए — या लिखिए';
+  if(heldLine){const l=heldLine;heldLine=null;setTimeout(()=>speak(l),80);}
+}
+['pointerdown','keydown','touchstart'].forEach(ev=>
+  window.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
+
+function voiceTrouble(){
+  const hint=$('micHint');
+  if(hint)hint.innerHTML='<span style="color:var(--rust)">आवाज़ नहीं चली — 🔊 दोबारा दबाएँ</span>';
+  logEvent('VOICE','Speech did not start','hi');
+}
+function stopKeepAlive(){if(keepAlive){clearInterval(keepAlive);keepAlive=null;}}
 function speak(text){
   if(!('speechSynthesis' in window)||!text)return;
+  if(!audioReady){                       // hold it until the operator touches the screen
+    heldLine=text;
+    const hint=$('micHint');
+    if(hint)hint.textContent='सुनने के लिए स्क्रीन पर कहीं भी दबाएँ';
+    return;
+  }
   try{
     speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang='hi-IN';u.rate=.92;
-    u.onend=()=>cpState(listening?'listening':'idle');
-    speechSynthesis.speak(u);
+    speechSynthesis.resume();            // clears the wedged state
     cpState('speaking');
-  }catch(e){}
+    setTimeout(()=>{
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='hi-IN';u.rate=.92;
+      if(hiVoice)u.voice=hiVoice;
+      let started=false;
+      u.onstart=()=>{started=true;cpState('speaking');
+        stopKeepAlive();                 // Chrome cuts long speech unless nudged
+        keepAlive=setInterval(()=>{if(speechSynthesis.speaking){speechSynthesis.pause();speechSynthesis.resume();}},5000);};
+      u.onend=()=>{stopKeepAlive();cpState(listening?'listening':'idle');};
+      u.onerror=()=>{stopKeepAlive();cpState(listening?'listening':'idle');voiceTrouble();};
+      speechSynthesis.speak(u);
+      // only complain if nothing started AND the engine is not busy — a slow
+      // voice load must not be reported as a failure
+      setTimeout(()=>{if(!started&&!speechSynthesis.speaking&&!speechSynthesis.pending){
+        cpState(listening?'listening':'idle');voiceTrouble();}},1400);
+    },70);
+  }catch(e){voiceTrouble();}
 }
 function shutUp(){                      // barge-in: operator talks, co-pilot yields
   if('speechSynthesis' in window&&speechSynthesis.speaking){
