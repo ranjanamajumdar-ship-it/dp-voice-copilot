@@ -2486,10 +2486,52 @@ function chunk(s){
   });
   return out.length?out:[s];
 }
+/* ---- 7c · Chrome specifics ---------------------------------------------------
+   Three Chrome behaviours broke this, and none of them are visible as an error:
+
+   1. getVoices() is ASYNC. At page load it usually returns [], so hiVoice was
+      null, Chrome silently substituted its default (English) voice, and a
+      Devanagari string handed to an English voice produces nothing. The voice
+      must therefore be re-picked immediately before every utterance, not once
+      at load.
+   2. Chrome's network voices frequently yield silence. Prefer localService.
+   3. Chrome will not speak in a hidden or backgrounded tab. It does not throw —
+      it just never starts, which is indistinguishable from a broken app. So a
+      line requested while hidden is held and spoken when the tab comes back.
+   ---------------------------------------------------------------------------- */
+function ensureVoice(){
+  const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  if(!vs.length)return null;                       // caller waits for onvoiceschanged
+  const pick=fn=>vs.filter(v=>v.localService).find(fn)||vs.find(fn);
+  hiVoice=pick(v=>/^hi-IN/i.test(v.lang))||pick(v=>/^hi/i.test(v.lang))
+        ||pick(v=>/^en-IN/i.test(v.lang))||hiVoice;
+  return hiVoice;
+}
+let voicesWaiting=null, voiceGateDone=false;
+function whenVoicesReady(cb){
+  if(ensureVoice()){cb();return;}
+  if(voicesWaiting){voicesWaiting.push(cb);return;}
+  voicesWaiting=[cb];
+  const flush=()=>{
+    const q=voicesWaiting||[];voicesWaiting=null;
+    ensureVoice();q.forEach(f=>{try{f();}catch(e){}});
+  };
+  if('speechSynthesis' in window)speechSynthesis.addEventListener('voiceschanged',flush,{once:true});
+  setTimeout(()=>{if(voicesWaiting)flush();},1800);   // never wait forever
+}
+/* held for a hidden tab — Chrome will not speak until it is visible again */
+let hiddenLine=null;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden||!hiddenLine)return;
+  const l=hiddenLine;hiddenLine=null;
+  trySpeak(l,0);
+});
+
 function mkUtter(text,rate,pitch){
   const u=new SpeechSynthesisUtterance(text);
   u.lang='hi-IN';u.rate=rate||.94;u.pitch=pitch||1;
-  if(hiVoice)u.voice=hiVoice;
+  const v=ensureVoice();                  // re-picked per utterance, not once at load
+  if(v)u.voice=v;
   return u;
 }
 function sayQueue(parts,rate,pitch,onFirstStart){
@@ -2518,6 +2560,19 @@ let vFails=0;
 function trySpeak(text,attempt,rate,pitch){
   const parts=chunk(sayable(text));
   if(!parts.length)return;
+  if(document.hidden){                   // Chrome never starts in a hidden tab
+    hiddenLine=text;
+    cpState(listening?'listening':'idle');
+    const hint=$('micHint');
+    if(hint)hint.textContent='इस tab पर वापस आइए — तब बोलूँगा';
+    return;
+  }
+  if(!voiceGateDone&&!ensureVoice()){     // voices not loaded yet (Chrome, async)
+    voiceGateDone=true;                   // gate runs once — never loop on a voiceless device
+    whenVoicesReady(()=>trySpeak(text,attempt,rate,pitch));
+    return;
+  }
+  voiceGateDone=true;
   try{
     stopKeepAlive();                     // chunking replaces the pause/resume hack
     speechSynthesis.cancel();
@@ -2572,19 +2627,33 @@ function voiceReport(){
   const hi=vs.filter(v=>/^hi/i.test(v.lang));
   const supported='speechSynthesis' in window;
   const srSupported=!!(window.SpeechRecognition||window.webkitSpeechRecognition);
+  ensureVoice();
+  const chrome=/Chrome\//.test(navigator.userAgent)&&!/Safari\/[\d.]+ Version/.test(navigator.userAgent);
   const rows=[
+    ['Browser',chrome?'Chrome':'Safari / अन्य'],
     ['बोलना (TTS)',supported?'उपलब्ध':'इस browser में नहीं'],
-    ['हिंदी आवाज़',hi.length?hi.map(v=>v.name).join(', '):'इंस्टॉल नहीं है'],
-    ['चुनी हुई आवाज़',hiVoice?hiVoice.name+' · '+hiVoice.lang:'कोई नहीं'],
-    ['कुल आवाज़ें',String(vs.length)],
+    ['हिंदी आवाज़',hi.length?hi.map(v=>v.name+(v.localService?'':' (network)')).join(', '):'इंस्टॉल नहीं है'],
+    ['चुनी हुई आवाज़',hiVoice?hiVoice.name+' · '+hiVoice.lang+(hiVoice.localService?' · local':' · network'):'कोई नहीं'],
+    ['आवाज़ें लोड हुईं',vs.length?String(vs.length):'अभी नहीं (Chrome देर करता है)'],
+    ['Tab दिख रहा है',document.hidden?'नहीं — Chrome छिपे tab में नहीं बोलता':'हाँ'],
     ['सुनना (mic)',srSupported?'उपलब्ध':'इस browser में नहीं — लिखकर पूछिए'],
     ['Audio unlock',audioReady?'हो गया':'अभी नहीं — स्क्रीन पर दबाएँ'],
     ['नाकाम कोशिशें',String(vFails)]
   ];
-  const fix=!hi.length
-    ? 'macOS: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → Hindi डाउनलोड करें, फिर browser दोबारा खोलें। Chrome और Safari दोनों OS की आवाज़ ही इस्तेमाल करते हैं।'
-    : (vFails?'हिंदी आवाज़ मौजूद है पर engine चालू नहीं हुआ — यह Chrome की जानी-पहचानी दिक़्क़त है। नीचे “अब बोलकर देखें” दबाएँ; न चले तो tab दोबारा खोलें।'
-             :'सब ठीक दिख रहा है। नीचे दबाकर सुन लीजिए।');
+  /* the fix must name the one cause that applies, in priority order */
+  const fix=!supported
+    ? 'यह browser बोल नहीं सकता। Chrome या Safari का नया version खोलिए।'
+    : document.hidden
+    ? 'Chrome छिपे या पीछे वाले tab में कभी नहीं बोलता। इस tab को सामने रखिए और दोबारा दबाइए।'
+    : !vs.length
+    ? 'Chrome ने अभी आवाज़ें लोड नहीं की हैं — यह async है। दो सेकंड रुककर “अब बोलकर देखें” दबाइए।'
+    : !hi.length
+    ? 'इस Mac पर हिंदी आवाज़ नहीं है — यही पूरी दिक़्क़त है। System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → Hindi (Lekha) डाउनलोड कीजिए, फिर Chrome पूरा बंद करके खोलिए। Chrome अपनी आवाज़ नहीं रखता, OS की ही लेता है।'
+    : (hiVoice&&!hiVoice.localService)
+    ? 'चुनी हुई आवाज़ network वाली है — Chrome में यह अक्सर चुप रह जाती है। कोई local हिंदी आवाज़ इंस्टॉल कीजिए।'
+    : vFails
+    ? 'हिंदी आवाज़ मौजूद और local है, पर engine चालू नहीं हुआ — यह Chrome का जाना-पहचाना बग है। “अब बोलकर देखें” दबाइए; न चले तो tab बंद करके नया खोलिए, या Safari में चलाइए (वहाँ यह बग नहीं है)।'
+    : 'सब ठीक दिख रहा है। नीचे दबाकर सुन लीजिए।';
   const d=hBot({title:'🔊 आवाज़ की जाँच',
     body:rows.map(r=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.6">
         <span style="color:var(--muted);min-width:112px">${r[0]}</span><b>${r[1]}</b></div>`).join(''),
