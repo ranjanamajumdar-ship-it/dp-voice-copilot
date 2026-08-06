@@ -95,15 +95,15 @@
 
   /* ---- App flow ---- */
   .app-header{flex-shrink:0;background:var(--navy);color:#fff;padding:10px 12px;display:flex;align-items:center;gap:9px;}
-  .app-back{height:38px;flex-shrink:0;border:none;background:rgba(9,36,84,.06);border-radius:var(--r-pill);
+  .app-back{height:44px;flex-shrink:0;border:none;background:rgba(9,36,84,.06);border-radius:var(--r-pill);
     color:var(--navy);font-size:14px;font-weight:600;cursor:pointer;display:none;align-items:center;padding:0 14px;}
   .app-back.show{display:flex;}
-  .app-restart{order:9;flex-shrink:0;width:36px;height:36px;border:none;border-radius:var(--r-pill);
+  .app-restart{order:9;flex-shrink:0;width:44px;height:44px;border:none;border-radius:var(--r-pill);
     background:rgba(9,36,84,.06);color:var(--navy);font-size:16px;cursor:pointer;}
   .app-restart:hover{background:rgba(9,36,84,.12);}
   .app-header .htxt{min-width:0;flex:1;}
   .app-header{background:var(--white)!important;color:var(--ink)!important;box-shadow:var(--lift-sm);}
-  .app-header .brand{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.2px;}
+  .app-header .brand{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.2px;}
   .app-header .fault{font-size:15px;font-weight:600;color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .progress-track{flex-shrink:0;height:3px;background:rgba(9,36,84,.07);display:flex;}
@@ -157,14 +157,14 @@
   .vb .eyebrow{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
   .cqrow{display:flex;align-items:flex-start;gap:10px;}
   .cqrow .cq,.cqrow .eyebrow{flex:1;min-width:0;margin-bottom:0;}
-  .cqspk{flex-shrink:0;width:34px;height:34px;border:none;border-radius:var(--r-pill);
-    background:var(--teal-tint);color:#22474E;font-size:15px;cursor:pointer;line-height:1;
+  .cqspk{flex-shrink:0;width:44px;height:44px;border:none;border-radius:var(--r-pill);
+    background:var(--teal-tint);color:#22474E;font-size:16px;cursor:pointer;line-height:1;
     display:flex;align-items:center;justify-content:center;transition:.16s;}
   .cqspk:hover{background:var(--teal);color:#04212a;}
   .cqspk:active{transform:scale(.92);}
   .vb .cq{font-size:18.5px;font-weight:600;line-height:1.35;letter-spacing:-.2px;}
   .vb .cd{font-size:15px;color:var(--muted);line-height:1.5;margin-top:4px;}
-  .vb .ctool{font-size:12px;font-weight:500;margin-top:8px;color:var(--muted);}
+  .vb .ctool{font-size:12.5px;font-weight:500;margin-top:8px;color:var(--muted);}
   .vb .issuemeta{display:flex;flex-direction:column;gap:7px;margin-top:12px;padding-top:12px;
     border-top:1px solid var(--hair);}
   .vb .issuemeta span{font-size:13px;font-weight:600;color:var(--ink);display:flex;gap:8px;}
@@ -181,30 +181,6 @@
   .vanswers.done .vans.chosen{opacity:1;background:var(--teal-tint);border-color:var(--teal);color:#22474E;}
   .vanswers.done .vans.chosen::before{content:'✓ ';font-weight:700;color:#2C5A63;}
 
-  /* --- the always-visible status bar of the rail --- */
-  .cprail{flex-shrink:0;display:flex;align-items:center;gap:11px;padding:11px 14px;
-    background:var(--white);color:var(--ink);cursor:pointer;box-shadow:var(--lift-sm);}
-  .cprail .av{width:36px;height:36px;border-radius:50%;background:var(--teal-tint);color:#2C5A63;
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;
-    position:relative;}
-  .copilot.listening .cprail .av{background:var(--rust);color:#fff;}
-  .copilot.listening .cprail .av::after{content:'';position:absolute;inset:-6px;border-radius:50%;
-    border:2px solid var(--rust);animation:ring 1.2s infinite;}
-  .copilot.speaking .cprail .av{background:var(--sage);color:#0d2408;}
-  .cprail .who{flex:1;min-width:0;}
-  .cprail .who b{display:block;font-size:14.5px;font-weight:600;line-height:1.2;}
-  .cprail .who .st{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:2px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .copilot.listening .cprail .who .st{color:var(--rust);font-weight:600;}
-  .cprail .heard{display:none;font-size:12px;font-weight:600;color:var(--ink);margin-top:3px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .copilot.listening .cprail .heard{display:block;}
-  .cprail .chev{flex-shrink:0;width:32px;height:32px;border:none;border-radius:var(--r-pill);
-    background:rgba(9,36,84,.05);color:var(--muted);font-size:13px;cursor:pointer;display:flex;
-    align-items:center;justify-content:center;transition:transform .25s;}
-  .copilot.expanded .cprail .chev{transform:rotate(180deg);}
-  .cprail .railmic{display:none;}                 /* one mic only — it lives in the input row */
-
   /* --- undo strip: a voice answer commits, but stays correctable --- */
   .cpundo{display:none;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;font-weight:500;
     background:var(--white);color:var(--muted);box-shadow:var(--lift-sm);}
@@ -212,7 +188,7 @@
   .cpundo span{flex:1;}
   .cpundo b{color:var(--ink);font-weight:600;}
   .cpundo button{background:transparent;border:1px solid var(--hair);border-radius:var(--r-pill);
-    color:var(--navy);font-weight:600;font-size:12px;padding:6px 13px;cursor:pointer;}
+    color:var(--navy);font-weight:600;font-size:12.5px;padding:0 16px;min-height:44px;cursor:pointer;}
 
   /* --- the conversation, revealed by expanding --- */
   .cpconvo{display:none;flex-direction:column;min-height:0;}
@@ -253,13 +229,14 @@
   .cpsuggest .lead{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:7px;}
   .cpsuggest .row{display:flex;flex-wrap:wrap;gap:7px;}
   .cpsuggest button{background:var(--white);border:1px solid var(--teal);border-radius:var(--r-pill);
-    color:#22474E;font-size:13.5px;font-weight:600;padding:9px 15px;cursor:pointer;box-shadow:var(--lift-sm);}
+    color:#22474E;font-size:13.5px;font-weight:600;padding:0 16px;min-height:44px;cursor:pointer;
+    box-shadow:var(--lift-sm);}
   .cpsuggest button.ghost{border-color:var(--hair);color:var(--muted);font-weight:500;box-shadow:none;}
   /* the supervisor is one tap away on every screen */
   .callbar{flex-shrink:0;padding:8px 14px 0;}
   .callbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
     background:var(--rust-tint);border:1px solid rgba(196,81,30,.28);border-radius:var(--r);
-    color:var(--rust);font-size:14px;font-weight:600;padding:11px;cursor:pointer;}
+    color:#8F340D;font-size:15px;font-weight:600;min-height:48px;padding:11px;cursor:pointer;}
   .callbtn:hover{background:#F6E3DA;}
   .callbtn.ringing{background:var(--rust);color:#fff;border-color:var(--rust);}
   .callbtn .ic{font-size:15px;}
@@ -270,8 +247,12 @@
   .vchip.esc{color:var(--rust);border-color:rgba(196,81,30,.3);}
 
   .vbar{flex-shrink:0;background:var(--white);padding:10px 14px 16px;box-shadow:0 -1px 2px rgba(9,36,84,.04);}
-  .vhint{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:8px;line-height:1.4;}
-  .vhint small{display:block;}
+  .vhint{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:8px;line-height:1.4;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vhint small{display:none;}
+  #vStatus{font-weight:600;color:var(--ink);}
+  .copilot.listening #vStatus{color:var(--rust);}
+  .copilot.speaking #vStatus{color:#2C5A63;}
   .vbar-row{display:flex;align-items:center;gap:10px;}
   .vbar-row input{flex:1;min-width:0;border:1px solid var(--hair);border-radius:var(--r-pill);
     padding:13px 16px;font-size:15px;background:var(--canvas);}
@@ -330,6 +311,8 @@
     background:var(--ink);color:#fff;font-weight:600;font-size:12.5px;padding:11px 20px;transition:.3s;
     z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.3);}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  /* keyboard focus must be visible — it was not */
+  :focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px;}
   .hide{display:none !important;}
 </style>
 
@@ -418,6 +401,7 @@
       <div class="screen" id="scr-app">
         <div class="app-header">
           <button class="app-back" id="appBack" onclick="stepBack()">‹ पीछे</button>
+          <button class="app-restart" id="narrBtn" onclick="toggleNarration()" title="बोलना बंद करें">🔊</button>
           <button class="app-restart" id="appRestart" onclick="restartFlow()" title="शुरू से">⟲</button>
           <div class="htxt">
             <div class="brand">डिजिटलपानी</div>
@@ -430,17 +414,6 @@
 
         <!-- ===== VOICE CO-PILOT · persistent rail ===== -->
         <div class="copilot" id="copilot">
-          <div class="cprail" onclick="if(!event.target.closest('.railmic'))toggleConvo()">
-            <div class="av">DP</div>
-            <div class="who">
-              <b>डॉ. पानी</b>
-              <span class="st" id="vStatus">सुनने के लिए तैयार · हिंदी</span>
-              <span class="heard" id="railHeard"></span>
-            </div>
-            <button class="chev" id="narrBtn" title="बोलना बंद करें" onclick="event.stopPropagation();toggleNarration()">🔊</button>
-            <button class="railmic" id="railMic" onclick="toggleMic()">🎙</button>
-            <button class="chev" id="cpChev" title="बातचीत खोलें">⌃</button>
-          </div>
           <div class="cpundo" id="cpUndo"></div>
 
           <div class="cpconvo" id="cpConvo">
@@ -453,7 +426,7 @@
                 <span class="ic">📞</span>सुपरवाइज़र को कॉल करें</button>
             </div>
             <div class="vbar">
-              <div class="vhint" id="micHint">दबाकर बोलिए — या लिखिए</div>
+              <div class="vhint"><span id="vStatus">तैयार</span> · <span id="micHint">दबाकर बोलिए — या लिखिए</span></div>
               <div class="vbar-row">
                 <input type="text" id="vInput" placeholder="लिखकर पूछें…" onkeydown="if(event.key==='Enter')sendTyped()">
                 <button class="micbtn" id="micBtn" onclick="toggleMic()" title="बोलें">🎙</button>
@@ -893,18 +866,10 @@ function cpState(state){          // 'idle' | 'listening' | 'speaking' | 'thinki
   const el=$('copilot');
   el.classList.remove('listening','speaking','thinking');
   if(state!=='idle')el.classList.add(state);
-  const labels={
-    idle:'सुनने के लिए तैयार · हिंदी',
-    listening:'🔴 सुन रहा हूँ',
-    speaking:'बोल रहा हूँ…',
-    thinking:'देख रहा हूँ…'
-  };
-  $('vStatus').textContent=labels[state]||labels.idle;
-  if(state!=='listening')$('railHeard').textContent='';
+  const labels={idle:'तैयार',listening:'🔴 सुन रहा हूँ',speaking:'बोल रहा हूँ',thinking:'देख रहा हूँ'};
+  const st=$('vStatus');if(st)st.textContent=labels[state]||labels.idle;
 }
-function toggleConvo(){
-  $('copilot').classList.contains('expanded')?closeVoice():openVoice();
-}
+function toggleConvo(){}   /* the rail that hosted this is gone */
 function openVoice(){
   if(!S)return;
   S.helpOpens++;
@@ -1089,8 +1054,8 @@ function narrateCurrent(){
 }
 function toggleNarration(){
   narrateOn=!narrateOn;
-  $('narrBtn').textContent=narrateOn?'🔊':'🔇';
-  $('narrBtn').title=narrateOn?'बोलना बंद करें':'बोलना चालू करें';
+  const nb=$('narrBtn');
+  if(nb){nb.textContent=narrateOn?'🔊':'🔇';nb.title=narrateOn?'बोलना बंद करें':'बोलना चालू करें';}
   if(!narrateOn)speechSynthesis.cancel();
   logEvent('VOICE','Step narration '+(narrateOn?'on':'off'));
   toast(narrateOn?'डॉ. पानी हर चरण पढ़कर बताएँगे':'अब चुप रहेंगे');
@@ -1282,7 +1247,7 @@ function undoVoice(before){
 /* ---------- the microphone: continuous, restarting, interruptible ---------- */
 function toggleMic(){listening?stopMic():startMic();}
 function micUI(on){
-  ['micBtn','railMic'].forEach(id=>{
+  ['micBtn'].forEach(id=>{
     const b=$(id);if(!b)return;
     b.classList.toggle('live',on);b.textContent=on?'■':'🎙';
   });
@@ -1317,7 +1282,6 @@ function spinRecog(){
     if(interim||saidFinal)shutUp();                   // barge-in the moment we hear anything
     const live=(saidFinal+interim).trim();
     $('micHint').innerHTML=`<span style="color:var(--rust)">${live||'…'}</span><small>सुन रहा हूँ</small>`;
-    $('railHeard').textContent=live||'…';
     if(saidFinal.trim()){
       const utt=saidFinal.trim();saidFinal='';
       openVoice();
@@ -1352,7 +1316,6 @@ function micFail(head,sub){
   $('copilot').classList.remove('listening','speaking','thinking');
   $('vStatus').textContent='आवाज़ उपलब्ध नहीं';
   $('micHint').innerHTML=`<span style="color:var(--rust)">${head}</span><small>${sub}</small>`;
-  $('railHeard').textContent='';
   openVoice();
 }
 function stopMic(){
