@@ -1728,7 +1728,9 @@ function autoStart(){
   openVoice();      // the co-pilot is present and interactive from the start
   narrateCurrent(); // and reads the first check out loud
 }
-autoStart();
+/* autoStart() is deliberately NOT called here — it now runs at the very end of
+   this script, after the v2 wrappers below are installed. Calling it here made
+   the default entry path skip every v2 addition and left openHelp() throwing. */
 
 /* ==================================================================================
    V2 — WORKING MEMORY + "मदद चाहिए" HELP LAYER
@@ -1822,6 +1824,22 @@ const PREFILL={
 
 function opProfile(){return PLANT.operators['__default'];}
 
+/* Every v2 counter is created here, not only in the startSession wrapper.
+   The flow has more than one entry point (autoStart on load, restartFlow, the
+   setup screen), and a missing counter used to throw inside openHelp — which
+   looks exactly like a dead button. Defensive on purpose. */
+function ensureV2State(){
+  if(!S)return false;
+  if(S.__v2)return true;
+  S.__v2=true;
+  S.helpLayerOpens=S.helpLayerOpens||0;S.helpOpenSources=S.helpOpenSources||[];
+  S.proactiveOffers=S.proactiveOffers||0;S.offersAccepted=S.offersAccepted||0;
+  S.offersDeclined=S.offersDeclined||0;S.helpResolved=S.helpResolved||0;
+  S.helpUnanswered=S.helpUnanswered||0;S.helpEscalated=S.helpEscalated||false;
+  S.prefillConfirmed=S.prefillConfirmed||0;S.prefillOverrides=S.prefillOverrides||0;
+  return true;
+}
+
 /* ---- the issue card opens with the hypothesis, not a blank questionnaire ---- */
 /* The phone never scrolls in this prototype — one turn on screen, end to end.
    So the card shows the hypothesis and its two strongest reasons, and the rest
@@ -1849,6 +1867,7 @@ function memMore(btn){
 
 /* ---- live-reading pre-fill, injected under the step's question ---- */
 function injectPrefill(n){
+  if(!ensureV2State())return;
   const pf=(PREFILL[S.fault]||{})[n];if(!pf)return;
   const r=PLANT.live[pf.tag];if(!r)return;
   const host=$('vBody').querySelector('.vb.bot');if(!host)return;
@@ -1978,6 +1997,7 @@ const HELP_KB=[
 
 const HELP_CHIPS=[
  {t:'यह चरण समझ नहीं आया',q:'यह चरण समझ नहीं आया'},
+ {t:'🔊 आवाज़ जाँचें',q:'__voicecheck'},
  {t:'Seal से कितना पानी normal है?',q:'seal से कितना पानी normal है'},
  {t:'DO probe कैसे साफ़ करें?',q:'DO probe कैसे साफ़ करें'},
  {t:'कितना PPM डालना है?',q:'कितना ppm डालना है'},
@@ -1996,7 +2016,7 @@ function helpContextLine(){
   return (c?c.label:'—')+(st?' · '+st.q.replace(/[।?]$/,''):'');
 }
 function openHelp(src){
-  if(!S||helpOpen)return;
+  if(!ensureV2State()||helpOpen)return;
   helpOpen=true;
   S.helpLayerOpens++;S.helpOpenSources.push(src);
   earcon('help');
@@ -2137,8 +2157,9 @@ function toolButton(t){
    results. If retrieval is empty, say "मुझे नहीं पता" and offer the engineer. */
 function helpAsk(text,mode){
   if(!text)return;
-  hMe(text);
-  helpAsked.push(text);
+  const diag=text==='__voicecheck';
+  hMe(diag?'🔊 आवाज़ जाँचें':text);
+  if(!diag)helpAsked.push(text);          /* a diagnostic is not a question to re-ask */
   S.helpAsks.push({q:text,mode:mode||'typed',at:hhmm(now()),step:curStep()?curStep().label:'—',layer:'help'});
   if(mode==='voice')S.voiceAsks++;else S.typedAsks++;
   logEvent('HELP',`${mode==='voice'?'🎙':'⌨'} help question: “${text}”`,'hi');
@@ -2148,6 +2169,7 @@ function helpAsk(text,mode){
   setTimeout(()=>{hThinking(false);$('hStat').textContent='';helpRespond(text);},620);
 }
 function helpRespond(text){
+  if(text==='__voicecheck'){voiceReport();return;}
   const t=text.toLowerCase();
   const d=navStack[navStack.length-1];
   const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
@@ -2277,6 +2299,7 @@ function stopHelpMic(){
    watches dwell, dead taps and back-tracking; when it fires we offer once, quietly,
    and never nag again on the same step. */
 function showOffer(){
+  if(!ensureV2State())return;
   const c=curStep();if(!c||helpOpen||offeredStep===curStepKey)return;
   offeredStep=curStepKey;
   S.proactiveOffers++;
@@ -2372,15 +2395,115 @@ snapshot=function(){
 const _startSession=startSession;
 startSession=function(){
   _startSession();
-  if(!S)return;
-  S.helpLayerOpens=0;S.helpOpenSources=[];S.proactiveOffers=0;S.offersAccepted=0;S.offersDeclined=0;
-  S.helpResolved=0;S.helpUnanswered=0;S.helpEscalated=false;
-  S.prefillConfirmed=0;S.prefillOverrides=0;
+  ensureV2State();
   helpAsked=[];helpTranscript=[];$('hBody').innerHTML='';
 };
 
+const _snapshotGuard=snapshot;
+snapshot=function(){ensureV2State();return _snapshotGuard();};
+
+/* ==================================================================================
+   7 · SPEECH REPAIR — stop trusting speechSynthesis.speaking
+   ----------------------------------------------------------------------------------
+   v1 assumed the utterance was fine if `speechSynthesis.speaking` was true 260 ms
+   after speak(). On macOS Chrome the engine routinely reports speaking:true while
+   `onstart` never fires and no audio is produced. The result was the worst possible
+   failure: silence, a status stuck on "बोल रहा हूँ" forever, and no way to tell
+   whether the app was broken or the machine was.
+
+   Now `onstart` is the only proof of speech. No onstart in 1.1 s → one hard retry →
+   then say so plainly and put the status back to तैयार. The UI never claims to be
+   speaking when it isn't.
+   ================================================================================== */
+let vFails=0;
+function trySpeak(text,attempt){
+  try{
+    speechSynthesis.cancel();
+    speechSynthesis.resume();
+    cpState('speaking');
+    const u=utter(text);
+    let started=false;
+    u.addEventListener('start',()=>{started=true;vFails=0;});
+    speechSynthesis.speak(u);
+    setTimeout(()=>{
+      if(started||u.started||speechSynthesis.paused)return;   // real speech, or paused mid-word
+      if(attempt<1){                                          // one hard reset, then honesty
+        try{speechSynthesis.cancel();}catch(e){}
+        trySpeak(text,attempt+1);return;
+      }
+      stopKeepAlive();
+      try{speechSynthesis.cancel();}catch(e){}
+      cpState(listening?'listening':'idle');                  // never lie about the state
+      speechFailed(text);
+    },1100);
+  }catch(e){cpState('idle');speechFailed(text);}
+}
+speak=function(text){
+  if(!('speechSynthesis' in window)||!text)return;
+  if(!audioReady){                       // browsers refuse speech before a gesture
+    heldLine=text;
+    const hint=$('micHint');
+    if(hint)hint.textContent='सुनने के लिए स्क्रीन पर कहीं भी दबाएँ';
+    return;
+  }
+  trySpeak(text,0);
+};
+function speechFailed(text){
+  vFails++;
+  if(S)S.voiceFallbacks=(S.voiceFallbacks||0)+1;
+  const hindi=hiVoice&&/^hi/i.test(hiVoice.lang);
+  const hint=$('micHint');
+  if(hint)hint.innerHTML='<span style="color:var(--rust);font-weight:600">'+
+    (hindi?'आवाज़ नहीं चली — 🔊 दोबारा दबाएँ':'इस डिवाइस में हिंदी आवाज़ नहीं है — पढ़कर आगे बढ़ें')+
+    '</span> · <button class="spk" style="font-size:11px;padding:4px 9px" onclick="openHelp(\'voice\');helpAsk(\'__voicecheck\',\'chip\')">जाँचें</button>';
+  logEvent('VOICE','Speech never started — voice='+(hiVoice?hiVoice.name+'/'+hiVoice.lang:'none')+
+    ' · attempt '+vFails,'hi');
+  /* on the very first failure, say once in text what could not be said aloud */
+  if(vFails===1)note('🔇','आवाज़ नहीं चल पाई — नीचे लिखा हुआ पढ़ लीजिए। जाँच रुकी नहीं है।');
+}
+
+/* ---- a diagnostic the operator (or you) can run from inside help ---- */
+function voiceReport(){
+  const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  const hi=vs.filter(v=>/^hi/i.test(v.lang));
+  const supported='speechSynthesis' in window;
+  const srSupported=!!(window.SpeechRecognition||window.webkitSpeechRecognition);
+  const rows=[
+    ['बोलना (TTS)',supported?'उपलब्ध':'इस browser में नहीं'],
+    ['हिंदी आवाज़',hi.length?hi.map(v=>v.name).join(', '):'इंस्टॉल नहीं है'],
+    ['चुनी हुई आवाज़',hiVoice?hiVoice.name+' · '+hiVoice.lang:'कोई नहीं'],
+    ['कुल आवाज़ें',String(vs.length)],
+    ['सुनना (mic)',srSupported?'उपलब्ध':'इस browser में नहीं — लिखकर पूछिए'],
+    ['Audio unlock',audioReady?'हो गया':'अभी नहीं — स्क्रीन पर दबाएँ'],
+    ['नाकाम कोशिशें',String(vFails)]
+  ];
+  const fix=!hi.length
+    ? 'macOS: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → Hindi डाउनलोड करें, फिर browser दोबारा खोलें। Chrome और Safari दोनों OS की आवाज़ ही इस्तेमाल करते हैं।'
+    : (vFails?'हिंदी आवाज़ मौजूद है पर engine चालू नहीं हुआ — यह Chrome की जानी-पहचानी दिक़्क़त है। नीचे “अब बोलकर देखें” दबाएँ; न चले तो tab दोबारा खोलें।'
+             :'सब ठीक दिख रहा है। नीचे दबाकर सुन लीजिए।');
+  const d=hBot({title:'🔊 आवाज़ की जाँच',
+    body:rows.map(r=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.6">
+        <span style="color:var(--muted);min-width:112px">${r[0]}</span><b>${r[1]}</b></div>`).join(''),
+    cite:'यह जाँच इस device की है — prototype की नहीं'});
+  const p=document.createElement('div');
+  p.style.cssText='font-size:12.5px;line-height:1.5;margin-top:9px;padding:9px 10px;border-radius:10px;background:var(--amber-tint);color:#7A4A00';
+  p.textContent=fix;d.appendChild(p);
+  const tw=document.createElement('div');tw.className='htools';
+  const b=document.createElement('button');b.textContent='🔊 अब बोलकर देखें';
+  b.onclick=()=>{vFails=0;audioReady=true;trySpeak('नमस्ते, मैं डॉक्टर पानी हूँ। अगर यह सुनाई दे रहा है तो आवाज़ ठीक है।',0);};
+  tw.appendChild(b);d.appendChild(tw);
+  logEvent('VOICE','Ran the voice diagnostic — hindi voices: '+(hi.length||0));
+}
+
 /* Escape closes the sheet; the step is untouched underneath. */
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpOpen)closeHelp('escape');});
+
+/* ---------------------------------------------------------------------------
+   The flow opens itself LAST, so the default entry path gets the v2 wrappers:
+   the memory card on the issue, the live pre-fill on the step, the risk watcher
+   behind the proactive offer, and a help sheet that actually opens.
+   --------------------------------------------------------------------------- */
+autoStart();
 
 </script>
 </body>
