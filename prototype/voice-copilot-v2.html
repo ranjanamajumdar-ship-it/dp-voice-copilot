@@ -1998,6 +1998,7 @@ const HELP_KB=[
 const HELP_CHIPS=[
  {t:'यह चरण समझ नहीं आया',q:'यह चरण समझ नहीं आया'},
  {t:'🔊 आवाज़ जाँचें',q:'__voicecheck'},
+ {t:'🎙 माइक जाँचें',q:'__miccheck'},
  {t:'Seal से कितना पानी normal है?',q:'seal से कितना पानी normal है'},
  {t:'DO probe कैसे साफ़ करें?',q:'DO probe कैसे साफ़ करें'},
  {t:'कितना PPM डालना है?',q:'कितना ppm डालना है'},
@@ -2157,8 +2158,8 @@ function toolButton(t){
    results. If retrieval is empty, say "मुझे नहीं पता" and offer the engineer. */
 function helpAsk(text,mode){
   if(!text)return;
-  const diag=text==='__voicecheck';
-  hMe(diag?'🔊 आवाज़ जाँचें':text);
+  const diag=text==='__voicecheck'||text==='__miccheck';
+  hMe(text==='__voicecheck'?'🔊 आवाज़ जाँचें':text==='__miccheck'?'🎙 माइक जाँचें':text);
   if(!diag)helpAsked.push(text);          /* a diagnostic is not a question to re-ask */
   S.helpAsks.push({q:text,mode:mode||'typed',at:hhmm(now()),step:curStep()?curStep().label:'—',layer:'help'});
   if(mode==='voice')S.voiceAsks++;else S.typedAsks++;
@@ -2170,6 +2171,7 @@ function helpAsk(text,mode){
 }
 function helpRespond(text){
   if(text==='__voicecheck'){voiceReport();return;}
+  if(text==='__miccheck'){micReport();return;}
   const t=text.toLowerCase();
   const d=navStack[navStack.length-1];
   const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
@@ -2615,6 +2617,166 @@ function speechFailed(text){
     ' · attempt '+vFails,'hi');
   /* on the very first failure, say once in text what could not be said aloud */
   if(vFails===1)note('🔇','आवाज़ नहीं चल पाई — नीचे लिखा हुआ पढ़ लीजिए। जाँच रुकी नहीं है।');
+}
+
+/* ==================================================================================
+   8 · MIC REPAIR — Safari does not listen the way Chrome listens
+   ----------------------------------------------------------------------------------
+   Symptom: microphone permission granted, mic button lights up, nothing happens.
+
+   Three causes, all in the same function:
+
+   1. continuous=true. Safari does not support continuous recognition — it ends the
+      session after each utterance. v1's onend handler then built a NEW recognizer
+      and called start() again, OUTSIDE a user gesture. Safari requires start() to
+      happen inside a gesture, so every restart was rejected. First tap did nothing
+      visible, and every tap after it was refused.
+   2. try{recog.start()}catch(e){} swallowed the failure whole. The UI kept saying
+      "सुन रहा हूँ…" while nothing was listening. Same sin as the TTS bug: trusting
+      instead of verifying.
+   3. onerror ignored language-not-supported and aborted. On macOS, hi-IN
+      recognition needs Dictation enabled and Hindi added to it; without that
+      Safari answers language-not-supported, which v1 dropped on the floor.
+
+   Now: no continuous on Safari, a watchdog that proves recognition actually
+   started, every error code surfaced in the operator's language, and a fallback
+   to en-IN when hi-IN is unavailable — degraded listening beats none.
+   ================================================================================== */
+const IS_SAFARI=/^((?!chrome|chromium|crios|fxios|edg|android).)*safari/i.test(navigator.userAgent);
+let micErrCode='', micStarted=false, micWatch=null, srLang='hi-IN', srFellBack=false;
+
+const MIC_WHY={
+  'not-allowed':['माइक की अनुमति नहीं मिली','browser की settings में माइक चालू कीजिए'],
+  'service-not-allowed':['सिस्टम ने माइक रोका है','System Settings → Keyboard → Dictation चालू कीजिए'],
+  'audio-capture':['माइक नहीं मिला','हेडसेट जोड़िए, या लिखकर पूछिए'],
+  'network':['इंटरनेट नहीं है','आवाज़ पहचान के लिए इंटरनेट चाहिए'],
+  'language-not-supported':['हिंदी पहचान उपलब्ध नहीं','Dictation में हिंदी जोड़िए'],
+  'aborted':['सुनना रुक गया','फिर से 🎙 दबाइए'],
+  'no-speech':['कुछ सुनाई नहीं दिया','फिर से 🎙 दबाकर बोलिए']
+};
+function micFailWhy(code,detail){
+  micErrCode=code||'unknown';
+  clearTimeout(micWatch);
+  const w=MIC_WHY[micErrCode]||['आवाज़ शुरू नहीं हुई','🎙 दोबारा दबाइए — या लिखकर पूछिए'];
+  if(['not-allowed','service-not-allowed','audio-capture'].includes(micErrCode))srFatal=true;
+  wantListen=false;listening=false;micUI(false);
+  cpState('idle');
+  $('vStatus').textContent='सुन नहीं पा रहा';
+  $('micHint').innerHTML=`<span style="color:var(--rust);font-weight:600">${w[0]}</span>`+
+    `<small>${w[1]} · <button class="spk" style="font-size:11px;padding:3px 8px" `+
+    `onclick="openHelp('mic');helpAsk('__miccheck','chip')">जाँचें</button></small>`;
+  logEvent('VOICE','Mic failed — '+micErrCode+(detail?' ('+detail+')':''),'hi');
+}
+function armMicWatch(){
+  clearTimeout(micWatch);
+  micWatch=setTimeout(()=>{
+    if(micStarted||!wantListen)return;
+    /* no onstart, no error — Safari refused quietly */
+    micFailWhy('silent-refusal');
+  },2000);
+}
+
+/* replaces v1's spinRecog — startMic() calls it by name, so this takes over */
+spinRecog=function(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){micFailWhy('unsupported');return;}
+  try{recog=new SR();}catch(e){micFailWhy('init',e.name);return;}
+  recog.lang=srLang;
+  recog.interimResults=true;
+  recog.continuous=!IS_SAFARI;          // Safari ends after each utterance regardless
+  let saidFinal='';
+  const began=()=>{micStarted=true;clearTimeout(micWatch);
+    $('micHint').innerHTML='सुन रहा हूँ… बोलिए';cpState('listening');};
+  recog.onstart=began;recog.onaudiostart=began;
+  recog.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal)saidFinal+=r[0].transcript+' ';else interim+=r[0].transcript;
+    }
+    if(interim||saidFinal)shutUp();                  // barge-in on the first sound
+    const live=(saidFinal+interim).trim();
+    $('micHint').innerHTML=`<span style="color:var(--rust)">${live||'…'}</span><small>सुन रहा हूँ</small>`;
+    if(saidFinal.trim()){
+      const utt=saidFinal.trim();saidFinal='';
+      openVoice();routeUtterance(utt);
+    }
+  };
+  recog.onerror=ev=>{
+    const err=ev.error||'unknown';
+    micErrCode=err;
+    if(err==='no-speech')return;                     // silence is not a failure
+    if(err==='aborted'&&!wantListen)return;          // we stopped it on purpose
+    if(err==='language-not-supported'&&!srFellBack){
+      srFellBack=true;srLang='en-IN';                // degraded listening beats none
+      logEvent('VOICE','hi-IN recognition unavailable — fell back to en-IN','hi');
+      note('🎙','हिंदी पहचान नहीं है — अंग्रेज़ी में सुन रहा हूँ। हिंदी में लिखकर भी पूछ सकते हैं।');
+      try{recog.onend=null;recog.abort();}catch(e){}
+      micStarted=false;armMicWatch();spinRecog();return;
+    }
+    micFailWhy(err);
+  };
+  recog.onend=()=>{
+    if(!wantListen||srFatal){stopMic();return;}
+    if(IS_SAFARI){
+      /* Safari cannot be restarted outside a gesture — ask for the tap instead of
+         pretending to listen. This is the honest version of v1's silent retry. */
+      listening=false;micUI(false);cpState('idle');
+      $('micHint').innerHTML='<b>फिर से 🎙 दबाइए</b><small>Safari हर बार दबाने पर सुनता है</small>';
+      return;
+    }
+    try{micStarted=false;spinRecog();}catch(e){stopMic();}
+  };
+  try{recog.start();}                                // NOT swallowed any more
+  catch(e){
+    if(/InvalidState/i.test(e.name||''))return;      // already running is harmless
+    micFailWhy('start-blocked',e.name);
+  }
+};
+const _startMicV1=startMic;
+startMic=function(){micErrCode='';micStarted=false;_startMicV1();armMicWatch();};
+const _stopMicV1=stopMic;
+stopMic=function(){clearTimeout(micWatch);_stopMicV1();};
+
+/* ---- mic diagnostic, same idea as the voice one ---- */
+function micReport(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const rows=[
+    ['Browser',IS_SAFARI?'Safari':'Chrome / अन्य'],
+    ['सुनने की सुविधा',SR?'उपलब्ध':'इस browser में नहीं'],
+    ['सुरक्षित पता (secure)',window.isSecureContext?'हाँ':'नहीं — localhost या https चाहिए'],
+    ['भाषा',srLang+(srFellBack?' (हिंदी नहीं मिली)':'')],
+    ['शुरू हुआ?',micStarted?'हाँ':'नहीं'],
+    ['पिछली गड़बड़ी',micErrCode||'कोई नहीं'],
+    ['Tab दिख रहा है',document.hidden?'नहीं':'हाँ']
+  ];
+  const fix=!SR
+    ? 'यह browser सुन नहीं सकता। Safari 14.1+ या Chrome खोलिए।'
+    : !window.isSecureContext
+    ? 'file:// से माइक नहीं चलता। http://localhost:8112/prototype/voice-copilot-v2.html खोलिए।'
+    : micErrCode==='service-not-allowed'||micErrCode==='language-not-supported'||micErrCode==='silent-refusal'
+    ? 'macOS पर Safari की आवाज़-पहचान Dictation से चलती है। System Settings → Keyboard → Dictation चालू कीजिए, और Dictation Languages में हिंदी जोड़िए। फिर Safari पूरा बंद (⌘Q) करके खोलिए।'
+    : micErrCode==='not-allowed'
+    ? (IS_SAFARI
+        ? 'Safari → Settings → Websites → Microphone → localhost → Allow कीजिए, फिर page दोबारा लोड कीजिए।'
+        : 'पते के बाएँ 🔒 पर दबाइए → Microphone → Allow, फिर page दोबारा लोड कीजिए।')
+    : micErrCode==='audio-capture'
+    ? 'कोई माइक नहीं मिला — headset जोड़िए या Mac का built-in माइक चुनिए।'
+    : IS_SAFARI
+    ? 'Safari हर बार एक ही बात सुनता है — बोलने के बाद फिर से 🎙 दबाइए। यह Safari की सीमा है, prototype की नहीं।'
+    : 'सब ठीक दिख रहा है। 🎙 दबाकर बोलिए।';
+  const d=hBot({title:'🎙 माइक की जाँच',
+    body:rows.map(r=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.6">
+        <span style="color:var(--muted);min-width:132px">${r[0]}</span><b>${r[1]}</b></div>`).join(''),
+    cite:'यह जाँच इस device और browser की है'});
+  const p=document.createElement('div');
+  p.style.cssText='font-size:12.5px;line-height:1.5;margin-top:9px;padding:9px 10px;border-radius:10px;background:var(--amber-tint);color:#7A4A00';
+  p.textContent=fix;d.appendChild(p);
+  const tw=document.createElement('div');tw.className='htools';
+  const b=document.createElement('button');b.textContent='🎙 अब सुनकर देखें';
+  b.onclick=()=>{srFatal=false;micErrCode='';startMic();};   // must be a real gesture
+  tw.appendChild(b);d.appendChild(tw);
+  logEvent('VOICE','Ran the mic diagnostic — last error: '+(micErrCode||'none'));
 }
 
 /* barge-in must abandon the whole queue, not just the chunk being spoken */
