@@ -2644,6 +2644,7 @@ function speechFailed(text){
    ================================================================================== */
 const IS_SAFARI=/^((?!chrome|chromium|crios|fxios|edg|android).)*safari/i.test(navigator.userAgent);
 let micErrCode='', micStarted=false, micWatch=null, srLang='hi-IN', srFellBack=false;
+let heardSomething=false, micCap=null;
 
 const MIC_WHY={
   'not-allowed':['माइक की अनुमति नहीं मिली','browser की settings में माइक चालू कीजिए'],
@@ -2683,22 +2684,40 @@ spinRecog=function(){
   try{recog=new SR();}catch(e){micFailWhy('init',e.name);return;}
   recog.lang=srLang;
   recog.interimResults=true;
-  recog.continuous=!IS_SAFARI;          // Safari ends after each utterance regardless
+  /* PUSH TO TALK, EVERYWHERE.
+     Chrome's continuous mode plus v1's auto-restart loop is a race: onend fires,
+     we build a new recognizer, start() lands on top of a session Chrome has not
+     finished tearing down, and it answers InvalidStateError or aborted. The loop
+     then thrashes and the mic looks dead. Safari refuses the restart outright.
+     One tap, one utterance, an explicit prompt for the next one — the same
+     behaviour in both browsers, and no restart to get wrong. */
+  recog.continuous=false;
   let saidFinal='';
-  const began=()=>{micStarted=true;clearTimeout(micWatch);
-    $('micHint').innerHTML='सुन रहा हूँ… बोलिए';cpState('listening');};
+  const began=()=>{
+    micStarted=true;clearTimeout(micWatch);
+    $('micHint').innerHTML='🔴 सुन रहा हूँ… बोलिए';cpState('listening');
+    /* hard cap: never sit with the mic open forever waiting for a phrase */
+    clearTimeout(micCap);
+    micCap=setTimeout(()=>{if(listening){try{recog.stop();}catch(e){}}},9000);
+  };
   recog.onstart=began;recog.onaudiostart=began;
+  recog.onspeechstart=()=>{heardSomething=true;};
   recog.onresult=e=>{
     let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
       if(r.isFinal)saidFinal+=r[0].transcript+' ';else interim+=r[0].transcript;
     }
-    if(interim||saidFinal)shutUp();                  // barge-in on the first sound
+    if(interim||saidFinal){heardSomething=true;shutUp();}   // barge-in on first sound
     const live=(saidFinal+interim).trim();
     $('micHint').innerHTML=`<span style="color:var(--rust)">${live||'…'}</span><small>सुन रहा हूँ</small>`;
     if(saidFinal.trim()){
       const utt=saidFinal.trim();saidFinal='';
+      clearTimeout(micCap);
+      /* one tap, one utterance: close the session before acting on it, so the
+         co-pilot's own reply is never fed back into the recognizer */
+      wantListen=false;
+      try{recog.stop();}catch(err){}
       openVoice();routeUtterance(utt);
     }
   };
@@ -2717,15 +2736,13 @@ spinRecog=function(){
     micFailWhy(err);
   };
   recog.onend=()=>{
-    if(!wantListen||srFatal){stopMic();return;}
-    if(IS_SAFARI){
-      /* Safari cannot be restarted outside a gesture — ask for the tap instead of
-         pretending to listen. This is the honest version of v1's silent retry. */
-      listening=false;micUI(false);cpState('idle');
-      $('micHint').innerHTML='<b>फिर से 🎙 दबाइए</b><small>Safari हर बार दबाने पर सुनता है</small>';
-      return;
-    }
-    try{micStarted=false;spinRecog();}catch(e){stopMic();}
+    clearTimeout(micWatch);clearTimeout(micCap);
+    listening=false;wantListen=false;micUI(false);cpState('idle');
+    if(srFatal)return;                   // micFailWhy already said what went wrong
+    /* the turn is over — invite the next one instead of silently going dead */
+    $('micHint').innerHTML=heardSomething
+      ? '<b>फिर से 🎙 दबाकर बोलिए</b><small>एक बार दबाने पर एक बात</small>'
+      : '<b>कुछ सुनाई नहीं दिया — 🎙 दोबारा दबाइए</b><small>माइक के पास बोलिए, या लिखकर पूछिए</small>';
   };
   try{recog.start();}                                // NOT swallowed any more
   catch(e){
@@ -2734,9 +2751,15 @@ spinRecog=function(){
   }
 };
 const _startMicV1=startMic;
-startMic=function(){micErrCode='';micStarted=false;_startMicV1();armMicWatch();};
+startMic=function(){
+  micErrCode='';micStarted=false;heardSomething=false;
+  srFatal=false;                    // a fresh tap deserves a fresh attempt
+  shutUp();                         // never listen to ourselves
+  earcon('listen');
+  _startMicV1();armMicWatch();
+};
 const _stopMicV1=stopMic;
-stopMic=function(){clearTimeout(micWatch);_stopMicV1();};
+stopMic=function(){clearTimeout(micWatch);clearTimeout(micCap);_stopMicV1();};
 
 /* ---- mic diagnostic, same idea as the voice one ---- */
 function micReport(){
