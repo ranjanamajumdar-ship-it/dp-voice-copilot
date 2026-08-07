@@ -1054,7 +1054,7 @@ function cpStep(n){
   const toolNeeded=st.tool&&st.tool!=='';
   const b=cpBubble(`<div class="eyebrow">चरण ${n} / ${total}</div>
     <div class="cqrow"><div class="cq">${st.q}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>${st.detail?`<div class="cd">${st.detail}</div>`:''}
-    <div class="ctool ${toolNeeded?'need':''}">${toolNeeded?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`);
+    ${toolNeeded?`<div class="ctool need">🔧 टूल चाहिए: ${st.tool}</div>`:''}`);
   attach(b,answerBlock(st.opts.map(o=>o.label),(i)=>{
     const o=st.opts[i];
     closeStep();
@@ -1105,7 +1105,7 @@ function updateBack(){$('appBack').classList.toggle('show',navStack.length>1);}
 function checkCount(){return SCRIPTS[S.fault].steps.filter(s=>!s.rc).length;}
 function toolChip(st){
   const n=st.tool&&st.tool!=='';
-  return `<div class="toolchip ${n?'need':''}">${n?'🔧 टूल चाहिए: '+st.tool:'✅ कोई टूल नहीं चाहिए'}</div>`;
+  return n?`<div class="toolchip need">🔧 टूल चाहिए: ${st.tool}</div>`:'';
 }
 /* The old tap-through form renderers are gone — cpStep/cpTool/cpWrap
    above ask everything through the co-pilot instead. These two commit
