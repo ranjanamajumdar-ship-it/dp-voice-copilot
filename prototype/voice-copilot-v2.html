@@ -534,8 +534,12 @@
   .prefill .pv{font-size:14px;}
   .prefill .pl{letter-spacing:.3px;}
 
-  /* the alert card carries one hypothesis, not a table of plant facts */
-  .vb .issuemeta{display:none;}
+  /* the alert card keeps its issue details — which plant, how many checks. That is
+     orienting information the operator needs once, before starting, and it is not
+     repeated on any check screen. */
+  .vb .issuemeta{margin-top:11px;padding-top:11px;}
+  .vb .issuemeta span{font-size:13.5px;}
+  .vb .issuemeta i{width:56px;}
   .memcard{padding:10px 11px;}
   .memcard .hyp{font-size:14px;margin-bottom:6px;}
   .memcard .src{display:none;}
@@ -992,9 +996,9 @@ function cpIssue(){
   redrawCurrent=cpIssue;
   $('progFill').style.width='0%';
   const sc=SCRIPTS[S.fault];
-  const b=cpBubble(`<div class="eyebrow">नया अलर्ट · ${hhmm(now())}</div>
-    <div class="cqrow"><div class="cq">${sc.nameHi}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
-    <div class="cd">${sc.trigger.replace(/^⚠️\s*/,'').replace(/\s*जाँच शुरू करें\?$/,'')}</div>
+  /* eyebrow is just the time — the header already says नया अलर्ट */
+  const b=cpBubble(`<div class="eyebrow">${hhmm(now())}</div>
+    <div class="cqrow"><div class="cq">${sc.trigger.replace(/^⚠️\s*/,'').replace(/\s*जाँच शुरू करें\?$/,'')}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
     <div class="issuemeta">
       <span><i>प्लांट</i>गंगा विहार STP · 12 MLD</span>
       <span><i>जाँच</i>${checkCount()} चरण · ${sc.nameEn}</span>
@@ -1523,7 +1527,7 @@ function suggest(lead,items){
   SUGG=items;
   $('cpSuggest').innerHTML=`<div class="lead">${lead}</div><div class="row">`+
     items.map((it,i)=>`<button onclick="takeSuggestion(${i})">${it.label}</button>`).join('')+
-    `<button class="ghost" onclick="clearSuggest()">फिर से बोलिए</button></div>`;
+    `<button class="ghost" onclick="clearSuggest()">इनमें से कोई नहीं</button></div>`;
   $('cpSuggest').classList.add('show');
   if(S)S.suggestions++;
 }
@@ -2431,9 +2435,19 @@ cpIssue=function(){
   if(card)host.insertBefore(card,host.querySelector('.vanswers')||null);
   const m=MEMORY[S.fault];
   if(m&&m.jump){
-    const opts=visibleOptions();
-    if(opts.length)suggest('या सीधे मेरे अनुमान से शुरू करें:',
-      [{label:m.jump.label,btn:null,jump:m.jump.n},{label:'नहीं, शुरू से जाँचें',btn:opts[0]}]);
+    const block=$('vBody').querySelector('.vanswers');
+    if(block){
+      const b=document.createElement('button');
+      b.className='vans';
+      b.innerHTML=m.jump.label;
+      b.onclick=()=>{
+        if(block.classList.contains('done'))return;
+        block.classList.add('done');b.classList.add('chosen');
+        logEvent('MEMORY','Operator took the memory hypothesis — jumped to step '+m.jump.n,'ok');
+        earcon('ok');navGo({t:'step',n:m.jump.n});
+      };
+      block.insertBefore(b,block.querySelector('.vmore'));
+    }
   }
 };
 const _takeSuggestion=takeSuggestion;
