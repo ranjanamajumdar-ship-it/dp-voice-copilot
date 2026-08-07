@@ -562,10 +562,10 @@
   .rd.out .rdverdict{background:var(--rust-tint);color:var(--rust);}
   .rd.out .rdval input{color:var(--rust);}
 
-  /* manual entry on a live reading — one quiet tap, never a second question */
-  .prefill .rdopen{margin-top:8px;background:transparent;border:none;padding:6px 0;
-    color:var(--navy);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
-    text-decoration:underline;text-underline-offset:3px;min-height:36px;}
+  /* a reading that came from the plant rather than the operator's own instrument —
+     same card, quieter ground, and a line saying where the number came from */
+  .rd.fromsensor{background:var(--canvas);border-style:dashed;}
+  .rd .rdsrc{font-size:11px;color:var(--muted);text-align:center;margin-top:7px;line-height:1.4;}
 
   /* the alert card keeps its issue details — which plant, how many checks. That is
      orienting information the operator needs once, before starting, and it is not
@@ -788,17 +788,25 @@ const SCRIPTS={
   toolOptions:["कोई टूल नहीं","मैकेनिकल सील","ग्लैंड","बेयरिंग"],
   rcList:["प्रेशर बहुत ज़्यादा है","मैकेनिकल सील ख़राब है","पंप के पुर्ज़े ढीले हैं","बेयरिंग ख़राब है — बदलना पड़ेगा"],
   steps:[
+   /* The pump itself was never checked in a pump-leak flow — the old first step
+      jumped straight to the discharge valve. This one comes first because it is
+      also the safety gate: a leak only shows under pressure, and nobody should be
+      peering at a seal on a pump that is behaving oddly. */
+   {q:"पंप से असामान्य आवाज़ या कंपन आ रहा है?",illus:"pump",
+    opts:[{label:"नहीं, सामान्य चल रहा है",next:2},
+          {label:"हाँ, आवाज़/कंपन ज़्यादा है",advice:"कैविटेशन या बेयरिंग की दिक़्क़त हो सकती है — आगे बेयरिंग जाँच ज़रूर कीजिए।",next:2},
+          {label:"पंप बंद है",advice:"पंप चालू कीजिए — लीक चलते पंप में ही दिखता है। न चले तो सुपरवाइज़र को बताइए।",next:2}]},
    {q:"डिस्चार्ज वाल्व बंद है या खुला है?",illus:"valve",
-    opts:[{label:"बंद है",advice:"प्रेशर कम करने के लिए वाल्व खोलें।",next:2},{label:"खुला है",next:2}]},
+    opts:[{label:"बंद है",advice:"प्रेशर कम करने के लिए वाल्व खोलें।",next:3},{label:"खुला है",next:3}]},
    {q:"फ़िल्टर में चोकिंग है?",illus:"filter",
-    opts:[{label:"हाँ, चोकिंग है",advice:"फ़िल्टर बैकवॉश करें।",next:3},{label:"नहीं",next:3}]},
+    opts:[{label:"हाँ, चोकिंग है",advice:"फ़िल्टर बैकवॉश करें।",next:4},{label:"नहीं",next:4}]},
    {q:"सील से लगातार पानी बह रहा है?",tool:"मैकेनिकल सील — मेंटेनेंस द्वारा",illus:"seal",
-    opts:[{label:"हाँ",advice:"मेंटेनेंस को मैकेनिकल सील लगानी पड़ेगी। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:6},{label:"नहीं",next:4}]},
+    opts:[{label:"हाँ",advice:"मेंटेनेंस को मैकेनिकल सील लगानी पड़ेगी। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:7},{label:"नहीं",next:5}]},
    {q:"ग्लैंड बॉक्स से पानी टपक रहा है?",tool:"ग्लैंड — मेंटेनेंस द्वारा",illus:"gland",
-    opts:[{label:"हाँ, ज़्यादा है",advice:"मेंटेनेंस को बुलाएं। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:6},
-          {label:"हाँ, पर कम है",advice:"नज़र रखें — ड्रिपिंग बढ़े तो मेंटेनेंस को बुलाएं।",next:5},{label:"नहीं",next:5}]},
+    opts:[{label:"हाँ, ज़्यादा है",advice:"मेंटेनेंस को बुलाएं। सुपरवाइज़र को एस्केलेट करें।",warn:true,escalate:true,next:7},
+          {label:"हाँ, पर कम है",advice:"नज़र रखें — ड्रिपिंग बढ़े तो मेंटेनेंस को बुलाएं।",next:6},{label:"नहीं",next:6}]},
    {q:"बेयरिंग में कंपन या गर्मी ज़्यादा है?",tool:"बेयरिंग — मेंटेनेंस द्वारा",illus:"bearing",
-    opts:[{label:"हाँ",advice:"मेंटेनेंस को बुलाएं — बेयरिंग बदलनी पड़ेगी।",warn:true,escalate:true,next:6},{label:"नहीं",next:6}]},
+    opts:[{label:"हाँ",advice:"मेंटेनेंस को बुलाएं — बेयरिंग बदलनी पड़ेगी।",warn:true,escalate:true,next:7},{label:"नहीं",next:7}]},
    {q:"लीक का सबसे संभावित कारण क्या है?",illus:"pump",rc:true}
   ]},
  B:{nameEn:"Low Dissolved Oxygen",nameHi:"एरेशन टैंक — कम डिज़ॉल्व्ड ऑक्सीजन जाँच",
@@ -1939,7 +1947,7 @@ const MEMORY={
 /* pre-fill: step → live tag. Confirm-don't-collect. The operator standing next to
    the tank is ground truth, so this is always a claim with a reject button. */
 const PREFILL={
-  A:{1:{tag:'Pump Discharge Pressure',
+  A:{2:{tag:'Pump Discharge Pressure',
         read:r=>`${r.v} ${r.u} — normal ${r.safe[0]}–${r.safe[1]} ${r.u} से ज़्यादा`,
         claim:'Pressure ज़्यादा है — हो सकता है discharge valve बंद हो।',opt:0}},
   B:{1:{tag:'Blower Header Pressure',
@@ -3083,9 +3091,10 @@ answerBlock=function(labels,onPick){
     /* WORKING MEMORY · the sensor claim is settled by the answer they were already
        giving, so it never needs a question of its own. Choosing against the claim
        is the sensor-drift signal the old confirm/reject buttons were there to catch. */
+    commitLiveReading();          /* the number in the field, recorded with the answer */
     if(curPrefill){
       const agreed=(i===curPrefill.opt);
-      S[agreed?'prefillConfirmed':'prefillOverrides']++;
+      if(agreed)S.prefillConfirmed++;
       logEvent('MEMORY',agreed
         ? `Operator's answer agrees with live ${curPrefill.tag}`
         : `Operator's answer DISAGREES with live ${curPrefill.tag} — sensor-drift evidence`,
@@ -3247,44 +3256,53 @@ cpStep=function(n){
   _cpStepRead(n);
 };
 
-/* MANUAL ENTRY over a live tag — the operator's own measurement beats the sensor,
-   and the difference between the two is the sensor-drift signal with a magnitude
-   attached rather than just a direction. Progressive disclosure: one quiet link,
-   never a second question competing with the check. */
-const _injectPrefillRead=injectPrefill;
+/* THE READING IS PART OF THE SCREEN, not something to go and open.
+   It was two things stacked — a passive display of the sensor value plus a link
+   that revealed an editor of the same value — which is the sort of thing that
+   looks like configurability and reads as work. Now there is one card: the plant's
+   number, already in the field, adjustable if the operator measured something
+   different. No expander, no commit button — the value is recorded when they
+   answer the check, so the screen still asks exactly one question. */
+let liveReading=null;
 injectPrefill=function(n){
-  _injectPrefillRead(n);
+  if(!ensureV2State())return;
+  curPrefill=null;liveReading=null;
   const pf=(PREFILL[S.fault]||{})[n];if(!pf)return;
   const r=PLANT.live[pf.tag];if(!r)return;
-  const box=$('vBody').querySelector('.prefill');if(!box)return;
-  const open=document.createElement('button');
-  open.className='rdopen';
-  open.textContent='मैंने ख़ुद नापा है — reading डालें';
-  open.onclick=()=>{
-    open.remove();
-    const ui=readingUI({tag:pf.tag,unit:r.u,safe:r.safe,step:.1,start:r.v},(val,kind)=>{
-      S.readings.push({tag:pf.tag,value:val,unit:r.u,verdict:kind,at:hhmm(now()),manual:true});
-      const delta=Math.round((val-r.v)*100)/100;
-      logEvent('READING',`Operator measured ${pf.tag} = ${val} ${r.u} (sensor says ${r.v}, `+
-        `difference ${delta>0?'+':''}${delta}) → ${kind.toUpperCase()}`, Math.abs(delta)>0.001?'hi':'ok');
-      if(Math.abs(delta)>0.001)S.prefillOverrides++;
-      ui.querySelector('.rdrow').innerHTML=
-        `<div class="rdval" style="flex:1"><div style="font-size:22px;font-weight:700;color:var(--navy)">`+
-        `${val} ${r.u}</div><div class="rdunit">आपकी reading दर्ज हो गई</div></div>`;
-      ui.querySelectorAll('.rdstep').forEach(b=>b.remove());
-      const c=ui.querySelector('.rdcommit');if(c)c.remove();
-    });
-    const go=document.createElement('button');
-    go.className='rdcommit vmore';
-    go.style.cssText='margin-top:10px;width:100%';
-    go.textContent='यह reading दर्ज करें';
-    go.onclick=()=>ui.commit();
-    ui.appendChild(go);
-    box.appendChild(ui);
-    logEvent('READING','Operator opened manual entry for '+pf.tag);
-  };
-  box.appendChild(open);
+  const host=$('vBody').querySelector('.vb.bot');if(!host)return;
+  curPrefill={opt:pf.opt,tag:pf.tag};
+  const ui=readingUI({tag:pf.tag,unit:r.u,safe:r.safe,step:.1,start:r.v},()=>{});
+  ui.classList.add('fromsensor');
+  const src=document.createElement('div');
+  src.className='rdsrc';
+  src.innerHTML=`प्लांट ने भेजा · ${r.at} — आपने ख़ुद नापा हो तो बदल दीजिए`;
+  ui.insertBefore(src,ui.querySelector('.rdverdict'));
+  ui.dataset.sensor=r.v;
+  liveReading={ui,tag:pf.tag,unit:r.u,sensor:r.v,safe:r.safe};
+  host.insertBefore(ui,host.querySelector('.vanswers')||null);
+  logEvent('MEMORY',`Showed live ${pf.tag} = ${r.v}${r.u}, editable`);
 };
+
+/* whatever number is in the field when the check is answered is the reading —
+   and if the operator changed it, the gap from the sensor is a calibration
+   finding with a magnitude, not just a direction */
+function commitLiveReading(){
+  if(!liveReading)return;
+  const {ui,tag,unit,sensor,safe}=liveReading;
+  const val=parseFloat(ui.querySelector('input').value);
+  liveReading=null;
+  if(!isFinite(val))return;
+  const kind=verdictOf(val,safe);
+  const delta=Math.round((val-sensor)*100)/100;
+  S.readings.push({tag,value:val,unit,verdict:kind,at:hhmm(now()),edited:Math.abs(delta)>0.001});
+  if(Math.abs(delta)>0.001){
+    S.prefillOverrides++;
+    logEvent('READING',`Operator measured ${tag} = ${val} ${unit} — sensor said ${sensor}, `+
+      `difference ${delta>0?'+':''}${delta} → ${kind.toUpperCase()}`,'hi');
+  }else{
+    logEvent('READING',`${tag} left at the sensor value ${val} ${unit} → ${kind.toUpperCase()}`,'ok');
+  }
+}
 
 /* Escape closes the sheet; the step is untouched underneath. */
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpOpen)closeHelp('escape');});
