@@ -226,8 +226,10 @@
      above them scrolls, so a check can never become un-answerable */
   /* bottom margin must stay 0 — a negative one extends the sticky range past the
      card's bottom edge and pushes the answers out of view again */
+  /* margin-top:auto puts the answers at the bottom of the card when there is room
+     (FITTS — the thumb arc); sticky takes over only once the card has to scroll */
   .vanswers{position:sticky;bottom:0;z-index:3;background:var(--white);
-    margin:11px -15px 0;padding:9px 15px 4px;
+    margin:auto -15px 0;padding:9px 15px 4px;
     box-shadow:0 -8px 12px -8px rgba(9,36,84,.22);}
   .vb.haschecks{padding-bottom:4px;}
   .vb.me{background:var(--navy-tint);color:var(--navy);align-self:flex-end;font-weight:600;
@@ -482,6 +484,63 @@
   .hexits button.back{background:var(--sage-tint);border-color:var(--sage);color:var(--sage-forest);}
   .hexits button.esc{background:var(--rust-tint);border-color:rgba(196,81,30,.35);color:var(--rust);}
   .hexits .note{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.4;}
+  .hexits button.call{background:var(--white);border-color:var(--hair);}
+  .hexits button.quiet{background:transparent;border-color:transparent;color:var(--muted);
+    font-weight:500;font-size:12.5px;min-height:34px;}
+
+  /* ==================================================================================
+     UX PASS — the screen had 12 targets, 82 words and two questions at once
+     ----------------------------------------------------------------------------------
+     FITTS          answers are the biggest thing on screen and sit lowest, in the
+                    thumb arc; rarely-used icons lose their permanent seat.
+     HICK           one decision per screen. Two ways out of being stuck became one
+                    door; the always-on text box and restart moved behind it.
+     COGNITIVE LOAD the check is the only germane content — the plant meta table,
+                    the status line and the duplicated labels are gone.
+     WORKING MEMORY the step counter is the anchor, so nothing has to be held in
+                    the head; the question stays pinned while the answers scroll.
+     JAKOB          back top-left, phone glyph for calling, chat bubbles, primary
+                    actions along the bottom — the patterns a phone already taught.
+     VON RESTORFF   exactly one emphasised element per screen. Rust used to sit on
+                    सुपरवाइज़र, a secondary action; it is now reserved for warnings.
+     ================================================================================== */
+
+  /* WORKING MEMORY — "चरण 2 / 5" is the anchor, and it never moves */
+  .app-header .stepnow{font-size:11.5px;font-weight:700;color:var(--teal);letter-spacing:.4px;
+    font-variant-numeric:tabular-nums;}
+  .app-header .fault{font-size:14px;-webkit-line-clamp:1;}
+
+  /* FITTS — the answer is the target, so it is large, full width and near the thumb */
+  .vans{min-height:64px;font-size:17px;padding:14px 16px;display:flex;align-items:center;
+    border-radius:var(--r);}
+  .vanswers{gap:8px;}
+  /* HICK — a long option list is progressively disclosed rather than dumped */
+  .vmore{min-height:48px;border-radius:var(--r-pill);border:1px dashed var(--hair);
+    background:transparent;color:var(--muted);font-size:13.5px;font-weight:600;
+    cursor:pointer;font-family:inherit;}
+
+  /* VON RESTORFF — the question is the one emphasised thing on a check screen */
+  .vb .cq{font-size:20px;line-height:1.32;}
+  /* …and the help door is deliberately quiet, so it never competes with it */
+  .helpbtn{border-style:solid;border-color:var(--hair);color:var(--muted);font-weight:600;
+    background:var(--white);}
+  .helpbtn .ic{opacity:.75;}
+  /* the accent is spent only where something is actually wrong */
+  .vb.warnstate .cq{color:var(--rust);}
+
+  /* COGNITIVE LOAD — the live reading is context, not a second question */
+  .prefill{background:var(--canvas);border-style:dashed;box-shadow:none;padding:9px 11px;}
+  .prefill .prow{display:none;}
+  .prefill .pv{font-size:14px;}
+  .prefill .pl{letter-spacing:.3px;}
+
+  /* the alert card carries one hypothesis, not a table of plant facts */
+  .vb .issuemeta{display:none;}
+  .memcard{padding:10px 11px;}
+  .memcard .hyp{font-size:14px;margin-bottom:6px;}
+  .memcard .src{display:none;}
+  .memcard .memmore{min-height:40px;padding:0 14px;}   /* FITTS — was an 11px sliver */
+  .vb.bot.haschecks{flex:1;}
 
 </style>
 </head>
@@ -571,10 +630,8 @@
       <div class="screen" id="scr-app">
         <div class="app-header">
           <button class="app-back" id="appBack" onclick="stepBack()">‹ पीछे</button>
-          <button class="app-restart" id="narrBtn" onclick="toggleNarration()" title="बोलना बंद करें">🔊</button>
-          <button class="app-restart" id="appRestart" onclick="restartFlow()" title="शुरू से">⟲</button>
           <div class="htxt">
-            <div class="brand">डिजिटलपानी</div>
+            <div class="stepnow" id="stepNow">—</div>
             <div class="fault" id="appFault">—</div>
           </div>
         </div>
@@ -594,19 +651,15 @@
             <div class="helprow"><div class="helpoffer" id="helpOffer"></div></div>
             <!-- two ways out of being stuck, side by side and always in the same
                  place: ask the co-pilot (free, no social cost) or call a human. -->
-            <div class="callbar duo">
+            <div class="callbar">
               <button class="helpbtn" id="helpBtn" onclick="openHelp('button')">
                 <span class="ic">🙋</span>मदद चाहिए</button>
-              <button class="callbtn" id="callBtn" onclick="callSupervisor()">
-                <span class="ic">📞</span>सुपरवाइज़र</button>
             </div>
-            <div class="vbar">
-              <div class="vhint"><span id="vStatus">तैयार</span> · <span id="micHint">लिखकर जवाब दें या पूछें — या ऊपर से चुनें</span></div>
-              <!-- listening removed — the co-pilot speaks, the operator types or taps -->
-              <div class="vbar-row">
-                <input type="text" id="vInput" placeholder="लिखकर पूछें या जवाब दें…" onkeydown="if(event.key==='Enter')sendTyped()">
-                <button class="sendbtn" id="sendBtn" onclick="sendTyped()" title="भेजें" aria-label="भेजें">➤</button>
-              </div>
+            <!-- the status line and the always-on text box were extraneous load on
+                 every single check; both now live inside the help sheet -->
+            <div class="vbar hide">
+              <div class="vhint"><span id="vStatus">तैयार</span> · <span id="micHint">—</span></div>
+              <div class="vbar-row"><input type="text" id="vInput"></div>
             </div>
           </div>
         </div>
@@ -634,7 +687,10 @@
         </div>
         <div class="hexits">
           <button class="back" onclick="helpBackToFlow()">✓ समझ गया — जाँच पर वापस</button>
+          <button class="call" onclick="closeHelp('call');callSupervisor()">📞 सुपरवाइज़र को कॉल करें</button>
           <button class="esc" onclick="helpEscalate()">📨 इंजीनियर को भेजें — यह बातचीत साथ जाएगी</button>
+          <button class="quiet" id="narrBtn" onclick="toggleNarration()">🔊 बोलना बंद करें</button>
+          <button class="quiet" onclick="closeHelp('restart');restartFlow()">⟲ जाँच शुरू से करें</button>
           <div class="note">इंजीनियर को आपकी पूरी बातचीत दिखेगी, इसलिए उन्हें दोबारा नहीं पूछना पड़ेगा।</div>
         </div>
       </div>
@@ -1002,9 +1058,11 @@ function cpStep(n){
     if(o.escalate)S.escalationNeeded=true;
     if(o.advice){
       redrawCurrent=()=>{
-        const ab=cpBubble(`<div class="cqrow"><div class="eyebrow">सलाह</div>`+
+        /* VON RESTORFF — only advice that carries a real warning takes the accent */
+        const ab=cpBubble(`<div class="cqrow"><div class="eyebrow">${o.warn?'⚠ ज़रूरी':'सलाह'}</div>`+
           `<button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>`+
           `<div class="cq" style="font-size:16.5px;font-weight:600">${o.advice}</div>`);
+        if(o.warn)ab.classList.add('warnstate');
         attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
       };
       redrawCurrent();lastNarrated='';narrateCurrent();
@@ -1319,7 +1377,8 @@ function narrateCurrent(){
 function toggleNarration(){
   narrateOn=!narrateOn;
   const nb=$('narrBtn');
-  if(nb){nb.textContent=narrateOn?'🔊':'🔇';nb.title=narrateOn?'बोलना बंद करें':'बोलना चालू करें';}
+  /* it lives in the help sheet now, so it can afford a word instead of a glyph */
+  if(nb){nb.textContent=narrateOn?'🔊 बोलना बंद करें':'🔇 बोलना चालू करें';}
   if(!narrateOn)speechSynthesis.cancel();
   logEvent('VOICE','Step narration '+(narrateOn?'on':'off'));
   toast(narrateOn?'डॉ. पानी हर चरण पढ़कर बताएँगे':'अब चुप रहेंगे');
@@ -2918,6 +2977,120 @@ cpState=function(state){
 };
 const _navGoV1=navGo;
 navGo=function(desc){_navGoV1(desc);restHint();};
+
+/* ==================================================================================
+   10 · THE UX PASS, IN BEHAVIOUR
+   ----------------------------------------------------------------------------------
+   The CSS above changes what the screen looks like; these change what it asks of
+   the operator. Measured before: 12 interactive targets, 82 words, and — the worst
+   of it — two questions on screen at once, because the live sensor reading was
+   asking for its own confirmation on top of the actual check.
+   ================================================================================== */
+
+/* WORKING MEMORY · the anchor.
+   Miller's limit is about what has to be HELD, so hold nothing: where you are is
+   printed on the screen, permanently, in the same place. */
+function stepAnchor(){
+  const el=$('stepNow');if(!el||!S)return;
+  const d=navStack[navStack.length-1];
+  let t='जाँच';
+  if(d){
+    if(d.t==='issue')t='नया अलर्ट';
+    else if(d.t==='tool')t='टूल';
+    else if(d.t==='wrap')t='आख़िरी क़दम';
+    else if(d.t==='step'){
+      const sc=SCRIPTS[S.fault],st=sc.steps[d.n-1];
+      t=st&&st.rc?'निदान':('चरण '+d.n+' / '+checkCount());
+    }
+  }
+  el.textContent=t;
+}
+const _navGoAnchor=navGo;
+navGo=function(desc){_navGoAnchor(desc);stepAnchor();};
+const _stepBackAnchor=stepBack;
+stepBack=function(){_stepBackAnchor();stepAnchor();};
+
+/* HICK'S LAW · one decision, and a short list to make it from.
+   Response time rises with the log of the number of options, so a five-item root
+   cause list is a materially slower decision than a four-item one. The tail is
+   disclosed on request rather than dumped — and nothing is removed, because on a
+   diagnostic the operator must still be able to reach every answer. */
+const VISIBLE_MAX=4;
+const _answerBlock=answerBlock;
+answerBlock=function(labels,onPick){
+  const wrap=_answerBlock(labels,function(i,l){
+    /* WORKING MEMORY · the sensor claim is settled by the answer they were already
+       giving, so it never needs a question of its own. Choosing against the claim
+       is the sensor-drift signal the old confirm/reject buttons were there to catch. */
+    if(curPrefill){
+      const agreed=(i===curPrefill.opt);
+      S[agreed?'prefillConfirmed':'prefillOverrides']++;
+      logEvent('MEMORY',agreed
+        ? `Operator's answer agrees with live ${curPrefill.tag}`
+        : `Operator's answer DISAGREES with live ${curPrefill.tag} — sensor-drift evidence`,
+        agreed?'ok':'hi');
+      curPrefill=null;
+    }
+    onPick(i,l);
+  });
+  const btns=[...wrap.querySelectorAll('.vans')];
+  if(btns.length>VISIBLE_MAX){
+    btns.slice(VISIBLE_MAX).forEach(b=>{b.style.display='none';});
+    const more=document.createElement('button');
+    more.className='vmore';
+    more.textContent=`और ${btns.length-VISIBLE_MAX} विकल्प देखें`;
+    more.onclick=()=>{
+      btns.forEach(b=>{b.style.display='';});
+      more.remove();
+      logEvent('UI','Operator opened the full option list');
+    };
+    wrap.appendChild(more);
+  }
+  return wrap;
+};
+
+/* COGNITIVE LOAD · the live reading is context, not a second decision.
+   It used to arrive with its own two buttons — a question stacked on the question.
+   Now it states what the plant is reporting and gets out of the way. */
+let curPrefill=null;
+injectPrefill=function(n){
+  if(!ensureV2State())return;
+  curPrefill=null;
+  const pf=(PREFILL[S.fault]||{})[n];if(!pf)return;
+  const r=PLANT.live[pf.tag];if(!r)return;
+  const host=$('vBody').querySelector('.vb.bot');if(!host)return;
+  curPrefill={opt:pf.opt,tag:pf.tag};
+  const box=document.createElement('div');
+  box.className='prefill';
+  box.innerHTML=`<div class="pl">🛰 प्लांट बता रहा है · ${pf.tag}</div>
+    <div class="pv">${r.v}<b>${r.u}</b> · <span style="font-weight:600;font-size:12.5px">${pf.claim}</span></div>
+    <div class="pt">आप जो देखें वही सही — नीचे से चुनिए।</div>`;
+  host.insertBefore(box,host.querySelector('.vanswers')||null);
+  logEvent('MEMORY',`Showed live ${pf.tag} = ${r.v}${r.u} as context`);
+};
+const _beginStepPF=beginStep;
+beginStep=function(d){curPrefill=null;_beginStepPF(d);};
+
+/* HICK'S LAW · the help sheet had eight opening choices, which is a menu, not help.
+   Three: the one they almost always want, the device check, and the safety one. */
+HELP_CHIPS.length=0;
+HELP_CHIPS.push(
+ {t:'यह चरण समझ नहीं आया',q:'यह चरण समझ नहीं आया'},
+ {t:'क्या यह safe है?',q:'क्या यह safe है'},
+ {t:'🔊 आवाज़ जाँचें',q:'__voicecheck'}
+);
+
+/* VON RESTORFF · the accent marks the thing that is actually wrong, nothing else.
+   Advice that carries a warning gets it; ordinary advice does not. */
+const _cpStepUX=cpStep;
+cpStep=function(n){
+  _cpStepUX(n);
+  stepAnchor();
+  /* the header already says "चरण 1 / 5" and never moves — printing it again on
+     the card is duplication, and duplication reads as two different things */
+  const eb=$('vBody').querySelector('.vb.bot .eyebrow');
+  if(eb&&/^चरण\s/.test(eb.textContent.trim()))eb.remove();
+};
 
 /* Escape closes the sheet; the step is untouched underneath. */
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpOpen)closeHelp('escape');});
