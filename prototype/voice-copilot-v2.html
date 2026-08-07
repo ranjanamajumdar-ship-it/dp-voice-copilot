@@ -534,6 +534,39 @@
   .prefill .pv{font-size:14px;}
   .prefill .pl{letter-spacing:.3px;}
 
+  /* ---- SENSOR READING ENTRY ----------------------------------------------------
+     Some checks are a measurement, not a judgement. FITTS: the steppers are 56px
+     and sit under the thumb, because a gloved hand cannot hit a spinner arrow.
+     WORKING MEMORY: the safe band is printed next to the number and the verdict is
+     computed for the operator — they never hold "normal is 7 to 8" in their head.
+     VON RESTORFF: only an out-of-range value takes the accent. */
+  .rd{margin-top:12px;background:var(--white);border:1px solid var(--hair);
+    border-radius:var(--r);padding:12px;box-shadow:var(--lift-sm);}
+  .rd .rdtag{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:9px;}
+  .rd .rdrow{display:flex;align-items:center;gap:10px;}
+  .rd .rdstep{width:56px;height:56px;flex-shrink:0;border-radius:50%;border:1px solid var(--hair);
+    background:var(--paper);color:var(--navy);font-size:26px;font-weight:600;cursor:pointer;
+    font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .rd .rdstep:active{background:var(--navy-tint);}
+  .rd .rdval{flex:1;min-width:0;text-align:center;}
+  .rd .rdval input{width:100%;border:none;background:transparent;text-align:center;
+    font-size:38px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;
+    font-family:inherit;padding:0;outline:none;}
+  .rd .rdval input:focus{outline:none;}
+  .rd .rdunit{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:-2px;}
+  .rd .rdband{font-size:12px;color:var(--muted);margin-top:9px;text-align:center;line-height:1.45;}
+  .rd .rdverdict{margin-top:10px;border-radius:var(--r);padding:9px 11px;font-size:13.5px;
+    font-weight:600;line-height:1.45;text-align:center;
+    background:var(--sage-tint);color:var(--sage-forest);}
+  .rd.out .rdverdict{background:var(--rust-tint);color:var(--rust);}
+  .rd.out .rdval input{color:var(--rust);}
+
+  /* manual entry on a live reading — one quiet tap, never a second question */
+  .prefill .rdopen{margin-top:8px;background:transparent;border:none;padding:6px 0;
+    color:var(--navy);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+    text-decoration:underline;text-underline-offset:3px;min-height:36px;}
+
   /* the alert card keeps its issue details — which plant, how many checks. That is
      orienting information the operator needs once, before starting, and it is not
      repeated on any check screen. */
@@ -778,10 +811,21 @@ const SCRIPTS={
    {q:"एयर वाल्व पूरा खुला है?",illus:"airvalve",
     opts:[{label:"खुला है",next:3},{label:"बंद / आधा",advice:"वाल्व पूरा खोलें, 15 मिनट बाद डिज़ॉल्व्ड ऑक्सीजन फिर देखें।",next:3}]},
    {q:"टैंक में बुलबुले हर जगह एक जैसे उठ रहे हैं?",illus:"diffuser",
-    opts:[{label:"एक जैसे",next:4},{label:"असमान",advice:"डिफ्यूज़र बंद या ख़राब हो सकता है। मेंटेनेंस को बुलाएं।",warn:true,escalate:true,next:5}]},
+    opts:[{label:"एक जैसे",next:4},{label:"असमान",advice:"डिफ्यूज़र बंद या ख़राब हो सकता है। मेंटेनेंस को बुलाएं।",warn:true,escalate:true,next:6}]},
    {q:"आज लोड ज़्यादा है, या स्लज गाढ़ा/काला है?",illus:"sludge",
-    opts:[{label:"हाँ",advice:"ज़्यादा स्लज निकालें और सुपरवाइज़र को बताएं।",next:5},
-          {label:"नहीं",advice:"डिज़ॉल्व्ड ऑक्सीजन प्रोब साफ़ करके रीडिंग दोबारा लें।",illus:"probe",next:5}]},
+    opts:[{label:"हाँ",advice:"ज़्यादा स्लज निकालें और सुपरवाइज़र को बताएं।",next:6},
+          {label:"नहीं",advice:"डिज़ॉल्व्ड ऑक्सीजन प्रोब साफ़ पानी में डालकर रीडिंग लीजिए।",illus:"probe",next:5}]},
+   /* A MEASUREMENT, not a judgement — the operator reads a number off an
+      instrument and enters it, and the threshold decides where the flow goes.
+      This is the shape the config engine already models: a tag, a unit, a safe
+      band and an operator. */
+   {q:"साफ़ पानी में probe कितना दिखा रहा है?",illus:"probe",
+    reading:{tag:"DO Probe — साफ़ पानी में",unit:"mg/L",safe:[7,8],step:0.1,start:7.0,
+      note:"साफ़ पानी में ठीक probe 7 से 8 mg/L दिखाता है।"},
+    verdict:{
+      low:{advice:"Probe की reading कम है — cap ख़राब है। मेंटेनेंस से cap बदलवाना पड़ेगा।",warn:true,escalate:true,next:6},
+      ok:{advice:"Probe ठीक है। तो कमी असली है — टैंक में ऑक्सीजन कम है।",next:6},
+      high:{advice:"Reading ज़्यादा है — probe को दोबारा साफ़ करके नापिए। ठीक न हो तो सुपरवाइज़र को बताएँ।",next:6}}},
    {q:"डिज़ॉल्व्ड ऑक्सीजन कम होने का सबसे संभावित कारण क्या है?",illus:"diffuser",rc:true}
   ]}
 };
@@ -1918,6 +1962,7 @@ function ensureV2State(){
   S.offersDeclined=S.offersDeclined||0;S.helpResolved=S.helpResolved||0;
   S.helpUnanswered=S.helpUnanswered||0;S.helpEscalated=S.helpEscalated||false;
   S.prefillConfirmed=S.prefillConfirmed||0;S.prefillOverrides=S.prefillOverrides||0;
+  S.readings=S.readings||[];      // every number the operator entered, with its verdict
   return true;
 }
 
@@ -2482,6 +2527,8 @@ snapshot=function(){
   s.proactiveOffers=S.proactiveOffers;s.offersAccepted=S.offersAccepted;s.offersDeclined=S.offersDeclined;
   s.helpResolved=S.helpResolved;s.helpUnanswered=S.helpUnanswered;s.helpEscalated=!!S.helpEscalated;
   s.prefillConfirmed=S.prefillConfirmed;s.prefillOverrides=S.prefillOverrides;
+  s.readingsTaken=(S.readings||[]).length;
+  s.readingsOutOfRange=(S.readings||[]).filter(r=>r.verdict!=='ok').length;
   return s;
 };
 
@@ -3104,6 +3151,139 @@ cpStep=function(n){
      the card is duplication, and duplication reads as two different things */
   const eb=$('vBody').querySelector('.vb.bot .eyebrow');
   if(eb&&/^चरण\s/.test(eb.textContent.trim()))eb.remove();
+};
+
+/* ==================================================================================
+   11 · SENSOR READING ENTRY
+   ----------------------------------------------------------------------------------
+   Not every check is a judgement. Some are a measurement: put the probe in clean
+   water and read the number. Those steps now accept the number, evaluate it against
+   the safe band, and branch on the result — the same tag / unit / safe-band / operator
+   shape the config engine already models.
+
+   The operator never compares the value themselves. They enter what the instrument
+   says; the co-pilot says whether that is in range and what it means. That is the
+   working-memory rule applied to arithmetic.
+   ================================================================================== */
+function verdictOf(v,safe){
+  if(v<safe[0])return 'low';
+  if(v>safe[1])return 'high';
+  return 'ok';
+}
+/* one renderer, used by a measurement step and by manual entry over a live tag */
+function readingUI(cfg,onCommit){
+  const box=document.createElement('div');
+  box.className='rd';
+  const dp=(cfg.step||0.1)<1?1:0;
+  let v=cfg.start;
+  box.innerHTML=`<div class="rdtag">🧪 ${cfg.tag}</div>
+    <div class="rdrow">
+      <button class="rdstep" data-d="-1" aria-label="कम करें">−</button>
+      <div class="rdval"><input type="text" inputmode="decimal" value="${v.toFixed(dp)}">
+        <div class="rdunit">${cfg.unit}</div></div>
+      <button class="rdstep" data-d="1" aria-label="बढ़ाएँ">+</button>
+    </div>
+    <div class="rdband">ठीक range: <b>${cfg.safe[0]}–${cfg.safe[1]} ${cfg.unit}</b></div>
+    <div class="rdverdict"></div>`;
+  const inp=box.querySelector('input'), vd=box.querySelector('.rdverdict');
+  const paint=()=>{
+    const k=verdictOf(v,cfg.safe);
+    box.classList.toggle('out',k!=='ok');
+    vd.textContent = k==='ok' ? '✓ यह range के अंदर है'
+                   : k==='low' ? '⚠ range से कम है'
+                   : '⚠ range से ज़्यादा है';
+  };
+  const set=nv=>{
+    if(!isFinite(nv))return;
+    v=Math.max(0,Math.round(nv*100)/100);
+    inp.value=v.toFixed(dp);paint();
+  };
+  box.querySelectorAll('.rdstep').forEach(b=>{
+    b.onclick=()=>{set(v+(+b.dataset.d)*(cfg.step||0.1));earcon('ok');};
+  });
+  inp.addEventListener('input',()=>{const n=parseFloat(inp.value);if(isFinite(n)){v=n;paint();}});
+  inp.addEventListener('blur',()=>set(parseFloat(inp.value)));
+  paint();
+  box.commit=()=>onCommit(v,verdictOf(v,cfg.safe));
+  return box;
+}
+
+/* a measurement step: the number IS the answer, so there is one action, not a list */
+function cpReading(n){
+  const sc=SCRIPTS[S.fault],st=sc.steps[n-1],total=checkCount();
+  redrawCurrent=()=>cpReading(n);
+  $('progFill').style.width=((n-1)/total*100)+'%';
+  const b=cpBubble(`<div class="cqrow"><div class="cq">${st.q}</div>
+    <button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
+    ${st.reading.note?`<div class="cd">${st.reading.note}</div>`:''}`);
+  const ui=readingUI(st.reading,(val,kind)=>{
+    closeStep();
+    S.readings.push({tag:st.reading.tag,value:val,unit:st.reading.unit,verdict:kind,at:hhmm(now())});
+    logEvent('READING',`${st.reading.tag} = ${val} ${st.reading.unit} → ${kind.toUpperCase()}`,
+      kind==='ok'?'ok':'hi');
+    const o=st.verdict[kind]||st.verdict.ok;
+    if(o.escalate)S.escalationNeeded=true;
+    earcon(kind==='ok'?'ok':'warn');
+    redrawCurrent=()=>{
+      const ab=cpBubble(`<div class="cqrow"><div class="eyebrow">${o.warn?'⚠ ज़रूरी':'नतीजा'}</div>
+        <button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
+        <div class="cq" style="font-size:17px;font-weight:600">${o.advice}</div>
+        <div class="cd">आपने दर्ज किया: <b>${val} ${st.reading.unit}</b></div>`);
+      if(o.warn)ab.classList.add('warnstate');
+      attach(ab,answerBlock(['आगे बढ़ें'],()=>navGo({t:'step',n:o.next})));
+    };
+    redrawCurrent();lastNarrated='';
+    if(o.warn)speakSlow(o.advice);else narrateCurrent();
+  });
+  b.appendChild(ui);
+  attach(b,answerBlock(['यह reading दर्ज करें'],()=>ui.commit()));
+  logEvent('SENT','Reading asked: '+st.reading.tag);
+  narrateCurrent();
+}
+const _cpStepRead=cpStep;
+cpStep=function(n){
+  const st=SCRIPTS[S.fault].steps[n-1];
+  if(st&&st.reading){cpReading(n);stepAnchor();return;}
+  _cpStepRead(n);
+};
+
+/* MANUAL ENTRY over a live tag — the operator's own measurement beats the sensor,
+   and the difference between the two is the sensor-drift signal with a magnitude
+   attached rather than just a direction. Progressive disclosure: one quiet link,
+   never a second question competing with the check. */
+const _injectPrefillRead=injectPrefill;
+injectPrefill=function(n){
+  _injectPrefillRead(n);
+  const pf=(PREFILL[S.fault]||{})[n];if(!pf)return;
+  const r=PLANT.live[pf.tag];if(!r)return;
+  const box=$('vBody').querySelector('.prefill');if(!box)return;
+  const open=document.createElement('button');
+  open.className='rdopen';
+  open.textContent='मैंने ख़ुद नापा है — reading डालें';
+  open.onclick=()=>{
+    open.remove();
+    const ui=readingUI({tag:pf.tag,unit:r.u,safe:r.safe,step:.1,start:r.v},(val,kind)=>{
+      S.readings.push({tag:pf.tag,value:val,unit:r.u,verdict:kind,at:hhmm(now()),manual:true});
+      const delta=Math.round((val-r.v)*100)/100;
+      logEvent('READING',`Operator measured ${pf.tag} = ${val} ${r.u} (sensor says ${r.v}, `+
+        `difference ${delta>0?'+':''}${delta}) → ${kind.toUpperCase()}`, Math.abs(delta)>0.001?'hi':'ok');
+      if(Math.abs(delta)>0.001)S.prefillOverrides++;
+      ui.querySelector('.rdrow').innerHTML=
+        `<div class="rdval" style="flex:1"><div style="font-size:22px;font-weight:700;color:var(--navy)">`+
+        `${val} ${r.u}</div><div class="rdunit">आपकी reading दर्ज हो गई</div></div>`;
+      ui.querySelectorAll('.rdstep').forEach(b=>b.remove());
+      const c=ui.querySelector('.rdcommit');if(c)c.remove();
+    });
+    const go=document.createElement('button');
+    go.className='rdcommit vmore';
+    go.style.cssText='margin-top:10px;width:100%';
+    go.textContent='यह reading दर्ज करें';
+    go.onclick=()=>ui.commit();
+    ui.appendChild(go);
+    box.appendChild(ui);
+    logEvent('READING','Operator opened manual entry for '+pf.tag);
+  };
+  box.appendChild(open);
 };
 
 /* Escape closes the sheet; the step is untouched underneath. */
