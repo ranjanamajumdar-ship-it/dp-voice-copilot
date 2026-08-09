@@ -562,6 +562,11 @@
   .rd.out .rdverdict{background:var(--rust-tint);color:var(--rust);}
   .rd.out .rdval input{color:var(--rust);}
 
+  /* the machine you are standing at, on the alert that sent you to it */
+  .issueart{margin-top:12px;background:var(--white);border:1px solid var(--hair);
+    border-radius:var(--r);padding:8px 10px;}
+  .issueart svg{width:100%;height:104px;display:block;}
+
   /* a reading that came from the plant rather than the operator's own instrument —
      same card, quieter ground, and a line saying where the number came from */
   .rd.fromsensor{background:var(--canvas);border-style:dashed;}
@@ -3303,6 +3308,131 @@ function commitLiveReading(){
     logEvent('READING',`${tag} left at the sensor value ${val} ${unit} → ${kind.toUpperCase()}`,'ok');
   }
 }
+
+/* ==================================================================================
+   12 · THE TOOL QUESTION WAS REDUNDANT
+   ----------------------------------------------------------------------------------
+   The flow already knows. Every check that needs a tool declares it, and the
+   operator has just walked past the one that matters — a leaking mechanical seal
+   names "मैकेनिकल सील — मेंटेनेंस द्वारा" on the check itself. Asking "कौन सा टूल
+   चाहिए?" afterwards made the operator re-derive from memory a conclusion the
+   system had already reached, and charged four options for it.
+
+   So the co-pilot states it instead of asking. The tool is taken from the check
+   that escalated, and appears where it is actually actionable: the hand-off, where
+   the engineer needs to know what to bring.
+   ================================================================================== */
+function toolFromFlow(){
+  const sc=SCRIPTS[S.fault];
+  /* the escalating check is the one that determined the part */
+  for(let i=S.steps.length-1;i>=0;i--){
+    const k=S.steps[i].key;
+    if(!/^S\d+$/.test(k))continue;
+    const st=sc.steps[+k.slice(1)-1];
+    if(st&&st.tool&&S.steps[i].escalated)return st.tool;
+  }
+  return null;
+}
+/* remember which check escalated, so the tool can be read back off it */
+const _answerBlockTool=answerBlock;
+answerBlock=function(labels,onPick){
+  return _answerBlockTool(labels,function(i,l){
+    const d=navStack[navStack.length-1];
+    if(d&&d.t==='step'){
+      const st=SCRIPTS[S.fault].steps[d.n-1];
+      const o=st&&st.opts&&st.opts[i];
+      const c=curStep();
+      if(o&&o.escalate&&c)c.escalated=true;
+    }
+    onPick(i,l);
+  });
+};
+
+/* the tool step is gone — the diagnosis hands straight to the wrap-up */
+pickRC=function(label){
+  closeStep();
+  S.rootCause=label;
+  S.accuracy=label===S.actualRC?'Match':'No match';
+  logEvent('ACCURACY',`Picked "${label}" vs staged "${S.actualRC}" → ${S.accuracy}`,
+    S.accuracy==='Match'?'ok':'hi');
+  S.toolPicked=toolFromFlow()||'कोई टूल नहीं';
+  logEvent('TOOL','Determined by the flow, not asked: '+S.toolPicked);
+  navGo({t:'wrap'});
+};
+
+cpWrap=function(){
+  redrawCurrent=cpWrap;
+  const esc=S.escalationNeeded, tool=toolFromFlow();
+  const b=cpBubble(`<div class="eyebrow">आख़िरी क़दम</div>
+    <div class="cqrow"><div class="cq">${esc?'क्या इसे इंजीनियर तक भेजना है?':'जाँच पूरी।'}</div>
+    <button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
+    <div class="cd">${esc?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>
+    ${tool?`<div class="ctool need" style="margin-top:11px">🔧 इंजीनियर को चाहिए: ${tool}</div>`:''}`);
+  const labels=esc?['हाँ, इंजीनियर को भेजें','पूरा हुआ']:['पूरा हुआ'];
+  attach(b,answerBlock(labels,(i,l)=>{l.includes('इंजीनियर')?escalate('flow'):finish();}));
+  narrateCurrent();
+};
+
+/* ==================================================================================
+   13 · THE PUMP, DRAWN
+   ----------------------------------------------------------------------------------
+   Built in the visual language of the plant SVG rather than the flow's line icons:
+   its palette (#e7f5f6 → #b0e1e2 fills, #2f669d strokes, #95c6c6 for the skid) and
+   its habit of stacking flat shaded shapes. Simplified hard, because it is 110px on
+   a phone and its job is recognition — this is the machine you are standing at —
+   not schematic accuracy. On the leak alert it drips, so the picture says the same
+   thing the headline does.
+   ================================================================================== */
+const ART={
+ pump:(leak)=>`<svg viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="पंप">
+   <defs><linearGradient id="pmb" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0" stop-color="#e7f5f6"/><stop offset="1" stop-color="#b0e1e2"/></linearGradient></defs>
+   <polygon points="26,128 296,128 288,141 34,141" fill="#95c6c6" stroke="#2f669d" stroke-width="2"/>
+   <rect x="44" y="120" width="16" height="9" fill="#aed5d6" stroke="#2f669d" stroke-width="2"/>
+   <rect x="196" y="120" width="16" height="9" fill="#aed5d6" stroke="#2f669d" stroke-width="2"/>
+   <rect x="40" y="58" width="112" height="62" rx="9" fill="url(#pmb)" stroke="#2f669d" stroke-width="2.5"/>
+   ${[58,72,86,100,114,128].map(x=>`<line x1="${x}" y1="64" x2="${x}" y2="114" stroke="#2f669d" stroke-width="1.6" opacity=".55"/>`).join('')}
+   <rect x="152" y="76" width="26" height="30" rx="4" fill="#aed5d6" stroke="#2f669d" stroke-width="2"/>
+   <circle cx="216" cy="91" r="43" fill="#bce3e6" stroke="#2f669d" stroke-width="2.5"/>
+   <circle cx="216" cy="91" r="22" fill="#e7f5f6" stroke="#2f669d" stroke-width="2"/>
+   <circle cx="216" cy="91" r="6" fill="#2f669d"/>
+   <rect x="203" y="26" width="26" height="26" fill="#bce3e6" stroke="#2f669d" stroke-width="2.5"/>
+   <rect x="196" y="18" width="40" height="10" rx="2" fill="#95c6c6" stroke="#2f669d" stroke-width="2"/>
+   <rect x="258" y="80" width="36" height="24" fill="#bce3e6" stroke="#2f669d" stroke-width="2.5"/>
+   <rect x="288" y="72" width="10" height="40" rx="2" fill="#95c6c6" stroke="#2f669d" stroke-width="2"/>
+   ${leak?`<g stroke="#C4511E" fill="#C4511E">
+      <path d="M178 112 q5 8 0 12 q-5-4 0-12z" opacity=".9"/>
+      <circle cx="171" cy="127" r="3.2" opacity=".7"/>
+      <circle cx="186" cy="124" r="2.4" opacity=".55"/>
+     </g>`:''}
+ </svg>`,
+ aeration:()=>`<svg viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="एरेशन टैंक">
+   <defs><linearGradient id="atb" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0" stop-color="#e7f5f6"/><stop offset="1" stop-color="#b0e1e2"/></linearGradient></defs>
+   <rect x="26" y="40" width="268" height="98" rx="6" fill="url(#atb)" stroke="#2f669d" stroke-width="2.5"/>
+   <line x1="26" y1="62" x2="294" y2="62" stroke="#2f669d" stroke-width="1.6" stroke-dasharray="6 5" opacity=".6"/>
+   <rect x="52" y="120" width="216" height="9" rx="3" fill="#95c6c6" stroke="#2f669d" stroke-width="2"/>
+   ${[78,120,162,204,246].map((x,i)=>`
+     <circle cx="${x}" cy="${104-i%2*6}" r="4.5" fill="#e7f5f6" stroke="#2f669d" stroke-width="1.6"/>
+     <circle cx="${x+7}" cy="${86-i%2*5}" r="3.2" fill="#e7f5f6" stroke="#2f669d" stroke-width="1.4"/>
+     <circle cx="${x-5}" cy="${72-i%2*4}" r="2.4" fill="#e7f5f6" stroke="#2f669d" stroke-width="1.2"/>`).join('')}
+   <rect x="236" y="16" width="14" height="52" fill="#95c6c6" stroke="#2f669d" stroke-width="2"/>
+   <rect x="226" y="8" width="34" height="12" rx="3" fill="#bce3e6" stroke="#2f669d" stroke-width="2"/>
+ </svg>`
+};
+function issueArt(){
+  return S.fault==='A' ? ART.pump(true) : ART.aeration();
+}
+const _cpIssueArt=cpIssue;
+cpIssue=function(){
+  _cpIssueArt();
+  const host=$('vBody').querySelector('.vb.bot');if(!host)return;
+  const wrap=document.createElement('div');
+  wrap.className='issueart';
+  wrap.innerHTML=issueArt();
+  const anchor=host.querySelector('.issuemeta')||host.querySelector('.memcard')||host.querySelector('.vanswers');
+  host.insertBefore(wrap,anchor);
+};
 
 /* Escape closes the sheet; the step is untouched underneath. */
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpOpen)closeHelp('escape');});
