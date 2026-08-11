@@ -485,8 +485,14 @@
   .hexits button.esc{background:var(--rust-tint);border-color:rgba(196,81,30,.35);color:var(--rust);}
   .hexits .note{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.4;}
   .hexits button.call{background:var(--white);border-color:var(--hair);}
-  .hexits button.quiet{background:transparent;border-color:transparent;color:var(--muted);
-    font-weight:500;font-size:12.5px;min-height:34px;}
+  /* housekeeping, not a way out of being stuck — quiet, small, out of the way */
+  .hminor{display:flex;gap:14px;justify-content:center;padding-top:2px;}
+  .hminor button{background:transparent;border:none;color:var(--muted);font-weight:500;
+    font-size:11.5px;min-height:30px;cursor:pointer;font-family:inherit;padding:0 4px;}
+  .hminor button:hover{color:var(--ink);text-decoration:underline;}
+  /* HIERARCHY — one way back, filled; the two escalations outlined */
+  .hexits button.back{background:var(--navy);border-color:var(--navy);color:#fff;
+    font-size:14.5px;min-height:46px;}
 
   /* ==================================================================================
      UX PASS — the screen had 12 targets, 82 words and two questions at once
@@ -520,6 +526,22 @@
     border-radius:var(--r);}
   .vanswers{gap:8px;}
   /* HICK — a long option list is progressively disclosed rather than dumped */
+  /* HIERARCHY, WITH ONE EXCEPTION THAT MATTERS
+     A move-forward action is filled navy and unmistakable. A pair of unequal
+     actions gets a filled primary and a quiet secondary. But the observations on a
+     check stay identical in weight on purpose — styling one of "बंद है / खुला है"
+     as primary would nudge the diagnosis, and a prettier screen is not worth a
+     wrong root cause. */
+  .vanswers.act .vans{background:var(--navy);border-color:var(--navy);color:#fff;
+    font-size:17.5px;font-weight:600;box-shadow:var(--lift);}
+  .vanswers.act .vans:hover{background:var(--navy-mid);border-color:var(--navy-mid);
+    transform:translateY(-1px);}
+  .vanswers.act .vans.secondary{background:transparent;border:1px solid var(--hair);
+    color:var(--muted);font-weight:500;font-size:15px;min-height:52px;box-shadow:none;}
+  .vanswers.act .vans.secondary:hover{color:var(--ink);border-color:var(--teal);}
+  .vanswers.done.act .vans.chosen{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .vanswers.done.act .vans.chosen::before{color:#fff;}
+
   .vmore{min-height:48px;border-radius:var(--r-pill);border:1px dashed var(--hair);
     background:transparent;color:var(--muted);font-size:13.5px;font-weight:600;
     cursor:pointer;font-family:inherit;}
@@ -587,8 +609,12 @@
   .memcard{padding:10px 11px;}
   .memcard .hyp{font-size:14px;margin-bottom:6px;}
   .memcard .src{display:none;}
-  .memcard .why{font-size:12.5px;line-height:1.45;color:#2F4858;font-weight:500;
-    padding-top:7px;border-top:1px solid rgba(106,168,176,.35);}
+  .memcard .whys{list-style:none;display:flex;flex-direction:column;gap:4px;
+    padding-top:8px;margin-top:2px;border-top:1px solid rgba(106,168,176,.35);}
+  .memcard .whys li{font-size:12.5px;line-height:1.4;color:#2F4858;font-weight:500;
+    padding-left:12px;position:relative;}
+  .memcard .whys li::before{content:'';position:absolute;left:0;top:7px;width:5px;height:5px;
+    border-radius:50%;background:#6AA8B0;}
   .vb.bot.haschecks{flex:1;}
 
 </style>
@@ -739,10 +765,11 @@
         <div class="hexits">
           <button class="back" onclick="helpBackToFlow()">✓ समझ गया — जाँच पर वापस</button>
           <button class="call" onclick="closeHelp('call');callSupervisor()">📞 सुपरवाइज़र को कॉल करें</button>
-          <button class="esc" onclick="helpEscalate()">📨 इंजीनियर को भेजें — यह बातचीत साथ जाएगी</button>
-          <button class="quiet" id="narrBtn" onclick="toggleNarration()">🔊 बोलना बंद करें</button>
-          <button class="quiet" onclick="closeHelp('restart');restartFlow()">⟲ जाँच शुरू से करें</button>
-          <div class="note">इंजीनियर को आपकी पूरी बातचीत दिखेगी, इसलिए उन्हें दोबारा नहीं पूछना पड़ेगा।</div>
+          <button class="esc" onclick="helpEscalate()">📨 इंजीनियर को भेजें — बातचीत साथ जाएगी</button>
+          <div class="hminor">
+            <button id="narrBtn" onclick="toggleNarration()">🔊 बोलना बंद करें</button>
+            <button onclick="closeHelp('restart');restartFlow()">⟲ शुरू से</button>
+          </div>
         </div>
       </div>
 
@@ -1017,10 +1044,10 @@ function renderHelpFraming(){
 /* ===================== H2 · BEHAVIOURAL TELEMETRY ===================== */
 function stepKey(desc){return desc.t==='step'?('S'+desc.n):desc.t.toUpperCase();}
 function stepLabel(desc){
-  if(desc.t==='issue')return 'Issue card';
-  if(desc.t!=='step')return desc.t==='tool'?'Tool pick':'Wrap-up';
+  if(desc.t==='issue')return 'अलर्ट';
+  if(desc.t!=='step')return desc.t==='tool'?'टूल':'आख़िरी क़दम';
   const st=SCRIPTS[S.fault].steps[desc.n-1];
-  return st.rc?'Root cause':('चरण '+desc.n);
+  return st.rc?'निदान':('चरण '+desc.n);
 }
 function beginStep(desc){
   closeStep();
@@ -1945,14 +1972,18 @@ const PLANT={
 /* The hypothesis the co-pilot opens with. Built from (b)+(c)+(d), never generated. */
 const MEMORY={
   B:{hyp:'मेरा अनुमान — DO probe गंदा है, blower ठीक है।',
-     why:'DO छह दिन से गिर रही है — 2.6 से 0.8',
+     whys:['DO छह दिन से गिर रही — 2.6 से 0.8',
+           'Blower pressure 0.52 bar — ठीक है',
+           'Probe 41 दिन से साफ़ नहीं — SOP 15 दिन'],
      ev:[{i:'📉',t:PLANT.trend['DO — Aeration Tank'].line,src:'7-दिन trend'},
          {i:'✅',t:'Blower header pressure 0.52 bar है — normal range में। Blower चल रहा है।',src:'Live tag'},
          {i:'🕘',t:'4 महीने पहले बिलकुल यही dip हुई थी — कारण था DO probe पर scaling। 20 मिनट में ठीक हुआ।',src:'Plant history'},
          {i:'🔧',t:'DO probe 41 दिन से साफ़ नहीं हुआ — SOP हर 15 दिन कहता है।',src:'Asset register'}],
      jump:{n:4,label:'पहले probe जाँचें — चरण 4 पर जाएँ'}},
   A:{hyp:'मेरा अनुमान — pressure ज़्यादा है, इसलिए seal से leak है।',
-     why:'Pressure 3.4 bar — normal 2.5 तक',
+     whys:['Pressure 3.4 bar — normal 2.5 तक',
+           'Seal 7 महीने पुरानी — SOP 6 महीने',
+           '2 महीने पहले भी यहीं leak हुआ था'],
      ev:[{i:'📈',t:PLANT.trend['Pump Discharge Pressure'].line,src:'7-दिन trend'},
          {i:'🔧',t:'Mechanical seal 7 महीने पहले बदली थी — SOP हर 6 महीने कहता है।',src:'Asset register'},
          {i:'🕘',t:'2 महीने पहले इसी pump में leak हुआ था — कारण था ढीली gland packing। 40 मिनट में ठीक हुआ।',src:'Plant history'}],
@@ -1995,10 +2026,10 @@ function ensureV2State(){
    is one tap away. Evidence should be checkable, not exhausting. */
 function memoryCardHTML(){
   const m=MEMORY[S.fault];if(!m)return '';
+  /* no eyebrow label — the card's own words say what it is */
   return `<div class="memcard">
-    <div class="mh">🧠 मैंने पहले क्या देखा</div>
     <div class="hyp">${m.hyp}</div>
-    <div class="why">${m.why}</div>
+    <ul class="whys">${m.whys.map(w=>`<li>${w}</li>`).join('')}</ul>
   </div>`;
 }
 /* memMore() removed — the card no longer expands, so there is nothing to toggle */
@@ -2165,11 +2196,8 @@ function openHelp(src){
   $('hSheet').classList.add('on');
   renderHelpChips();renderAsked();
   if(!helpTranscript.length){
-    const p=opProfile();
-    /* the co-pilot opens knowing where the operator is and who they are */
-    hBot({title:'पूछिए — यह जाँच रुकी नहीं है।',
-      body:`आप <b>${helpContextLine()}</b> पर हैं। मुझे आपका plant data दिख रहा है, तो सवाल सीधा पूछिए — हिंदी में बोलिए या लिखिए।`
-        +(p.level==='नया'?'<br><br>ज़्यादा तेज़ नहीं बोलूँगा, और हर चीज़ पूरी बताऊँगा।':''),
+    hBot({title:'क्या पूछना है?',
+      body:'नीचे से चुनिए, या हिंदी में लिखकर पूछिए।',
       cite:'पूछना काम का हिस्सा है — यह आपके मूल्यांकन में नहीं जाता।'});
   }
   logEvent('HELP',`Help layer opened via ${src} at ${helpContextLine()}`,'hi');
@@ -2295,9 +2323,15 @@ function toolButton(t){
    results. If retrieval is empty, say "मुझे नहीं पता" and offer the engineer. */
 function helpAsk(text,mode){
   if(!text)return;
+  const LABEL={'__voicecheck':'🔊 आवाज़ जाँचें','__miccheck':'🎙 माइक जाँचें',
+               '__whichtool':'कौन सा टूल चाहिए?','__whytool':'यह टूल क्यों चाहिए?'};
   const diag=text==='__voicecheck'||text==='__miccheck';
-  hMe(text==='__voicecheck'?'🔊 आवाज़ जाँचें':text==='__miccheck'?'🎙 माइक जाँचें':text);
-  if(!diag)helpAsked.push(text);          /* a diagnostic is not a question to re-ask */
+  hMe(LABEL[text]||text);
+  if(!diag){
+    const label=LABEL[text]||text;
+    helpAsked=helpAsked.filter(a=>a.q!==text);   /* asked again → move it, not duplicate it */
+    helpAsked.push({q:text,label});
+  }
   S.helpAsks.push({q:text,mode:mode||'typed',at:hhmm(now()),step:curStep()?curStep().label:'—',layer:'help'});
   if(mode==='voice')S.voiceAsks++;else S.typedAsks++;
   logEvent('HELP',`${mode==='voice'?'🎙':'⌨'} help question: “${text}”`,'hi');
@@ -2309,6 +2343,45 @@ function helpAsk(text,mode){
 function helpRespond(text){
   if(text==='__voicecheck'){voiceReport();return;}
   if(text==='__miccheck'){micReport();return;}
+
+  /* THE TOOL QUESTIONS ARE ANSWERED FROM THE CHECK THE OPERATOR IS ON.
+     A generic "tools live in the store" reply is useless when the real question is
+     "this check, right now — what do I need and why?" */
+  const d0=navStack[navStack.length-1];
+  const st0=(d0&&d0.t==='step')?SCRIPTS[S.fault].steps[d0.n-1]:null;
+  if(text==='__whichtool'){
+    const t=st0&&st0.tool;
+    hBot({title:t?'इस चरण के लिए: '+t:'इस चरण में कोई टूल नहीं चाहिए',
+      say:t?('इस जाँच के लिए '+t+' चाहिए। यह मेंटेनेंस स्टोर में मिलेगा।')
+           :'इस जाँच के लिए कोई टूल नहीं चाहिए। आँख से देखकर बता दीजिए।',
+      body:t?`इस जाँच के लिए <b>${t}</b> चाहिए।<br><br>मेंटेनेंस स्टोर से इंडेंट पर्ची लेकर मिलेगा।`
+            :'बस देखकर बताना है — कुछ खोलना या नापना नहीं है।',
+      cite:'इस चरण की SOP',
+      tools:t?[{k:'escalate'}]:[]});
+    return;
+  }
+  if(text==='__whytool'){
+    const t=st0&&st0.tool;
+    if(!t){
+      hBot({title:'इस चरण में टूल नहीं चाहिए',
+        say:'इस जाँच में कुछ खोलना नहीं है, इसलिए टूल की ज़रूरत नहीं।',
+        body:'इस जाँच में कुछ खोलना या बदलना नहीं है — इसलिए टूल की ज़रूरत नहीं।',
+        cite:'इस चरण की SOP'});
+      return;
+    }
+    /* the reason is the part the check is about, so it comes from the check */
+    const part=t.split('—')[0].trim();
+    hBot({title:`${part} क्यों चाहिए`,
+      say:`${part} इसलिए चाहिए, क्योंकि यही हिस्सा लीक रोकता है। यह घिस जाए तो पानी बहने लगता है।`,
+      body:`इस चरण में आप <b>${part}</b> वाला हिस्सा देख रहे हैं।<br><br>`+
+        `यही हिस्सा पानी को बाहर निकलने से रोकता है। घिस जाए या ढीला हो जाए तो पानी `+
+        `रिसने लगता है — इसलिए ख़राबी यहीं मिली तो <b>${part}</b> बदलना या कसना पड़ता है।`,
+      num:t,
+      steps:['पहले देखिए कि पानी कहाँ से आ रहा है।','अगर यहीं से आ रहा है तो मेंटेनेंस का काम है।','ख़ुद खोलने की कोशिश न कीजिए।'],
+      cite:'इस चरण की SOP · '+(curStep()?curStep().label:'—'),
+      tools:[{k:'escalate'}]});
+    return;
+  }
   const t=text.toLowerCase();
   const d=navStack[navStack.length-1];
   const st=(d&&d.t==='step')?SCRIPTS[S.fault].steps[d.n-1]:null;
@@ -2411,8 +2484,10 @@ function renderAsked(){
   if(!helpAsked.length){el.style.display='none';return;}
   el.style.display='block';
   el.innerHTML='<div class="al">जो मैंने पूछा</div><div class="arow">'+
-    helpAsked.slice(-6).map(q=>`<button onclick="helpAsk(${JSON.stringify(q).replace(/"/g,'&quot;')},'again')">↻ ${q.length>34?q.slice(0,34)+'…':q}</button>`).join('')+
-    '</div>';
+    helpAsked.slice(-5).map(a=>{
+      const t=a.label.length>30?a.label.slice(0,30)+'…':a.label;
+      return `<button onclick="helpAsk(${JSON.stringify(a.q).replace(/"/g,'&quot;')},'again')">↻ ${t}</button>`;
+    }).join('')+'</div>';
 }
 function helpSendTyped(){
   const v=$('hInput').value.trim();if(!v)return;
@@ -3089,7 +3164,7 @@ stepBack=function(){_stepBackAnchor();stepAnchor();};
    diagnostic the operator must still be able to reach every answer. */
 const VISIBLE_MAX=4;
 const _answerBlock=answerBlock;
-answerBlock=function(labels,onPick){
+answerBlock=function(labels,onPick,kind){
   const wrap=_answerBlock(labels,function(i,l){
     /* WORKING MEMORY · the sensor claim is settled by the answer they were already
        giving, so it never needs a question of its own. Choosing against the claim
@@ -3107,6 +3182,12 @@ answerBlock=function(labels,onPick){
     onPick(i,l);
   });
   const btns=[...wrap.querySelectorAll('.vans')];
+  /* one option is always a move-forward action; more than one is only an action
+     block when the caller says so, because checks must stay evenly weighted */
+  if(labels.length===1||kind==='action'){
+    wrap.classList.add('act');
+    btns.slice(1).forEach(b=>b.classList.add('secondary'));
+  }
   if(btns.length>VISIBLE_MAX){
     btns.slice(VISIBLE_MAX).forEach(b=>{b.style.display='none';});
     const more=document.createElement('button');
@@ -3149,8 +3230,10 @@ beginStep=function(d){curPrefill=null;_beginStepPF(d);};
 HELP_CHIPS.length=0;
 HELP_CHIPS.push(
  {t:'यह चरण समझ नहीं आया',q:'यह चरण समझ नहीं आया'},
- {t:'क्या यह safe है?',q:'क्या यह safe है'},
- {t:'🔊 आवाज़ जाँचें',q:'__voicecheck'}
+ {t:'कौन सा टूल चाहिए?',q:'__whichtool'},
+ {t:'यह टूल क्यों चाहिए?',q:'__whytool'},
+ {t:'बैकवॉश कैसे करें?',q:'बैकवॉश कैसे करें'},
+ {t:'क्या यह safe है?',q:'क्या यह safe है'}
 );
 
 /* VON RESTORFF · the accent marks the thing that is actually wrong, nothing else.
@@ -3333,7 +3416,7 @@ function toolFromFlow(){
 }
 /* remember which check escalated, so the tool can be read back off it */
 const _answerBlockTool=answerBlock;
-answerBlock=function(labels,onPick){
+answerBlock=function(labels,onPick,kind){     /* kind must be forwarded, not dropped */
   return _answerBlockTool(labels,function(i,l){
     const d=navStack[navStack.length-1];
     if(d&&d.t==='step'){
@@ -3343,7 +3426,7 @@ answerBlock=function(labels,onPick){
       if(o&&o.escalate&&c)c.escalated=true;
     }
     onPick(i,l);
-  });
+  },kind);
 };
 
 /* the tool step is gone — the diagnosis hands straight to the wrap-up */
@@ -3366,8 +3449,8 @@ cpWrap=function(){
     <button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
     <div class="cd">${esc?'मेंटेनेंस का काम है — मॉनिटरिंग इंजीनियर आगे देखेंगे।':'आपकी जाँच दर्ज हो गई है।'}</div>
     ${tool?`<div class="ctool need" style="margin-top:11px">🔧 इंजीनियर को चाहिए: ${tool}</div>`:''}`);
-  const labels=esc?['हाँ, इंजीनियर को भेजें','पूरा हुआ']:['पूरा हुआ'];
-  attach(b,answerBlock(labels,(i,l)=>{l.includes('इंजीनियर')?escalate('flow'):finish();}));
+  const labels=esc?['हाँ, इंजीनियर को भेजें','नहीं, मैंने ख़ुद ठीक कर लिया']:['पूरा हुआ'];
+  attach(b,answerBlock(labels,(i,l)=>{i===0&&esc?escalate('flow'):finish();},'action'));
   narrateCurrent();
 };
 
