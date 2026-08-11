@@ -229,7 +229,7 @@
   /* margin-top:auto puts the answers at the bottom of the card when there is room
      (FITTS — the thumb arc); sticky takes over only once the card has to scroll */
   .vanswers{position:sticky;bottom:0;z-index:3;background:var(--white);
-    margin:auto -15px 0;padding:9px 15px 4px;
+    margin:13px -15px 0;padding:9px 15px 4px;
     box-shadow:0 -8px 12px -8px rgba(9,36,84,.22);}
   .vb.haschecks{padding-bottom:4px;}
   .vb.me{background:var(--navy-tint);color:var(--navy);align-self:flex-end;font-weight:600;
@@ -543,9 +543,20 @@
   .app-header .fault{font-size:14px;-webkit-line-clamp:1;}
 
   /* FITTS — the answer is the target, so it is large, full width and near the thumb */
-  .vans{min-height:64px;font-size:17px;padding:14px 16px;display:flex;align-items:center;
-    border-radius:var(--r);}
-  .vanswers{gap:8px;}
+  .vans{min-height:64px;font-size:17px;padding:14px 42px 14px 16px;display:flex;
+    align-items:center;border-radius:var(--r);position:relative;
+    background:var(--paper);border:1.5px solid rgba(9,36,84,.16);
+    box-shadow:0 1px 0 rgba(9,36,84,.04);}
+  .vans::after{content:'›';position:absolute;right:15px;top:50%;transform:translateY(-52%);
+    font-size:26px;font-weight:400;line-height:1;color:var(--teal);opacity:.85;}
+  .vans:hover{background:var(--white);border-color:var(--teal);}
+  .vans:active{background:var(--navy-tint);transform:scale(.995);}
+  .vanswers{gap:9px;}
+  /* the filled action keeps the chevron, in its own colour */
+  .vanswers.act .vans::after{color:rgba(255,255,255,.8);}
+  .vanswers.act .vans.secondary::after{color:var(--muted);}
+  /* answered rows stop looking pressable */
+  .vanswers.done .vans::after{display:none;}
   /* HICK — a long option list is progressively disclosed rather than dumped */
   /* HIERARCHY, WITH ONE EXCEPTION THAT MATTERS
      A move-forward action is filled navy and unmistakable. A pair of unequal
@@ -636,7 +647,12 @@
     padding-left:12px;position:relative;}
   .memcard .whys li::before{content:'';position:absolute;left:0;top:7px;width:5px;height:5px;
     border-radius:50%;background:#6AA8B0;}
-  .vb.bot.haschecks{flex:1;}
+  /* Centred, not pinned. Pinned to the bottom put a void above the question;
+     pinned to the top put one below it. Auto margins on both sides split the
+     leftover space, so a short check looks composed instead of broken — and auto
+     margins keep behaving once the card is tall enough to scroll, which
+     justify-content:flex-end does not. */
+  .vb.bot.haschecks{margin-top:auto;margin-bottom:auto;}
 
 </style>
 </head>
