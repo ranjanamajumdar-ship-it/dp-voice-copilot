@@ -508,6 +508,12 @@
   /* HIERARCHY — one way back, filled; the two escalations outlined */
   .hexits button.back{background:var(--navy);border-color:var(--navy);color:#fff;
     font-size:14.5px;min-height:46px;}
+  /* a call button that does not say who it calls is asking for blind trust */
+  .hexits button.callcta{flex-direction:column;gap:1px;min-height:56px;padding:8px 0;
+    display:flex;align-items:center;justify-content:center;}
+  .hexits button.callcta .l1{font-size:14.5px;font-weight:600;}
+  .hexits button.callcta .l2{font-size:12px;font-weight:500;opacity:.75;
+    font-variant-numeric:tabular-nums;letter-spacing:.3px;}
 
   /* ==================================================================================
      UX PASS — the screen had 12 targets, 82 words and two questions at once
@@ -771,7 +777,10 @@
         <div class="hchips" id="hChips"></div>
         <div class="hstat" id="hStat"></div>
         <div class="hexits">
-          <button class="back" onclick="closeHelp('call');callSupervisor()">📞 सुपरवाइज़र को कॉल करें</button>
+          <button class="back callcta" onclick="callSupervisor()">
+            <span class="l1">📞 सुपरवाइज़र को कॉल करें</span>
+            <span class="l2" id="supNum"></span>
+          </button>
           <div class="hminor">
             <button id="narrBtn" onclick="toggleNarration()">🔊 बोलना बंद करें</button>
             <button onclick="closeHelp('restart');restartFlow()">⟲ शुरू से</button>
@@ -1756,16 +1765,19 @@ function stopMic(){
 function callSupervisor(){
   if(!S)return;
   S.supervisorCalls++;
+  logEvent('CALL',`Operator called ${SUPERVISOR.name} (${SUPERVISOR.display}) from `+
+    `${curStep()?curStep().label:'—'}`,'hi');
   const btn=$('callBtn');
-  btn.classList.add('ringing');
-  btn.innerHTML='<span class="ic">📞</span>कॉल जा रही है… सुपरवाइज़र';
-  logEvent('CALL',`Operator called the supervisor from ${curStep()?curStep().label:'—'}`,'hi');
-  note('','सुपरवाइज़र को कॉल की जा रही है — जाँच वहीं रुकी है।');
+  if(btn){
+    btn.classList.add('ringing');
+    btn.innerHTML='<span class="ic">📞</span>कॉल जा रही है… सुपरवाइज़र';
+    setTimeout(()=>{btn.classList.remove('ringing');
+      btn.innerHTML='<span class="ic">📞</span>सुपरवाइज़र को कॉल करें';},3200);
+  }
+  note('',`${SUPERVISOR.name} को कॉल — ${SUPERVISOR.display}. जाँच वहीं रुकी है।`);
   speak('सुपरवाइज़र को कॉल की जा रही है।');
-  setTimeout(()=>{
-    btn.classList.remove('ringing');
-    btn.innerHTML='<span class="ic">📞</span>सुपरवाइज़र को कॉल करें';
-  },3200);
+  /* hand off to the dialler — on a phone this opens it with the number filled in */
+  try{window.location.href='tel:'+SUPERVISOR.tel;}catch(e){}
 }
 
 /* ===================== ESCALATION → CONSOLE (H3/H6) ===================== */
@@ -2009,6 +2021,12 @@ const PREFILL={
 
 function opProfile(){return PLANT.operators['__default'];}
 
+const SUPERVISOR={
+  name:'प्लांट सुपरवाइज़र',
+  display:'+91 00000 00000',      // <-- placeholder: cannot dial anyone
+  tel:'+910000000000'
+};
+
 /* Every v2 counter is created here, not only in the startSession wrapper.
    The flow has more than one entry point (autoStart on load, restartFlow, the
    setup screen), and a missing counter used to throw inside openHelp — which
@@ -2209,6 +2227,7 @@ function openHelp(src){
   shutUp();                                  /* help interrupts narration, always */
   hideOffer();
   $('hCtx').textContent=helpContextLine();
+  const sn=$('supNum');if(sn)sn.textContent=SUPERVISOR.name+' · '+SUPERVISOR.display;
   $('hScrim').classList.add('on');
   $('hSheet').classList.add('on');
   renderHelpChips();renderAsked();
