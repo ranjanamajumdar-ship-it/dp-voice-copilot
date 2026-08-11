@@ -377,6 +377,19 @@
   .prefill.overridden{border-color:var(--amber);background:var(--amber-tint);}
 
   /* ---- the quiet, always-there help affordance ---- */
+  /* डॉ. पानी — one prominent, permanent corner. Bottom-right so it falls under the
+     thumb (FITTS), in its own bar so it can never overlap an answer, and carrying a
+     name as well as a glyph because an unlabelled circle teaches nobody. */
+  .fabbar{display:flex;justify-content:flex-end;padding:6px 14px 2px;}
+  .fab{display:flex;align-items:center;gap:9px;min-height:56px;padding:0 17px 0 12px;
+    border:none;border-radius:var(--r-pill);cursor:pointer;font-family:inherit;
+    background:var(--navy);color:#fff;
+    box-shadow:0 4px 14px rgba(9,36,84,.28), 0 1px 3px rgba(9,36,84,.2);
+    transition:transform .16s, box-shadow .16s;}
+  .fab:active{transform:scale(.96);box-shadow:0 2px 8px rgba(9,36,84,.26);}
+  .fab .ic{width:34px;height:34px;flex-shrink:0;border-radius:50%;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .fab .lbl{font-size:15.5px;font-weight:600;letter-spacing:.1px;}
   .helprow{display:flex;flex-direction:column;padding:0 13px;}
   .helprow:empty,.helprow>.helpoffer:not(.show){margin:0;}
   .callbar.duo{display:flex;gap:8px;}
@@ -727,12 +740,12 @@
             <div class="cpnote" id="cpNote"></div>
             <div class="vbody" id="vBody"></div>
             <div class="cpsuggest" id="cpSuggest"></div>
-            <div class="helprow"><div class="helpoffer" id="helpOffer"></div></div>
             <!-- two ways out of being stuck, side by side and always in the same
                  place: ask the co-pilot (free, no social cost) or call a human. -->
-            <div class="callbar">
-              <button class="helpbtn" id="helpBtn" onclick="openHelp('button')">
-                <span class="ic">🙋</span>मदद चाहिए</button>
+            <div class="fabbar">
+              <button class="fab" id="helpBtn" onclick="openHelp('button')"
+                aria-label="डॉ. पानी को पूछें">
+                <span class="ic">💧</span><span class="lbl">डॉ. पानी को पूछें</span></button>
             </div>
             <!-- the status line and the always-on text box were extraneous load on
                  every single check; both now live inside the help sheet -->
@@ -2508,21 +2521,9 @@ function stopHelpMic(){
    watches dwell, dead taps and back-tracking; when it fires we offer once, quietly,
    and never nag again on the same step. */
 function showOffer(){
-  if(!ensureV2State())return;
-  const c=curStep();if(!c||helpOpen||offeredStep===curStepKey)return;
-  offeredStep=curStepKey;
-  S.proactiveOffers++;
-  const el=$('helpOffer');
-  /* one line, inline buttons — an offer that pushes the check off screen is
-     not help. The offer must cost less room than the thing it interrupts. */
-  el.innerHTML=`<div class="ol">अटक गए? मैं दूसरे तरीके से समझाऊँ?</div>
-    <div class="orow"><button class="pri" onclick="acceptOffer()">हाँ</button>
-    <button onclick="hideOffer(true)">नहीं, ठीक हूँ</button></div>`;
-  el.classList.add('show');
-  $('vBody').scrollTop=0;          // keep the question the offer is about in view
-  earcon('help');
-  speak('अटक गए? मैं समझा सकता हूँ।');
-  logEvent('HELP',`Proactive offer at ${c.label} — risk ${riskScore()}`,'hi');
+  /* removed — the co-pilot no longer interrupts a check to ask about the check, and
+     the trigger was dwell time, which punished the operator for looking carefully.
+     riskScore() still records the confusion for the run's telemetry. */
 }
 function hideOffer(declined){
   const el=$('helpOffer');if(!el)return;
