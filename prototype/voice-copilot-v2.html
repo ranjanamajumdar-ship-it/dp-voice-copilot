@@ -506,6 +506,11 @@
      ================================================================================== */
 
   /* WORKING MEMORY — "चरण 2 / 5" is the anchor, and it never moves */
+  /* the one voice button — fixed position, always reachable, 48px (FITTS) */
+  .app-speak{order:9;flex-shrink:0;width:48px;height:48px;border:none;border-radius:var(--r-pill);
+    background:var(--teal-tint);color:#22474E;font-size:19px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.16s;}
+  .app-speak:active{background:var(--teal);color:#04212a;transform:scale(.94);}
   .app-header .stepnow{font-size:11.5px;font-weight:700;color:var(--teal);letter-spacing:.4px;
     font-variant-numeric:tabular-nums;}
   .app-header .fault{font-size:14px;-webkit-line-clamp:1;}
@@ -567,7 +572,7 @@
     border-radius:var(--r);padding:8px 10px;display:flex;justify-content:center;}
   /* the supplied drawing is nearly square and carries real detail, so it gets the
      height to stay legible; preserveAspectRatio letterboxes it inside the card */
-  .issueart svg{width:100%;height:168px;display:block;}
+  .issueart svg{width:100%;height:132px;display:block;}
 
   /* a reading that came from the plant rather than the operator's own instrument —
      same card, quieter ground, and a line saying where the number came from */
@@ -577,13 +582,13 @@
   /* the alert card keeps its issue details — which plant, how many checks. That is
      orienting information the operator needs once, before starting, and it is not
      repeated on any check screen. */
-  .vb .issuemeta{margin-top:11px;padding-top:11px;}
-  .vb .issuemeta span{font-size:13.5px;}
-  .vb .issuemeta i{width:56px;}
+  .vb .issuemeta{margin-top:9px;padding-top:9px;}
+  .vb .issuemeta span{font-size:12.5px;font-weight:500;color:var(--muted);}
   .memcard{padding:10px 11px;}
   .memcard .hyp{font-size:14px;margin-bottom:6px;}
   .memcard .src{display:none;}
-  .memcard .memmore{min-height:40px;padding:0 14px;}   /* FITTS — was an 11px sliver */
+  .memcard .why{font-size:12.5px;line-height:1.45;color:#2F4858;font-weight:500;
+    padding-top:7px;border-top:1px solid rgba(106,168,176,.35);}
   .vb.bot.haschecks{flex:1;}
 
 </style>
@@ -674,6 +679,8 @@
       <div class="screen" id="scr-app">
         <div class="app-header">
           <button class="app-back" id="appBack" onclick="stepBack()">‹ पीछे</button>
+          <button class="app-speak" id="speakBtn" onclick="speakStage()"
+            title="फिर से सुनें" aria-label="फिर से सुनें">🔊</button>
           <div class="htxt">
             <div class="stepnow" id="stepNow">—</div>
             <div class="fault" id="appFault">—</div>
@@ -1058,10 +1065,7 @@ function cpIssue(){
   /* eyebrow is just the time — the header already says नया अलर्ट */
   const b=cpBubble(`<div class="eyebrow">${hhmm(now())}</div>
     <div class="cqrow"><div class="cq">${sc.trigger.replace(/^⚠️\s*/,'').replace(/\s*जाँच शुरू करें\?$/,'')}</div><button class="cqspk" onclick="event.stopPropagation();speakStage()" title="सुनें" aria-label="सुनें">🔊</button></div>
-    <div class="issuemeta">
-      <span><i>प्लांट</i>गंगा विहार STP · 12 MLD</span>
-      <span><i>जाँच</i>${checkCount()} चरण · ${sc.nameEn}</span>
-    </div>`);
+    <div class="issuemeta"><span>${PLANT.name} · ${PLANT.cap} · ${checkCount()} चरण</span></div>`);
   attach(b,answerBlock(['जाँच शुरू करें'],()=>navGo({t:'step',n:1})));
   logEvent('SENT','Issue card shown');
   narrateCurrent();
@@ -1096,7 +1100,7 @@ function answerBlock(labels,onPick){
 function attach(bubble,block){
   bubble.classList.add('haschecks');   // a check needs the full width for its answers
   bubble.appendChild(block);
-  $('vBody').scrollTop=$('vBody').scrollHeight;
+  $('vBody').scrollTop=0;      /* start at the question — the answers are pinned anyway */
 }
 function cpStep(n){
   const sc=SCRIPTS[S.fault],st=sc.steps[n-1],total=checkCount();
@@ -1214,6 +1218,8 @@ function renderChips(){}   /* the chip row was removed — suggestions appear on
    or a clarification never wipes the check the operator is on. */
 let redrawCurrent=()=>{};
 function stageSet(html,cls){
+  /* the header owns the voice button now — see .app-speak */
+  html=String(html).replace(/<button class="cqspk"[\s\S]*?<\/button>/g,'');
   const b=document.createElement('div');
   b.className='vb '+(cls||'bot');b.innerHTML=html;
   $('vBody').innerHTML='';$('vBody').appendChild(b);
@@ -1938,13 +1944,15 @@ const PLANT={
 
 /* The hypothesis the co-pilot opens with. Built from (b)+(c)+(d), never generated. */
 const MEMORY={
-  B:{hyp:'मेरा अनुमान — DO probe गंदा है, blower ठीक चल रहा है।',
+  B:{hyp:'मेरा अनुमान — DO probe गंदा है, blower ठीक है।',
+     why:'DO छह दिन से गिर रही है — 2.6 से 0.8',
      ev:[{i:'📉',t:PLANT.trend['DO — Aeration Tank'].line,src:'7-दिन trend'},
          {i:'✅',t:'Blower header pressure 0.52 bar है — normal range में। Blower चल रहा है।',src:'Live tag'},
          {i:'🕘',t:'4 महीने पहले बिलकुल यही dip हुई थी — कारण था DO probe पर scaling। 20 मिनट में ठीक हुआ।',src:'Plant history'},
          {i:'🔧',t:'DO probe 41 दिन से साफ़ नहीं हुआ — SOP हर 15 दिन कहता है।',src:'Asset register'}],
      jump:{n:4,label:'पहले probe जाँचें — चरण 4 पर जाएँ'}},
-  A:{hyp:'मेरा अनुमान — pressure ज़्यादा है, इसलिए seal से leak हो रहा है।',
+  A:{hyp:'मेरा अनुमान — pressure ज़्यादा है, इसलिए seal से leak है।',
+     why:'Pressure 3.4 bar — normal 2.5 तक',
      ev:[{i:'📈',t:PLANT.trend['Pump Discharge Pressure'].line,src:'7-दिन trend'},
          {i:'🔧',t:'Mechanical seal 7 महीने पहले बदली थी — SOP हर 6 महीने कहता है।',src:'Asset register'},
          {i:'🕘',t:'2 महीने पहले इसी pump में leak हुआ था — कारण था ढीली gland packing। 40 मिनट में ठीक हुआ।',src:'Plant history'}],
@@ -1987,25 +1995,13 @@ function ensureV2State(){
    is one tap away. Evidence should be checkable, not exhausting. */
 function memoryCardHTML(){
   const m=MEMORY[S.fault];if(!m)return '';
-  /* Collapsed to the hypothesis alone. The evidence is one tap away, because the
-     check and its answers must own the screen — a card that crowds them out is
-     worse than no card. */
   return `<div class="memcard">
     <div class="mh">🧠 मैंने पहले क्या देखा</div>
     <div class="hyp">${m.hyp}</div>
-    <ul class="memrest" style="display:none">
-      ${m.ev.map(e=>`<li><i>${e.i}</i><span>${e.t}</span></li>`).join('')}</ul>
-    <button class="memmore" onclick="memMore(this)">क्यों? ${m.ev.length} वजह देखें</button>
-    <div class="src">आपके plant के data से — जाँच आप करेंगे।</div>
+    <div class="why">${m.why}</div>
   </div>`;
 }
-function memMore(btn){
-  const c=btn.closest('.memcard'),r=c.querySelector('.memrest');
-  const open=r.style.display!=='none';
-  r.style.display=open?'none':'flex';
-  btn.textContent=open?`क्यों? ${r.children.length} वजह देखें`:'कम दिखाएँ';
-  if(!open)logEvent('MEMORY','Operator opened the full evidence list');
-}
+/* memMore() removed — the card no longer expands, so there is nothing to toggle */
 
 /* ---- live-reading pre-fill, injected under the step's question ---- */
 function injectPrefill(n){
