@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Voice-assisted Co-pilot — डॉ. पानी बोलकर बताते हैं</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -49,6 +49,7 @@
     border-radius:36px;border:6px solid #B8B4A8;
     box-shadow:0 24px 60px rgba(26,26,26,.3);overflow:hidden;display:flex;flex-direction:column;position:relative;}
   @media(max-width:1000px){.phone{width:100%;max-width:391px;margin:0 auto;}}
+
   .statusbar{height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
     padding:0 20px;font-size:12.5px;font-weight:600;background:var(--navy);color:#fff;}
   .screen{flex:1;overflow:hidden;display:none;min-height:0;}
@@ -654,6 +655,37 @@
      justify-content:flex-end does not. */
   .vb.bot.haschecks{margin-top:auto;margin-bottom:auto;}
 
+  /* ================= ON AN ACTUAL PHONE, THE PROTOTYPE IS THE PHONE =================
+     The bezel, the rounded corners and the painted 9:41 status bar are scaffolding
+     for showing this on a laptop. On a real device they render a mock phone inside a
+     phone: a frame eating the edges, and two status bars stacked.
+
+     100dvh, not 100vh — vh on mobile is the viewport with the browser chrome
+     retracted, so the bottom of the app (the answers and डॉ. पानी) sits under the
+     address bar until you scroll. The vh line stays first as the fallback.
+     ================================================================================= */
+  @media(max-width:640px){
+    body{padding:0;background:var(--paper);}
+    .stage{margin:0;}
+    .phone{width:100%;max-width:none;height:100vh;height:100dvh;
+      border:none;border-radius:0;box-shadow:none;}
+    .statusbar{display:none;}          /* the device already has one, just above */
+    /* keep the bottom row clear of the home indicator */
+    .fabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom));}
+    .hexits{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+    .hsheet{max-height:92%;}
+    /* a real phone is narrower than the mock, so buy back the side margins */
+    .vbody{padding:12px 10px 4px;}
+    .vb{padding:13px 13px;}
+    .vanswers{margin-left:-13px;margin-right:-13px;padding-left:13px;padding-right:13px;}
+    .app-header{padding:10px;}
+    .issueart svg{height:120px;}
+  }
+  /* short screens in landscape: give the answers the room instead of the drawing */
+  @media(max-height:520px){
+    .issueart{display:none;}
+    .vans{min-height:52px;font-size:15.5px;}
+  }
 </style>
 </head>
 <body>
@@ -3525,7 +3557,38 @@ const PUMP_SVG=`<svg width="100%" height="100%" preserveAspectRatio="xMidYMid me
         fill: #aed5d6;
       }#pmpArt .pmp-12{
         fill: #9ecccc;
-      }</style>
+      }  /* ================= ON AN ACTUAL PHONE, THE PROTOTYPE IS THE PHONE =================
+     The bezel, the rounded corners and the painted 9:41 status bar are scaffolding
+     for showing this on a laptop. On a real device they render a mock phone inside a
+     phone: a frame eating the edges, and two status bars stacked.
+
+     100dvh, not 100vh — vh on mobile is the viewport with the browser chrome
+     retracted, so the bottom of the app (the answers and डॉ. पानी) sits under the
+     address bar until you scroll. The vh line stays first as the fallback.
+     ================================================================================= */
+  @media(max-width:640px){
+    body{padding:0;background:var(--paper);}
+    .stage{margin:0;}
+    .phone{width:100%;max-width:none;height:100vh;height:100dvh;
+      border:none;border-radius:0;box-shadow:none;}
+    .statusbar{display:none;}          /* the device already has one, just above */
+    /* keep the bottom row clear of the home indicator */
+    .fabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom));}
+    .hexits{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+    .hsheet{max-height:92%;}
+    /* a real phone is narrower than the mock, so buy back the side margins */
+    .vbody{padding:12px 10px 4px;}
+    .vb{padding:13px 13px;}
+    .vanswers{margin-left:-13px;margin-right:-13px;padding-left:13px;padding-right:13px;}
+    .app-header{padding:10px;}
+    .issueart svg{height:120px;}
+  }
+  /* short screens in landscape: give the answers the room instead of the drawing */
+  @media(max-height:520px){
+    .issueart{display:none;}
+    .vans{min-height:52px;font-size:15.5px;}
+  }
+</style>
     <linearGradient id="pmpG1" x1="545.73" y1="853.25" x2="531.13" y2="1364.65" gradientUnits="userSpaceOnUse">
       <stop offset=".11" stop-color="#e7f5f6"/>
       <stop offset=".23" stop-color="#e1f2f3"/>
