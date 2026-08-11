@@ -2196,9 +2196,9 @@ function openHelp(src){
   $('hSheet').classList.add('on');
   renderHelpChips();renderAsked();
   if(!helpTranscript.length){
-    hBot({title:'क्या पूछना है?',
-      body:'नीचे से चुनिए, या हिंदी में लिखकर पूछिए।',
-      cite:'पूछना काम का हिस्सा है — यह आपके मूल्यांकन में नहीं जाता।'});
+    /* just the question. The chips and the text box below say how, so saying it in
+       words was redundant, and the reassurance was a paragraph nobody asked for. */
+    hBot({title:'क्या पूछना है?'});
   }
   logEvent('HELP',`Help layer opened via ${src} at ${helpContextLine()}`,'hi');
 }
