@@ -257,6 +257,7 @@
   .cpsuggest button.ghost{border-color:var(--hair);color:var(--muted);font-weight:500;box-shadow:none;}
   /* the supervisor is one tap away on every screen */
   .callbar{flex-shrink:0;padding:8px 14px 0;}
+  .cpsuggest,.cpundo,.cpnote{flex-shrink:0;}
   .callbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
     background:var(--rust-tint);border:1px solid rgba(196,81,30,.28);border-radius:var(--r);
     color:#8F340D;font-size:15px;font-weight:600;min-height:48px;padding:11px;cursor:pointer;}
@@ -381,8 +382,10 @@
   /* डॉ. पानी — one prominent, permanent corner. Bottom-right so it falls under the
      thumb (FITTS), in its own bar so it can never overlap an answer, and carrying a
      name as well as a glyph because an unlabelled circle teaches nobody. */
-  .fabbar{display:flex;justify-content:flex-end;padding:6px 14px 2px;}
+  .fabbar{display:flex;justify-content:flex-end;align-items:center;
+    flex-shrink:0;min-height:74px;padding:8px 14px 12px;}
   .fab{display:flex;align-items:center;gap:9px;min-height:56px;padding:0 17px 0 12px;
+    flex-shrink:0;white-space:nowrap;max-width:100%;
     border:none;border-radius:var(--r-pill);cursor:pointer;font-family:inherit;
     background:var(--navy);color:#fff;
     box-shadow:0 4px 14px rgba(9,36,84,.28), 0 1px 3px rgba(9,36,84,.2);
@@ -653,7 +656,9 @@
      leftover space, so a short check looks composed instead of broken — and auto
      margins keep behaving once the card is tall enough to scroll, which
      justify-content:flex-end does not. */
-  .vb.bot.haschecks{margin-top:auto;margin-bottom:auto;}
+  /* top aligned: the question starts where the eye starts, and the leftover space
+     falls at the bottom, where डॉ. पानी already lives */
+  .vb.bot.haschecks{margin-top:0;margin-bottom:auto;}
 
   /* ================= ON AN ACTUAL PHONE, THE PROTOTYPE IS THE PHONE =================
      The bezel, the rounded corners and the painted 9:41 status bar are scaffolding
@@ -671,7 +676,7 @@
       border:none;border-radius:0;box-shadow:none;}
     .statusbar{display:none;}          /* the device already has one, just above */
     /* keep the bottom row clear of the home indicator */
-    .fabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom));}
+    .fabbar{padding-bottom:calc(12px + env(safe-area-inset-bottom));min-height:80px;}
     .hexits{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
     .hsheet{max-height:92%;}
     /* a real phone is narrower than the mock, so buy back the side margins */
@@ -3557,38 +3562,7 @@ const PUMP_SVG=`<svg width="100%" height="100%" preserveAspectRatio="xMidYMid me
         fill: #aed5d6;
       }#pmpArt .pmp-12{
         fill: #9ecccc;
-      }  /* ================= ON AN ACTUAL PHONE, THE PROTOTYPE IS THE PHONE =================
-     The bezel, the rounded corners and the painted 9:41 status bar are scaffolding
-     for showing this on a laptop. On a real device they render a mock phone inside a
-     phone: a frame eating the edges, and two status bars stacked.
-
-     100dvh, not 100vh — vh on mobile is the viewport with the browser chrome
-     retracted, so the bottom of the app (the answers and डॉ. पानी) sits under the
-     address bar until you scroll. The vh line stays first as the fallback.
-     ================================================================================= */
-  @media(max-width:640px){
-    body{padding:0;background:var(--paper);}
-    .stage{margin:0;}
-    .phone{width:100%;max-width:none;height:100vh;height:100dvh;
-      border:none;border-radius:0;box-shadow:none;}
-    .statusbar{display:none;}          /* the device already has one, just above */
-    /* keep the bottom row clear of the home indicator */
-    .fabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom));}
-    .hexits{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
-    .hsheet{max-height:92%;}
-    /* a real phone is narrower than the mock, so buy back the side margins */
-    .vbody{padding:12px 10px 4px;}
-    .vb{padding:13px 13px;}
-    .vanswers{margin-left:-13px;margin-right:-13px;padding-left:13px;padding-right:13px;}
-    .app-header{padding:10px;}
-    .issueart svg{height:120px;}
-  }
-  /* short screens in landscape: give the answers the room instead of the drawing */
-  @media(max-height:520px){
-    .issueart{display:none;}
-    .vans{min-height:52px;font-size:15.5px;}
-  }
-</style>
+      }</style>
     <linearGradient id="pmpG1" x1="545.73" y1="853.25" x2="531.13" y2="1364.65" gradientUnits="userSpaceOnUse">
       <stop offset=".11" stop-color="#e7f5f6"/>
       <stop offset=".23" stop-color="#e1f2f3"/>
